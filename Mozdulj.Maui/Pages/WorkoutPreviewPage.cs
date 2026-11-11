@@ -36,6 +36,8 @@ public sealed class WorkoutPreviewPage : ContentPage
             if (_workout.Status != "completed" &&
                 preferences.RelaxationMusicEnabled &&
                 preferences.RelaxationMusicSource == "youtube_music" &&
+                preferences.RelaxationYouTubeMusicPremiumConfirmed &&
+                YouTubeMusicSupport.IsInstalled() &&
                 Uri.TryCreate(preferences.RelaxationYouTubeMusicPlaylistUrl, UriKind.Absolute, out var url) &&
                 url.Scheme == Uri.UriSchemeHttps)
             {
@@ -43,7 +45,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 var openMusic = UI.Button("♫ Lejátszási lista megnyitása YouTube Musicban", false);
                 openMusic.Clicked += async (_, _) =>
                 {
-                    try { await Launcher.Default.OpenAsync(musicUrl); }
+                    try { await YouTubeMusicSupport.OpenPlaylistAsync(musicUrl); }
                     catch (Exception ex) { await DisplayAlertAsync("YouTube Music", ex.Message, "Rendben"); }
                 };
                 _content.Children.Add(openMusic);
