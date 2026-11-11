@@ -125,6 +125,25 @@ public static class YouTubeMusicMediaBridge
     }
 
     /// <summary>
+    /// Pause only YouTube Music, only if it is actually playing. Do not use the
+    /// PlayPause toggle here: if it was already paused, that would start it.
+    /// No session / no notification-listener permission means no control.
+    /// </summary>
+    public static bool TryPauseIfPlaying()
+    {
+        var controller = MusicController();
+        if (controller is null) return false;
+        try
+        {
+            if (controller.PlaybackState?.State != PlaybackStateCode.Playing)
+                return true;
+            controller.GetTransportControls().Pause();
+            return true;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
     /// Best effort only. Android decides whether it honours the freeform bounds
     /// or LAUNCH_ADJACENT hint. Never rely on a hidden/privileged windowing API.
     /// </summary>
@@ -160,8 +179,11 @@ public static class YouTubeMusicMediaBridge
         // screen (often the currently playing track). A dedicated document task
         // asks Android to pass the playlist URL to a fresh Music activity.
         // The Music app may still ignore this, depending on its launch mode.
+        // Avoid an unconditional duplicate Music task: the observed older
+        // player UI can otherwise remain as a stale, frozen task snapshot.
+        // NEW_DOCUMENT still requests the selected playlist as a distinct document.
         intent.AddFlags(ActivityFlags.NewTask | ActivityFlags.NewDocument |
-            ActivityFlags.MultipleTask | ActivityFlags.LaunchAdjacent);
+            ActivityFlags.LaunchAdjacent);
 
         var freeform = activity.PackageManager?.HasSystemFeature(
             PackageManager.FeatureFreeformWindowManagement) == true;
