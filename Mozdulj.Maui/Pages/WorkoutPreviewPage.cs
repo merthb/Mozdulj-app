@@ -57,7 +57,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 url.Scheme == Uri.UriSchemeHttps)
             {
                 var musicUrl = url;
-                var openMusic = UI.Button("♫ YouTube Music megnyitása kisebb ablakban (próba)", false);
+                var openMusic = UI.Button("YouTube Music megnyitása", false);
                 openMusic.Clicked += async (_, _) =>
                 {
                     try
@@ -72,9 +72,9 @@ public sealed class WorkoutPreviewPage : ContentPage
                 };
                 _content.Children.Add(openMusic);
                 _content.Children.Add(UI.Label(
-                    "Az Android megpróbálja többablakos módban megnyitni a YouTube Musicot. " +
-                    "A készüléktől függően azonban teljes képernyőn nyílhat meg. " +
-                    "Indítsd el a listát, és ha szükséges, térj vissza a Mozdulj!-ba a relaxáció elindításához.",
+                    "A lejátszási lista a YouTube Musicban nyílik meg. " +
+                    "Ha a telefon engedi, a két alkalmazás egymás mellett is használható. " +
+                    "Indítsd el a zenét, majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
                     12, color:UI.Muted));
                 _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
                 _content.Children.Add(_musicPanel);
