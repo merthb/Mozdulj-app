@@ -93,8 +93,8 @@ public sealed class WorkoutPreviewPage : ContentPage
                     HorizontalOptions = LayoutOptions.Start,
                     VerticalOptions = LayoutOptions.Center
                 };
-                var up = ReorderButton("↑", "Feljebb");
-                var down = ReorderButton("↓", "Lejjebb");
+                var up = ReorderButton("↑");
+                var down = ReorderButton("↓");
                 up.IsEnabled = AdjacentItem(it, -1) != null;
                 down.IsEnabled = AdjacentItem(it, 1) != null;
                 up.Opacity = up.IsEnabled ? 1 : 0.3;
@@ -158,7 +158,7 @@ public sealed class WorkoutPreviewPage : ContentPage
     }
 
     // Tiny but comfortable, always visible tap targets next to the list items.
-    private static Button ReorderButton(string label, string hint) => new()
+    private static Button ReorderButton(string label) => new()
     {
         Text = label,
         FontSize = 19,
