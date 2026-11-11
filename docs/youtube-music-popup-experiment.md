@@ -1,6 +1,6 @@
 # YouTube Music mini-lejátszó – kísérlet
 
-**Állapot:** készüléken részlegesen ellenőrzött: a YouTube Music MediaSession mini-lejátszó működik, de a `PlayFromUri` nem indítja a listát. A friss dokumentumablakos mélylinkindítás tesztelésre vár. Ez a branch a `feature/recovery-playlist-awake`
+**Állapot:** készüléken részlegesen ellenőrzött: a YouTube Music MediaSession mini-lejátszó működik; a `PlayFromUri` nem indítja a listát. A dokumentumablakos mélylink már a listára visz. Most az osztott képernyős kérés nélküli változat tesztelésre vár. Ez a branch a `feature/recovery-playlist-awake`
 (PR #5) fejlesztéseire épül, és önmagában nem része a `master` ágnak.
 
 ## Mit próbálunk ki?
@@ -8,12 +8,13 @@
 1. A relaxáció előnézete a **YouTube Music megnyitása** gombbal
    `ACTION_VIEW` intentet indít, kizárólag a hivatalos, telepített
    `com.google.android.apps.youtube.music` Android-csomagnak.
-2. `FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT` kéri, hogy – ha a
-   készülék és az Android-verzió támogatja – a két alkalmazás egymás mellett
-   legyen látható. A freeform ablakkezelést támogató eszközökön további
-   `ActivityOptions.SetLaunchBounds` ablakméret-javaslat is megy.
-   **Ez csak kérés**: az Android megtagadhatja/figyelmen kívül hagyhatja,
-   és a YouTube Music teljes képernyőn jelenhet meg.
+2. Készülékteszten a `LAUNCH_ADJACENT` osztott képernyős próbálkozás
+   minden megnyitásnál „az alkalmazás nem támogatja az osztott képernyőt”
+   rendszerüzenetet váltott ki. **Eltávolítottuk** a `LAUNCH_ADJACENT`
+   jelzőt és a `SetLaunchBounds` szabadablak-kérést. Most csak
+   `NEW_TASK | NEW_DOCUMENT` marad: ez továbbra is a mentett
+   `music.youtube.com/playlist?list=...` listahivatkozást adja át, de
+   normál YouTube Music-ablakot kér, nem osztott nézetet.
 3. A `MediaSessionManager.GetActiveSessions` a YouTube Music médiaállapotát
    (dal címe, előadó, lejátszás/szünet, előző/következő) kérdezi le;
    a panel csak a dedikált YouTube Music-csomaghoz kapcsolódik.
@@ -45,10 +46,10 @@
   Music-munkamenet). A YouTube Music alkalmazását vagy felugró nézetét
   nem zárhatjuk be kívülről, és a pause hívás eredménye nem garantált.
   A visszalépési megerősítés **elutasításakor nem állítjuk meg** a zenét.
-- **A külön Music-ablak állóképe:** eltávolítottuk a `MULTIPLE_TASK`
-  jelzőt, amely minden megnyitásnál új feladatot kényszeríthetett ki.
-  Megmarad a `NEW_DOCUMENT` kérés a lejátszási lista célzott megnyitására,
-  de az Android és a YouTube Music kezeli a tényleges ablakéletciklust.
+- **Az osztott képernyős figyelmeztetés:** eltávolítottuk a
+  `LAUNCH_ADJACENT` és `SetLaunchBounds` kéréseket; a `NEW_DOCUMENT`
+  megmarad a célzott lejátszási lista megnyitásához. Az Android és a
+  YouTube Music kezeli a tényleges ablakéletciklust.
 - **Automatikus előtérbe-visszaugrás zeneindításkor nem garantálható**.
   Az Android 10+ korlátozza a háttérben lévő alkalmazások
   Activity-indítását. Ha a többablakos mód nem működik, a felhasználó
@@ -79,8 +80,9 @@
 - [ ] Megnyitás működik akkor is, ha YouTube Music nem játszik semmit?
 - [ ] Ha az Android/YT Music figyelmen kívül hagyja az új ablakot, továbbra is kézzel vissza lehet térni?
 - [ ] Relaxáció előnézet: a gomb a **YouTube Music** appot nyitja meg
-- [ ] Kisebb felugró ablak vagy split-screen megjelenik (ha támogatott)
-- [ ] Ha az OS nem támogatja, teljes képernyő és kézi visszalépés működik
+- [x] Az előző megnyitásnál a playlist megjelent, de felugrott az osztott képernyő nem támogatott rendszerüzenet
+- [ ] Megnyitás osztott képernyős rendszerüzenet nélkül, normál YouTube Music-ablakban
+- [ ] A playlist továbbra is a mentett listára visz, akkor is, amikor más szám szól
 - [ ] Értesítés-hozzáférés nélkül a panel magyarázó üzenetet ad
 - [ ] Engedély megadása után az aktív dal címe / előadója megjelenik
 - [ ] Panel: lejátszás/szünet, előző és következő szám (ha támogatott)
