@@ -1,0 +1,112 @@
+name: Build signed Android APK
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Build and sign APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Check signing secrets
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_PASSWORD; do
+            if [[ -z "$(printenv "$name")" ]]; then
+              echo "::error::Missing GitHub Actions repository secret: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Install .NET MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Restore Android signing keystore
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mozdulj-signing.keystore"
+          test -s "$RUNNER_TEMP/mozdulj-signing.keystore"
+
+      - name: Publish Release APK with signing
+        shell: bash
+        env:
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          dotnet publish Mozdulj.Maui/Mozdulj.Maui.csproj \
+            -f net10.0-android \
+            -c Release \
+            -p:AndroidPackageFormats=apk \
+            -p:AndroidKeyStore=true \
+            -p:AndroidSigningKeyStore="$RUNNER_TEMP/mozdulj-signing.keystore" \
+            -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" \
+            -p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASSWORD \
+            -p:AndroidSigningKeyPass=env:ANDROID_KEY_PASSWORD \
+            -p:AcceptAndroidSDKLicenses=true
+
+      - name: Verify and collect signed APK
+        shell: bash
+        run: |
+          publish_dir="Mozdulj.Maui/bin/Release/net10.0-android/publish"
+          apk_path="$(find "$publish_dir" -maxdepth 1 -type f -iname '*-signed.apk' -print -quit)"
+          if [[ -z "$apk_path" ]]; then
+            echo "::error::No signed APK was found in $publish_dir"
+            exit 1
+          fi
+
+          apksigner="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner -print | sort -V | tail -n 1)"
+          if [[ -z "$apksigner" ]]; then
+            echo "::error::Android apksigner tool is missing"
+            exit 1
+          fi
+          "$apksigner" verify "$apk_path"
+
+          mkdir -p dist
+          short_sha="$(git rev-parse --short=7 "$GITHUB_SHA")"
+          cp "$apk_path" "dist/Mozdulj-$GITHUB_RUN_NUMBER-$short_sha.apk"
+
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mozdulj-signed-apk-${{ github.run_number }}
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Delete temporary signing keystore
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/mozdulj-signing.keystore"
