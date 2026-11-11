@@ -1,6 +1,62 @@
 using Mozdulj.Core;
 using System.Text.Json;
 
+// Targeted recovery check. The historical full suite contains catalog-version
+// assertions that are independent from the backup-import path.
+if (args.Contains("--backup-recovery-only", StringComparer.Ordinal))
+{
+    var installedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
+        "..", "..", "..", "..", "Mozdulj.Maui", "Resources", "Raw", "exercises.catalog.json"));
+    var installed = CatalogCodec.Parse(File.ReadAllText(installedPath));
+    var oldKey = Enumerable.Repeat((byte)7, 32).ToArray();
+    var newKey = Enumerable.Repeat((byte)9, 32).ToArray();
+    var sample = new LocalData
+    {
+        OnboardingCompleted = true,
+        RewardProgress = new RewardProgress { LifetimeXp = 160, AvailableFreezes = 2 },
+        Completions = [new CompletionRecord { ItemId = "recovery-check", Xp = 40 }],
+        FavoriteIds = [installed.Exercises[0].Id]
+    };
+    var backup = System.Text.Encoding.UTF8.GetString(LocalBackupCodec.Export(sample, oldKey));
+    try
+    {
+        LocalBackupCodec.Import(backup, installed, newKey);
+        throw new Exception("TEST FAIL: normal import accepted an unrelated key");
+    }
+    catch (BackupSignatureMismatchException) { Console.WriteLine("PASS signature mismatch is offered for explicit confirmation"); }
+    var recovered = LocalBackupCodec.RecoverAfterReinstall(backup, installed);
+    if (recovered.Preferences.UserId != sample.Preferences.UserId ||
+        recovered.Completions.Single().ItemId != "recovery-check" ||
+        recovered.RewardProgress.LifetimeXp != 160 ||
+        !recovered.FavoriteIds.SequenceEqual(sample.FavoriteIds))
+        throw new Exception("TEST FAIL: recovery did not retain progression");
+    var newBackup = System.Text.Encoding.UTF8.GetString(LocalBackupCodec.Export(recovered, newKey));
+    var verifiedAgain = LocalBackupCodec.Import(newBackup, installed, newKey);
+    if (verifiedAgain.RewardProgress.LifetimeXp != 160)
+        throw new Exception("TEST FAIL: restored data cannot be re-signed on new installation");
+    try
+    {
+        LocalBackupCodec.RecoverAfterReinstall(
+            JsonSerializer.Serialize(new FullBackup { Data = sample }, CatalogCodec.JsonOptions),
+            installed);
+        throw new Exception("TEST FAIL: unsigned backup accepted");
+    }
+    catch (InvalidDataException) { Console.WriteLine("PASS unsigned backup rejected"); }
+    try
+    {
+        LocalBackupCodec.RecoverAfterReinstall(
+            JsonSerializer.Serialize(new FullBackup {
+                Data = new LocalData { SchemaVersion = 99 },
+                IntegrityAlgorithm = BackupIntegrity.Algorithm,
+                Integrity = Convert.ToBase64String(new byte[32])
+            }, CatalogCodec.JsonOptions), installed);
+        throw new Exception("TEST FAIL: invalid schema accepted");
+    }
+    catch (InvalidDataException) { Console.WriteLine("PASS malformed data rejected"); }
+    Console.WriteLine("PASS cross-install recovery and re-signing tests");
+    return;
+}
+
 var catalogPath=Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
     "..","..","..","..","Mozdulj.Maui","Resources","Raw","exercises.catalog.json"));
 if(!File.Exists(catalogPath)) throw new FileNotFoundException(catalogPath);
@@ -390,14 +446,44 @@ Assert(forged!=System.Text.Encoding.UTF8.GetString(completeBackup),
     "A teszt szándékosan módosított pontszámot tartalmaz");
 try { LocalBackupCodec.Import(forged,catalog,signingKey);
     throw new Exception("TEST FAIL: hamisított mentést elfogadott"); }
-catch(InvalidDataException) {Console.WriteLine("PASS szerkesztett backup elutasítva");}
+catch(BackupSignatureMismatchException) {Console.WriteLine("PASS szerkesztett backup elutasítva");}
 try { LocalBackupCodec.Import(System.Text.Encoding.UTF8.GetString(completeBackup),catalog,changedKey);
     throw new Exception("TEST FAIL: másik telepítés kulcsát elfogadta"); }
-catch(InvalidDataException) {Console.WriteLine("PASS idegen kulcs elutasítva");}
+catch(BackupSignatureMismatchException) {Console.WriteLine("PASS idegen kulcs elutasítva");}
 var unsigned=System.Text.Json.JsonSerializer.Serialize(new FullBackup{Data=legacyData},CatalogCodec.JsonOptions);
 try { LocalBackupCodec.Import(unsigned,catalog,signingKey);
     throw new Exception("TEST FAIL: aláíratlan backup haladást növelt"); }
 catch(InvalidDataException) {Console.WriteLine("PASS aláíratlan haladás elutasítva");}
+// Disaster-recovery path is explicit: the old secure key is irrecoverable
+// after uninstall, but a well-formed signed-envelope backup can be recovered.
+var reinstalled=LocalBackupCodec.RecoverAfterReinstall(
+    System.Text.Encoding.UTF8.GetString(completeBackup),catalog);
+Assert(reinstalled.Preferences.UserId==legacyData.Preferences.UserId &&
+       reinstalled.Completions.Single().ItemId=="keep" &&
+       reinstalled.RewardProgress.LifetimeXp==1000 &&
+       reinstalled.FavoriteIds.SequenceEqual(legacyData.FavoriteIds) &&
+       reinstalled.BuiltInContentOverrides.Count==1,
+    "Újratelepítés után a régi mentés adatainak helyreállítása megőrzi a profilt és a haladást");
+var newlySigned=LocalBackupCodec.Export(reinstalled,changedKey);
+var newlyVerified=LocalBackupCodec.Import(
+    System.Text.Encoding.UTF8.GetString(newlySigned),catalog,changedKey);
+Assert(newlyVerified.Preferences.UserId==reinstalled.Preferences.UserId &&
+       newlyVerified.RewardProgress.LifetimeXp==1000,
+    "A helyreállított adatok az új telepítés kulcsával újra hitelesíthetők");
+try { LocalBackupCodec.RecoverAfterReinstall(unsigned,catalog);
+    throw new Exception("TEST FAIL: aláíratlan backupot helyreállított"); }
+catch(InvalidDataException) {Console.WriteLine("PASS aláíratlan mentés vészhelyzetben is elutasítva");}
+var invalidEnvelope=new FullBackup {
+    Data=new LocalData {SchemaVersion=99},
+    IntegrityAlgorithm=BackupIntegrity.Algorithm,
+    Integrity=Convert.ToBase64String(new byte[32])
+};
+try {
+    LocalBackupCodec.RecoverAfterReinstall(
+        System.Text.Json.JsonSerializer.Serialize(invalidEnvelope,CatalogCodec.JsonOptions),catalog);
+    throw new Exception("TEST FAIL: nem támogatott adatmodellt elfogadott"); }
+catch(InvalidDataException) {Console.WriteLine("PASS ismeretlen adatséma elutasítva");}
+
 Assert(catalog.Exercises.Count(x=>x.Id is "achilles-vadli-nyujtott" or "achilles-soleus-hajlitott")==2,
     "A két Achilles-környéki vádlinyújtás szerepel a katalógusban");
 var legPose=catalog.Exercises.First(x=>x.Id=="ananda-balasana").Pose.Rig3D!;

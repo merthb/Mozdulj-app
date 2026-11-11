@@ -57,6 +57,16 @@ public sealed class FullBackup
     public string? IntegrityAlgorithm { get; set; }
 }
 
+/// <summary>
+/// The backup contains a well-formed HMAC, but it does not match the current
+/// installation key. It can mean either an edited file or a lost key after
+/// reinstall; the UI must not automatically trust the data.
+/// </summary>
+public sealed class BackupSignatureMismatchException : IOException
+{
+    public BackupSignatureMismatchException(string message) : base(message) { }
+}
+
 public static class BackupIntegrity
 {
     public const string Algorithm = "HMAC-SHA256-v1";
@@ -80,33 +90,79 @@ public static class BackupIntegrity
         catch (FormatException) { throw new InvalidDataException("A mentés hitelesítése sérült."); }
         var expected=HMACSHA256.HashData(key, Payload(backup.Data));
         if (!CryptographicOperations.FixedTimeEquals(actual, expected))
-            throw new InvalidDataException("A mentést módosították, vagy másik telepítésből származik. Az XP és a streak nem importálható.");
+            throw new BackupSignatureMismatchException(
+                "A mentés HMAC-aláírása nem egyezik a jelenlegi telepítés kulcsával.");
     }
 }
 
 public static class LocalBackupCodec
 {
     public const int MaxBackupBytes = 12_000_000;
-    /// <summary>Only signed backups may include completion/reward data.</summary>
-    public static byte[] Export(LocalData data, byte[] signingKey) => BackupIntegrity.Sign(data, signingKey);
+
+    /// <summary>Normal imports still require the original, device-specific HMAC key.</summary>
+    public static byte[] Export(LocalData data, byte[] signingKey) =>
+        BackupIntegrity.Sign(data, signingKey);
+
     public static LocalData Import(string json, ExerciseCatalog installedBase, byte[] signingKey)
+    {
+        var envelope = ReadEnvelope(json);
+        BackupIntegrity.Verify(envelope, signingKey);
+        return ValidateData(envelope.Data, installedBase);
+    }
+
+    /// <summary>
+    /// Explicit disaster recovery after Android uninstall invalidated SecureStorage.
+    /// The old HMAC key cannot be reconstructed: this validates the signed-backup
+    /// *format* and all recoverable data, but CANNOT authenticate its origin.
+    /// Must never be used as an automatic fallback from the strict Import path.
+    /// </summary>
+    public static LocalData RecoverAfterReinstall(string json, ExerciseCatalog installedBase)
+    {
+        var envelope = ReadEnvelope(json);
+        if (envelope.IntegrityAlgorithm != BackupIntegrity.Algorithm ||
+            string.IsNullOrWhiteSpace(envelope.Integrity))
+            throw new InvalidDataException(
+                "A fájl nem eredeti, hitelesített Mozdulj! teljes mentés formátumú.");
+        try
+        {
+            if (Convert.FromBase64String(envelope.Integrity).Length != 32)
+                throw new InvalidDataException("Érvénytelen mentés-hitelesítési mező.");
+        }
+        catch (FormatException)
+        {
+            throw new InvalidDataException("A mentés hitelesítési mezője sérült.");
+        }
+        // We cannot verify the original HMAC without the removed install's key.
+        // Manual user confirmation is required by the UI before calling here.
+        return ValidateData(envelope.Data, installedBase);
+    }
+
+    private static FullBackup ReadEnvelope(string json)
     {
         if (Encoding.UTF8.GetByteCount(json) > MaxBackupBytes)
             throw new InvalidDataException("Túl nagy biztonsági mentés.");
-        var envelope=JsonSerializer.Deserialize<FullBackup>(json, CatalogCodec.JsonOptions)
+        var envelope = JsonSerializer.Deserialize<FullBackup>(json, CatalogCodec.JsonOptions)
             ?? throw new InvalidDataException("Üres biztonsági mentés.");
-        if (envelope.Format != "mozdulj.user-backup.v1" || envelope.BackupVersion != 1 || envelope.Data is null)
+        if (envelope.Format != "mozdulj.user-backup.v1" ||
+            envelope.BackupVersion != 1 || envelope.Data is null)
             throw new InvalidDataException("Ismeretlen mentési formátum.");
-        // Verify before migration/normalization, which may alter serialized fields.
-        BackupIntegrity.Verify(envelope, signingKey);
-        var data=LocalDataMigrations.Upgrade(envelope.Data);
-        var builtIds=installedBase.Exercises.Select(e=>e.Id).ToHashSet(StringComparer.Ordinal);
-        if (data.DisabledBuiltInIds.Any(id=>!builtIds.Contains(id)))
+        return envelope;
+    }
+
+    private static LocalData ValidateData(LocalData data, ExerciseCatalog installedBase)
+    {
+        data = LocalDataMigrations.Upgrade(data);
+        if (data.Preferences is null || string.IsNullOrWhiteSpace(data.Preferences.UserId))
+            throw new InvalidDataException("A mentésben nincs érvényes profilazonosító.");
+        var builtIds = installedBase.Exercises.Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
+        if (data.DisabledBuiltInIds.Any(id => !builtIds.Contains(id)))
             throw new InvalidDataException("A mentésben ismeretlen kikapcsolt alapgyakorlat található.");
-        if (data.BuiltInContentOverrides.Select(x=>x.ExerciseId).Distinct(StringComparer.Ordinal).Count()!=data.BuiltInContentOverrides.Count)
+        if (data.BuiltInContentOverrides.Select(x => x.ExerciseId)
+            .Distinct(StringComparer.Ordinal).Count() != data.BuiltInContentOverrides.Count)
             throw new InvalidDataException("Duplikált alapgyakorlat-korrektúra.");
-        foreach(var patch in data.BuiltInContentOverrides) BuiltInContentRules.Validate(patch,installedBase);
-        ExerciseLibraryRules.BuildEffectiveCatalog(installedBase,data);
+        foreach (var patch in data.BuiltInContentOverrides)
+            BuiltInContentRules.Validate(patch, installedBase);
+        ExerciseLibraryRules.BuildEffectiveCatalog(installedBase, data);
         return data;
     }
 }

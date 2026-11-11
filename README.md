@@ -6,15 +6,15 @@ A Mozdulj! célja, hogy a rendszeres mozgás könnyen beilleszthető legyen a h�
 
 Az alkalmazás nem egyetlen, mindenkinek azonos edzéstervet kínál: figyelembe veszi a rendelkezésre álló időt, a kívánt nehézséget, a fókuszba helyezett testtájakat, a kedvelt mozgásformákat és az otthon elérhető eszközöket. A felhasználó a gyakorlatokat megismerheti, személyre szabhatja és saját gyakorlatokkal bővítheti.
 
-> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Kiadás:** Béta 1.0 · **APK-ban szereplő verzió:** 1.0.0-beta.1 · **Felület nyelve:** magyar
+> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Legfrissebb béta:** 1.0.0-beta.2 · **Felület nyelve:** magyar
 
-## Béta verzió 1.0 – letöltés és telepítés
+## Béta verzió 1.0 – 2. javítás: letöltés és telepítés
 
-A **Béta verzió 1.0** a GitHub Releases oldalon érhető el: **[Mozdulj! – Béta verzió 1.0](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.1)**.
+A legújabb, készüléken sikeresen telepített és adatmentéssel ellenőrzött változat a **[Béta verzió 1.0 – 2. javítás (`v1.0.0-beta.2`)](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.2)**. A korábbi **[Béta 1.0 (`v1.0.0-beta.1`)](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.1)** továbbra is elérhető, de az új verziót javasoljuk.
 
 - A kiadás telepíthető, **aláírt Android APK**-t tartalmaz, amelyet a **béta verzióra frissített `master` commitból** fordít és ellenőriz a GitHub Actions. Az APK telepítéséhez a telefonon szükség lehet az adott fájlkezelő vagy böngésző számára az **ismeretlen alkalmazások telepítésének engedélyezésére**.
 - Korábban telepített Mozdulj! fölé a frissítés azonos alkalmazásazonosító és aláírókulcs mellett végezhető el. **Az alkalmazás törlése helyett lehetőleg frissíts**, és előtte készíts adatmentést a Profilban.
-- A GitHub-kiadás neve **Béta verzió 1.0**, a címkéje `v1.0.0-beta.1`. Az Androidon látható alkalmazásverzió is **`1.0.0-beta.1`**; a frissítéshez használt belső Android-verziókód **33** (az előző 32 után).
+- A javítókiadás címkéje **`v1.0.0-beta.2`**, az Androidon látható alkalmazásverzió **`1.0.0-beta.2`**, a belső Android-verziókód **34**. Az APK a kipróbált, sikeresen telepített és aláírt javítóbuildből származik; nem helyettesítjük egy másik kulccsal aláírt telepítővel.
 - A fő funkciók internet nélkül is működnek; **a YouTube Music online szolgáltatás**, amelyhez telepített YouTube Music alkalmazás és a szükséges előfizetés kell.
 
 A béta még **visszajelzésekre és készülékes tesztelésre szánt változat**. A mozgásadatok mentése fontos; telepítés, frissítés vagy adatvisszaállítás előtt célszerű biztonsági mentést készíteni.
@@ -307,7 +307,11 @@ A Profil oldalon két külön műveletcsoport található:
 1. **Gyakorlattár importálása/exportálása (JSON):** a gyakorlatok és kapcsolódó állapotok átadása. Importáláskor választható az újak hozzáadása, az összefésülés vagy a saját lista cseréje.
 2. **Teljes adatmentés és visszaállítás (JSON):** profil, kedvencek, előzmények, eredmények, saját gyakorlatok és személyes javítások mentése.
 
-A teljes mentés haladási adatai **helyi kulccsal hitelesítettek**. Az exportált fájl utólagos módosítása érvénytelenné teheti a visszaállítást. A hitelesítő kulcs az adott alkalmazástelepítéshez kötődhet; **telefoncsere vagy alkalmazáseltávolítás előtt** érdemes a mentési és visszaállítási lehetőségeket gondosan ellenőrizni. A személyes hangfájl nem feltétlenül állítható vissza pusztán a JSON-adatmentésből, ezért azt külön is meg kell őrizni.
+A teljes mentés haladási adatai **helyi kulccsal hitelesítettek**. Normál visszaállításkor az alkalmazás ellenőrzi az eredeti telepítés kulcsával készített HMAC-aláírást; a mentés utólagos módosítása vagy más telepítés kulcsa ilyenkor hibát okoz.
+
+**Régebbi mentések visszaállítása:** a `1.0.0-beta.2` kiadástól **ugyanaz a „Teljes adatmentés visszaállítása (.json)” gomb** kezeli a korábbi verziókból származó mentéseket is, mind a Profil oldalon, mind az első beállítások előtt. Normál esetben a fájl HMAC-hitelesítésével tölti vissza a mentést, további lépés nélkül. **Újratelepítés után a korábbi hitelesítő kulcs elveszhet.** Ha a mentés aláírása nem egyezik az új telepítés kulcsával, az alkalmazás figyelmeztet: a korábbi kulcs nélkül nem igazolható, hogy a fájl sértetlen-e. Csak **kifejezett jóváhagyással** engedélyezhető a helyreállítás. A fájl formátuma, aláírási mezőinek szerkezete, adatsémája és a gyakorlatadatok továbbra is ellenőrzésre kerülnek. **Ez a jóváhagyott útvonal nem biztosít kriptográfiai eredet- vagy sértetlenség-ellenőrzést**, ezért kizárólag saját, megbízható mentéssel használandó. Utána az új telepítésből érdemes ismét teljes mentést készíteni.
+
+A személyes relaxációs hangfájlok **nem tárolódnak a teljes JSON-mentésben**; újratelepítés után a helyi zenei listák saját hangfájljait újra be kell importálni. A mentésfájlt eredeti formájában is őrizd meg.
 
 A rendszer verziózott adatstruktúrát és migrációs lépéseket használ, és törekszik arra, hogy frissítéskor a meglévő személyes beállítások, korrekciók és edzéstörténet megmaradjanak. Az alkalmazás frissítéséhez ugyanaz az Android-alkalmazásazonosító és megfelelő aláírás szükséges.
 
@@ -328,8 +332,9 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 | Tulajdonság | Érték |
 | --- | --- |
 | Alkalmazás neve | Mozdulj! |
-| GitHub-kiadás | **Béta verzió 1.0** · `v1.0.0-beta.1` |
-| APK belső verziója | **1.0.0-beta.1** · Android-verziókód: **33** |
+| GitHub-kiadás | **Béta verzió 1.0 – 2. javítás** · `v1.0.0-beta.2` |
+| Legutóbbi béta APK | **1.0.0-beta.2** · Android-verziókód: **34** |
+| Előző kiadás | **1.0.0-beta.1** · Android-verziókód: **33** |
 | Android alkalmazásazonosító | `hu.mozdulj.preview` |
 | Célkeretrendszer | `net10.0-android` |
 | Minimum Android API | 24 (Android 7.0) |
@@ -340,7 +345,7 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 
 A forrás Visual Studióban, telepített **.NET 10 SDK**, **.NET MAUI** és **Android workload** mellett nyitható meg és fordítható. Az Android-alkalmazáshoz megfelelő Android SDK, emulátor vagy csatlakoztatott készülék szükséges.
 
-A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A `master` ágra érkező commitok után a **GitHub Actions automatikusan épít és ellenőrzi az aláírt Android APK-t**, amely a sikeres futás `Artifacts` részében található. A **Béta verzió 1.0** APK-ja a kapcsolódó **GitHub Release** oldalról is letölthető, a workflow-artifact lejáratától függetlenül.
+A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A `master` ágra érkező commitok után a **GitHub Actions automatikusan épít és ellenőrzi az aláírt Android APK-t**, amely a sikeres futás `Artifacts` részében található. A **Béta 1.0 – 2. javítás** kipróbált APK-ja a kapcsolódó **GitHub Release** oldalról is letölthető, a workflow-artifact lejáratától függetlenül.
 
 A sikeres CI-fordítás nem helyettesíti az eszközön történő tesztelést: a zene, a relaxáció megszakítás utáni újrakezdése, a kijelző ébren tartása, az értesítések, a gombos sorrendváltás, a 3D nézet és a különböző Android-verziók továbbra is készülékes ellenőrzést igényelnek.
 

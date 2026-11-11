@@ -56,6 +56,30 @@ public sealed class OnboardingPage : ContentPage
             "Először állítsuk be, milyen mozgás illik hozzád. A napi programokat és a havi kihívásokat csak ezután állítjuk össze.",
             15, color:UI.Muted));
 
+        // The same standard restore action is available before first setup,
+        // so a reinstalled user does not have to create a replacement profile.
+        var restore=UI.Button("Teljes adatmentés visszaállítása (.json)",false);
+        restore.Clicked+=async (_, _)=>
+        {
+            try
+            {
+                if (await BackupRestoreFlow.RunAsync(this,_state) && Window != null)
+                    Window.Page=_state.NeedsInitialSetup
+                        ? new OnboardingPage(_state) : new RootTabs(_state);
+            }
+            catch(Exception ex)
+            {
+                await DisplayAlertAsync("Visszaállítás sikertelen",ex.Message,"Rendben");
+            }
+        };
+        content.Children.Add(UI.Card(
+            UI.Label("Van korábbi teljes mentésed?",17,true),
+            UI.Label("Ha már használtad a Mozdulj!-at, a meglévő mentésedet " +
+                "a szokásos visszaállítás funkcióval is betöltheted. " +
+                "A rendszer szükség esetén tájékoztat az elveszett hitelesítő kulcsról.",
+                13,color:UI.Muted),
+            restore));
+
         foreach (var value in Durations) _minutes.Items.Add($"{value} perc");
         _minutes.SelectedIndex = Math.Max(0, Array.IndexOf(Durations, pref.WorkoutMinutes));
         foreach (var label in new[] { "Kezdő", "Középhaladó", "Haladó" }) _difficulty.Items.Add(label);
