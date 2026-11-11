@@ -24,10 +24,10 @@ public static class YouTubeMusicMediaBridge
         bool HasAccess, bool HasSession, bool Playing, string Title, string Artist,
         bool CanPrevious, bool CanNext);
 
-    private static Context Context => global::Android.App.Application.Context;
+    private static Context AppContext => global::Android.App.Application.Context;
 
     private static ComponentName ListenerComponent =>
-        new(Context.PackageName!, ListenerClass);
+        new(AppContext.PackageName!, ListenerClass);
 
     public static bool HasAccess()
     {
@@ -36,12 +36,12 @@ public static class YouTubeMusicMediaBridge
             var component = ListenerComponent;
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Omr1)
             {
-                var notifications = Context.GetSystemService(Context.NotificationService)
+                var notifications = AppContext.GetSystemService(global::Android.Content.Context.NotificationService)
                     as NotificationManager;
                 return notifications?.IsNotificationListenerAccessGranted(component) == true;
             }
             // API 24–26: the newer NotificationManager API is unavailable.
-            var enabled = Settings.Secure.GetString(Context.ContentResolver,
+            var enabled = Settings.Secure.GetString(AppContext.ContentResolver,
                 "enabled_notification_listeners") ?? "";
             return enabled.Split(':').Any(value =>
                 string.Equals(value, component.FlattenToString(),
@@ -64,13 +64,13 @@ public static class YouTubeMusicMediaBridge
         if (!HasAccess()) return null;
         try
         {
-            var manager = Context.GetSystemService(Context.MediaSessionService)
+            var manager = AppContext.GetSystemService(global::Android.Content.Context.MediaSessionService)
                 as MediaSessionManager;
             return manager?.GetActiveSessions(ListenerComponent).FirstOrDefault(session =>
                 string.Equals(session.PackageName, YouTubeMusicSupport.PackageName,
                     StringComparison.Ordinal));
         }
-        catch (SecurityException) { return null; }
+        catch (Java.Lang.SecurityException) { return null; }
         catch { return null; }
     }
 
