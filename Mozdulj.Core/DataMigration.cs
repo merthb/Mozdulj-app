@@ -57,6 +57,16 @@ public sealed class FullBackup
     public string? IntegrityAlgorithm { get; set; }
 }
 
+/// <summary>
+/// The backup contains a well-formed HMAC, but it does not match the current
+/// installation key. It can mean either an edited file or a lost key after
+/// reinstall; the UI must not automatically trust the data.
+/// </summary>
+public sealed class BackupSignatureMismatchException : InvalidDataException
+{
+    public BackupSignatureMismatchException(string message) : base(message) { }
+}
+
 public static class BackupIntegrity
 {
     public const string Algorithm = "HMAC-SHA256-v1";
@@ -80,7 +90,8 @@ public static class BackupIntegrity
         catch (FormatException) { throw new InvalidDataException("A mentés hitelesítése sérült."); }
         var expected=HMACSHA256.HashData(key, Payload(backup.Data));
         if (!CryptographicOperations.FixedTimeEquals(actual, expected))
-            throw new InvalidDataException("A mentést módosították, vagy másik telepítésből származik. Az XP és a streak nem importálható.");
+            throw new BackupSignatureMismatchException(
+                "A mentés HMAC-aláírása nem egyezik a jelenlegi telepítés kulcsával.");
     }
 }
 
