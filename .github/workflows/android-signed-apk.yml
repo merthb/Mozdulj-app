@@ -66,8 +66,6 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          # The Android versionCode increases for every workflow run.
-          version_code=$((100000 + GITHUB_RUN_NUMBER))
           dotnet publish Mozdulj.Maui/Mozdulj.Maui.csproj \
             -f net10.0-android \
             -c Release \
@@ -77,7 +75,6 @@ jobs:
             -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" \
             -p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASSWORD \
             -p:AndroidSigningKeyPass=env:ANDROID_KEY_PASSWORD \
-            -p:ApplicationVersion="$version_code" \
             -p:AcceptAndroidSDKLicenses=true
 
       - name: Verify and collect signed APK
