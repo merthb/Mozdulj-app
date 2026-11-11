@@ -34,7 +34,7 @@ public static class YouTubeMusicMediaBridge
         try
         {
             var component = ListenerComponent;
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Omr1)
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.OMr1)
             {
                 var notifications = AppContext.GetSystemService(global::Android.Content.Context.NotificationService)
                     as NotificationManager;
@@ -153,12 +153,15 @@ public static class YouTubeMusicMediaBridge
             {
                 var width = metrics.WidthPixels;
                 var height = metrics.HeightPixels;
-                var bounds = new Rect(width / 5, height / 8,
+                var bounds = new global::Android.Graphics.Rect(width / 5, height / 8,
                     width * 4 / 5, height * 3 / 4);
                 var options = ActivityOptions.MakeBasic();
-                options.SetLaunchBounds(bounds);
-                activity.StartActivity(intent, options.ToBundle());
-                return;
+                if (options is not null)
+                {
+                    options.SetLaunchBounds(bounds);
+                    activity.StartActivity(intent, options.ToBundle());
+                    return;
+                }
             }
         }
 
