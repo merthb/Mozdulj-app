@@ -39,6 +39,16 @@
 
 ## Fontos korlátok
 
+- **A relaxációból kilépéskor** a Mozdulj! a MediaSession `Pause()` műveletével
+  megpróbálja szüneteltetni a YouTube Musicot (ha a felhasználó ezt a zenei
+  forrást választotta, az értesítés-hozzáférést engedélyezte, és van elérhető
+  Music-munkamenet). A YouTube Music alkalmazását vagy felugró nézetét
+  nem zárhatjuk be kívülről, és a pause hívás eredménye nem garantált.
+  A visszalépési megerősítés **elutasításakor nem állítjuk meg** a zenét.
+- **A külön Music-ablak állóképe:** eltávolítottuk a `MULTIPLE_TASK`
+  jelzőt, amely minden megnyitásnál új feladatot kényszeríthetett ki.
+  Megmarad a `NEW_DOCUMENT` kérés a lejátszási lista célzott megnyitására,
+  de az Android és a YouTube Music kezeli a tényleges ablakéletciklust.
 - **Automatikus előtérbe-visszaugrás zeneindításkor nem garantálható**.
   Az Android 10+ korlátozza a háttérben lévő alkalmazások
   Activity-indítását. Ha a többablakos mód nem működik, a felhasználó
@@ -75,7 +85,14 @@
 - [ ] Engedély megadása után az aktív dal címe / előadója megjelenik
 - [ ] Panel: lejátszás/szünet, előző és következő szám (ha támogatott)
 - [ ] 10 perces relaxáció indítása közben a YouTube Music a háttérben szól
-- [ ] Az alkalmazás elhagyása a már futó relaxációt megszakítja
+- [ ] A relaxáció 10:00→0:00 végén a YouTube Music lejátszása szünetel
+- [ ] Kilépési megerősítésben a „Maradok” nem állítja le a zenét
+- [ ] Megerősített kilépéskor a YouTube Music zene szünetel és az időzítő újraindul
+- [ ] Android-vissza / felső Kilépés / alsó megszakítás mind szünetelteti a YouTube Musicot
+- [ ] A háttérbe kerülés megszakítja a relaxációt és szünetelteti a YouTube Musicot
+- [ ] Az alkalmazás saját Music-lejátszójának ablaka nem feltétlenül záródik be
+- [ ] Normál edzés vagy helyi relaxáció nem állít le más alkalmazásban szóló zenét
+- [ ] Ismételt YouTube Music megnyitáskor nem keletkezik korlátlan számú külön feladat
 - [ ] Kilépés gomb megerősítése újrakezdést jelez
 - [ ] Engedély visszavonása után a panel nem fér hozzá a média-munkamenethez
 - [ ] Helyi zenei lista és normál edzés változatlanul működik
