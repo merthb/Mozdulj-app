@@ -95,6 +95,71 @@ public static class YouTubeMusicMediaBridge
         catch { return new(true, false, false, "", "", false, false); }
     }
 
+    /// <summary>
+    /// The Android transport API only sends a request; YouTube Music does not
+    /// acknowledge that it loaded the given playlist. The caller must compare
+    /// the media state afterwards, and must never equate dispatch with success.
+    /// </summary>
+    public sealed record PlaylistStartRequest(
+        bool Sent, bool WasPlaying, string PreviousTrack, string FailureReason);
+
+    public static PlaylistStartRequest RequestPlaylistFromUri(Uri playlistUrl)
+    {
+        if (playlistUrl.Scheme != Uri.UriSchemeHttps ||
+            playlistUrl.Host is not ("music.youtube.com" or "www.youtube.com" or "youtube.com") ||
+            !playlistUrl.AbsolutePath.Equals("/playlist", StringComparison.OrdinalIgnoreCase) ||
+            !playlistUrl.Query.Contains("list=", StringComparison.Ordinal))
+            return new(false, false, "", "A mentett YouTube Music-lejátszási lista linkje érvénytelen.");
+
+        if (!HasAccess())
+            return new(false, false, "", "Az indításhoz előbb engedélyezni kell a mini-lejátszó értesítés-hozzáférését.");
+
+        var controller = MusicController();
+        if (controller is null)
+            return new(false, false, "",
+                "Még nincs elérhető YouTube Music-médiakapcsolat. Próbáld a YouTube Music megnyitása gombot.");
+
+        try
+        {
+            var wasPlaying = controller.PlaybackState?.State == PlaybackStateCode.Playing;
+            var metadata = controller.Metadata;
+            var previousTrack = (metadata?.GetString(MediaMetadata.MetadataKeyMediaId) ?? "") +
+                "|" + (metadata?.GetString(MediaMetadata.MetadataKeyTitle) ?? "") +
+                "|" + (metadata?.GetString(MediaMetadata.MetadataKeyArtist) ?? "");
+
+            // Not all media apps advertise ACTION_PLAY_FROM_URI; for this
+            // explicit compatibility trial we still send one harmless request.
+            // It must not fall back to Play(), which could start the wrong music.
+            controller.GetTransportControls().PlayFromUri(
+                global::Android.Net.Uri.Parse(playlistUrl.AbsoluteUri), null);
+            return new(true, wasPlaying, previousTrack, "");
+        }
+        catch (Exception)
+        {
+            return new(false, false, "",
+                "A YouTube Music elutasította a lejátszási lista közvetlen indítását.");
+        }
+    }
+
+    public static bool HasPlaylistStartEvidence(PlaylistStartRequest request)
+    {
+        if (!request.Sent) return false;
+        var controller = MusicController();
+        if (controller is null) return false;
+        try
+        {
+            if (controller.PlaybackState?.State != PlaybackStateCode.Playing)
+                return false;
+            if (!request.WasPlaying) return true;
+            var metadata = controller.Metadata;
+            var currentTrack = (metadata?.GetString(MediaMetadata.MetadataKeyMediaId) ?? "") +
+                "|" + (metadata?.GetString(MediaMetadata.MetadataKeyTitle) ?? "") +
+                "|" + (metadata?.GetString(MediaMetadata.MetadataKeyArtist) ?? "");
+            return currentTrack != request.PreviousTrack;
+        }
+        catch { return false; }
+    }
+
     public enum MusicCommand { PlayPause, Previous, Next }
 
     public static bool TryControl(MusicCommand command)
