@@ -118,6 +118,8 @@ public sealed class UserPreferences
     public List<RelaxationTrack> RelaxationPlaylist { get; set; } = [];
     /// <summary>local or youtube_music. YouTube Music runs in its own installed app.</summary>
     public string RelaxationMusicSource { get; set; } = "local";
+    /// <summary>Self-confirmed Premium access, not verifiable through YouTube Music.</summary>
+    public bool RelaxationYouTubeMusicPremiumConfirmed { get; set; }
     public string RelaxationYouTubeMusicPlaylistUrl { get; set; } = "";
     public List<string> FocusRegions { get; set; } = ["hát", "csípő", "törzs"];
     public List<string> PreferredCategories { get; set; } = ["mobilizálás", "nyújtás", "erősítés"];
