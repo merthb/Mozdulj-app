@@ -33,7 +33,10 @@ public sealed class WorkoutPreviewPage : ContentPage
             _content.Children.Add(UI.Label($"Bemelegítés: {_workout.Items.Count(x=>x.Phase=="warmup")} · Fő rész: {_workout.Items.Count(x=>x.Phase=="main")} · Levezetés: {_workout.Items.Count(x=>x.Phase=="cooldown")}",14,true));
             if(!string.IsNullOrWhiteSpace(_workout.PlanningNote))
                 _content.Children.Add(UI.Card(UI.Label(_workout.PlanningNote,13,color:UI.Muted)));
-            _content.Children.Add(UI.Label("Koppints a leíráshoz. Indítás előtt a ↕ fogantyúval a blokkon belül átrendezheted a gyakorlatokat.", 13, color:UI.Muted));
+            _content.Children.Add(UI.Label(_workout.Status == "planned"
+                ? "A leíráshoz koppints a gyakorlat nevére. Átrendezéshez tartsd nyomva a bal oldali, háromvonalas fogantyút, majd húzd a gyakorlatot a kívánt helyre ugyanabban a blokkban."
+                : "A gyakorlat nevére koppintva megnyithatod a részleteket.",
+                13, color:UI.Muted));
             if (_workout.Status=="planned")
                 _content.Children.Add(UI.Label($"Kihagyható feladatok: {WorkoutPlanEditing.RemainingRemovals(_workout)} / {WorkoutPlanEditing.MaxRemovals(_workout.TargetMinutes)}",13,true,color:UI.Teal));
             if (_workout.Status != "planned")
@@ -48,7 +51,7 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         string? previousPhase=null;
         if (_workout.Kind != "recovery")
-        foreach (var (item, index) in _workout.Items.Select((x,i)=>(x,i)))
+        foreach (var item in _workout.Items)
         {
             var it = item;
             async Task ShowDetailsAsync()
@@ -67,42 +70,83 @@ public sealed class WorkoutPreviewPage : ContentPage
                 {"warmup"=>"1. Bemelegítés","main"=>"2. Fő blokk","cooldown"=>"3. Levezetés","recovery"=>"Ellazulási szakaszok",_=>"Feladatok"},19,true));
                 previousPhase=phase;
             }
-            // The original two text lines remain unchanged; the description button
-            // is replaced by a tap on the text area. The independent swap button
-            // occupies the far right column and does not open the details.
-            var row = new Grid { ColumnSpacing=8,
-                ColumnDefinitions = { new ColumnDefinition { Width=GridLength.Star },
-                                      new ColumnDefinition { Width=GridLength.Auto } } };
-            var heading = new VerticalStackLayout { Spacing=4 };
-            heading.Children.Add(UI.Label($"{index + 1}. {it.Name}"+(it.IsRequired?" ★ Kötelező":""), 16, true));
+            // The drag handle occupies its own touch target at the far left.
+            // Only the middle text area opens the details; the right action swaps.
+            // There are no per-exercise numbers in this view.
+            var canReorder = _workout.Status == "planned";
+            var row = new Grid { ColumnSpacing = 6 };
+            if (canReorder)
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var textColumn = canReorder ? 1 : 0;
+            var actionColumn = textColumn + 1;
+
+            if (canReorder)
+            {
+                // Three real bars rather than a font glyph: consistent on Android.
+                // The 42x54 dp surface is larger than the visible symbol, so it is
+                // easy to grab without accidentally opening the exercise details.
+                var bars = new VerticalStackLayout
+                {
+                    Spacing = 4,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center,
+                    InputTransparent = true
+                };
+                for (var bar = 0; bar < 3; bar++)
+                    bars.Children.Add(new BoxView
+                    {
+                        Color = UI.Purple,
+                        WidthRequest = 19,
+                        HeightRequest = 3,
+                        InputTransparent = true
+                    });
+
+                var handle = new Border
+                {
+                    Content = bars,
+                    WidthRequest = 42,
+                    HeightRequest = 54,
+                    Padding = 0,
+                    VerticalOptions = LayoutOptions.Center,
+                    HorizontalOptions = LayoutOptions.Start,
+                    BackgroundColor = UI.Lavender,
+                    StrokeThickness = 0,
+                    StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle
+                    { CornerRadius = new CornerRadius(10) }
+                };
+                SemanticProperties.SetDescription(handle, $"{it.Name}: átrendezés");
+                SemanticProperties.SetHint(handle, "Tartsd nyomva és húzd egy másik gyakorlatra ugyanebben a blokkban.");
+                var drag = new DragGestureRecognizer { CanDrag = true };
+                drag.DragStarting += (_, args) => args.Data.Text = it.Id;
+                handle.GestureRecognizers.Add(drag);
+                Grid.SetColumn(handle, 0);
+                row.Children.Add(handle);
+            }
+
+            var heading = new VerticalStackLayout { Spacing = 4, VerticalOptions = LayoutOptions.Center };
+            heading.Children.Add(UI.Label(it.Name + (it.IsRequired ? " ★ Kötelező" : ""), 16, true));
             var phaseLabel = phase switch
             {
                 "warmup" => "Bemelegítés", "main" => "Fő rész", "cooldown" => "Levezetés", "recovery" => "Relaxáció", _ => "Ismeretlen fázis"
             };
             heading.Children.Add(UI.Label($"{phaseLabel} · {it.Category} · {it.TargetLabel} {(it.Status == "completed" ? "✓" : "")}", 13, color:UI.Muted));
-            var exerciseDefinition=_state.FindExercise(it.ExerciseId);
-            if(exerciseDefinition?.Equipment.Count>0)
-                heading.Children.Add(UI.Label("🎒 Szükséges: "+exerciseDefinition.EquipmentLabel,13,true,color:UI.Purple));
+            var exerciseDefinition = _state.FindExercise(it.ExerciseId);
+            if (exerciseDefinition?.Equipment.Count > 0)
+                heading.Children.Add(UI.Label("🎒 Szükséges: " + exerciseDefinition.EquipmentLabel, 13, true, color:UI.Purple));
             var tap = new TapGestureRecognizer();
-            tap.Tapped += async (_,_) => await ShowDetailsAsync();
+            tap.Tapped += async (_, _) => await ShowDetailsAsync();
             heading.GestureRecognizers.Add(tap);
-            if (_workout.Status=="planned")
-            {
-                var grip=UI.Label("↕ Húzd a sorrend módosításához",11,color:UI.Muted);
-                var drag=new DragGestureRecognizer();
-                drag.DragStarting+=(_,args)=>args.Data.Text=it.Id;
-                grip.GestureRecognizers.Add(drag);
-                heading.Children.Add(grip);
-            }
-            Grid.SetColumn(heading,0);
+            Grid.SetColumn(heading, textColumn);
             row.Children.Add(heading);
-            if (_workout.Status == "planned" && it.Status == "pending" && !it.IsRequired && phase != "unknown")
+            if (canReorder && it.Status == "pending" && !it.IsRequired && phase != "unknown")
             {
                 var replace = UI.SubtleAction("⇄ Csere");
-                replace.VerticalOptions=LayoutOptions.Center;
+                replace.VerticalOptions = LayoutOptions.Center;
                 replace.Clicked += async (_, _) =>
                     await Navigation.PushAsync(new WorkoutReplacementPage(_state, _workout, it));
-                Grid.SetColumn(replace,1);
+                Grid.SetColumn(replace, actionColumn);
                 row.Children.Add(replace);
             }
             var card=UI.Card(row);
