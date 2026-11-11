@@ -100,9 +100,10 @@ public sealed class WorkoutAudio : IDisposable
                 var file = _musicFiles[_musicIndex % _musicFiles.Count];
                 _musicIndex++;
                 if (!File.Exists(file)) continue;
+                global::Android.Media.MediaPlayer? player = null;
                 try
                 {
-                    var player = new global::Android.Media.MediaPlayer();
+                    player = new global::Android.Media.MediaPlayer();
                     player.SetDataSource(file);
                     player.Looping = false;
                     player.SetVolume(.68f, .68f);
@@ -114,8 +115,8 @@ public sealed class WorkoutAudio : IDisposable
                 }
                 catch
                 {
-                    _music?.Release();
-                    _music?.Dispose();
+                    player?.Release();
+                    player?.Dispose();
                     _music = null;
                 }
             }
