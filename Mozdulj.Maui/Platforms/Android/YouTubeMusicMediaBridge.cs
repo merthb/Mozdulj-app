@@ -1,7 +1,4 @@
-using Android.App;
 using Android.Content;
-using Android.Content.PM;
-using Android.Graphics;
 using Android.Media;
 using Android.Media.Session;
 using Android.OS;
@@ -144,10 +141,12 @@ public static class YouTubeMusicMediaBridge
     }
 
     /// <summary>
-    /// Best effort only. Android decides whether it honours the freeform bounds
-    /// or LAUNCH_ADJACENT hint. Never rely on a hidden/privileged windowing API.
+    /// Open the saved playlist in the official YouTube Music app.
+    /// Do not request split-screen, freeform or adjacent windows: some phones
+    /// show an OS-level "split screen not supported" warning on every launch.
+    /// NEW_DOCUMENT preserves the tested playlist deep-link behavior.
     /// </summary>
-    public static void OpenMusicInCompanionWindow(Uri playlistUrl)
+    public static void OpenPlaylistInYouTubeMusic(Uri playlistUrl)
     {
         if (!YouTubeMusicSupport.IsInstalled())
             throw new InvalidOperationException("A YouTube Music nincs telepítve.");
@@ -159,8 +158,6 @@ public static class YouTubeMusicMediaBridge
         var activity = Platform.CurrentActivity
             ?? throw new InvalidOperationException("Nincs aktív Android-ablak.");
 
-        // Convert a normal YouTube playlist share link to Music's own host,
-        // and keep only the playlist id. The target can still decide to ignore it.
         var playlistId = playlistUrl.Query.TrimStart('?').Split('&')
             .Select(part => part.Split('=', 2))
             .Where(parts => parts.Length == 2 && parts[0] == "list")
@@ -169,46 +166,17 @@ public static class YouTubeMusicMediaBridge
         if (string.IsNullOrWhiteSpace(playlistId) ||
             playlistId.Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '_' or '-')))
             throw new InvalidDataException("Hiányzó vagy érvénytelen YouTube Music-listaazonosító.");
+
         var canonicalUrl = "https://music.youtube.com/playlist?list=" +
             Uri.EscapeDataString(playlistId);
 
         var intent = new Intent(Intent.ActionView, global::Android.Net.Uri.Parse(canonicalUrl));
         intent.SetPackage(YouTubeMusicSupport.PackageName);
         intent.AddCategory(Intent.CategoryBrowsable);
-        // NEW_TASK alone restores the already-running Music task at its last
-        // screen (often the currently playing track). A dedicated document task
-        // asks Android to pass the playlist URL to a fresh Music activity.
-        // The Music app may still ignore this, depending on its launch mode.
-        // Avoid an unconditional duplicate Music task: the observed older
-        // player UI can otherwise remain as a stale, frozen task snapshot.
-        // NEW_DOCUMENT still requests the selected playlist as a distinct document.
-        intent.AddFlags(ActivityFlags.NewTask | ActivityFlags.NewDocument |
-            ActivityFlags.LaunchAdjacent);
-
-        var freeform = activity.PackageManager?.HasSystemFeature(
-            PackageManager.FeatureFreeformWindowManagement) == true;
-        if (freeform)
-        {
-            var metrics = activity.Resources?.DisplayMetrics;
-            if (metrics is not null)
-            {
-                var width = metrics.WidthPixels;
-                var height = metrics.HeightPixels;
-                var bounds = new global::Android.Graphics.Rect(width / 5, height / 8,
-                    width * 4 / 5, height * 3 / 4);
-                var options = ActivityOptions.MakeBasic();
-                if (options is not null)
-                {
-                    options.SetLaunchBounds(bounds);
-                    activity.StartActivity(intent, options.ToBundle());
-                    return;
-                }
-            }
-        }
-
-        // On many phones this opens full-screen; on supported multi-window
-        // devices Android may place it next to Mozdulj!. No automatic return is
-        // attempted, because Android 10+ restricts background activity starts.
+        // NEW_TASK alone can resume the currently playing song; NEW_DOCUMENT
+        // requests the selected playlist as a new document in the Music app.
+        // No LaunchAdjacent and no SetLaunchBounds: no multi-window request.
+        intent.AddFlags(ActivityFlags.NewTask | ActivityFlags.NewDocument);
         activity.StartActivity(intent);
     }
 }
