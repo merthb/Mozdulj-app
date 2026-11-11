@@ -56,32 +56,14 @@ public sealed class OnboardingPage : ContentPage
             "Először állítsuk be, milyen mozgás illik hozzád. A napi programokat és a havi kihívásokat csak ezután állítjuk össze.",
             15, color:UI.Muted));
 
-        // On a fresh installation there is no profile page yet. Make the
-        // emergency restore accessible *before* initial setup creates a new ID.
-        var restorePrevious=UI.Button("Korábbi teljes mentés visszaállítása",false);
-        restorePrevious.Clicked+=async (_, _)=>
+        // The same standard restore action is available before first setup,
+        // so a reinstalled user does not have to create a replacement profile.
+        var restore=UI.Button("Teljes adatmentés visszaállítása (.json)",false);
+        restore.Clicked+=async (_, _)=>
         {
             try
             {
-                if(!await DisplayAlertAsync("Helyreállítás újratelepítés után",
-                    "A régi telepítés titkos mentési kulcsa eltávolításkor elveszhetett. " +
-                    "A korábbi teljes JSON-mentés adatainak szerkezetét ellenőrizhetjük, " +
-                    "de a fájl eredetiségét az elveszett kulcs nélkül NEM tudjuk igazolni. " +
-                    "Csak saját, megbízható mentést használj!",
-                    "Értem, folytatom","Mégse"))return;
-                var file=await FilePicker.Default.PickAsync(new PickOptions
-                    {PickerTitle="Korábbi teljes Mozdulj! mentés kiválasztása"});
-                if(file is null)return;
-                if(!await DisplayAlertAsync("Biztosan visszaállítod?",
-                    "Ez a mentés adja majd a profilodat és a korábbi haladásodat. " +
-                    "A hitelesítés ellenőrzése az újratelepítés miatt nem lehetséges.",
-                    "Visszaállítás","Mégse"))return;
-                using var stream=await file.OpenReadAsync();
-                await _state.RestoreUserBackupAsync(stream,recoveryAfterReinstall:true);
-                await DisplayAlertAsync("Adatok visszaállítva",
-                    "A korábbi profil és haladás betöltődött. Készíts új teljes adatmentést " +
-                    "a Profil oldalon az új telepítéshez!","Rendben");
-                if(Window != null)
+                if (await BackupRestoreFlow.RunAsync(this,_state) && Window != null)
                     Window.Page=_state.NeedsInitialSetup
                         ? new OnboardingPage(_state) : new RootTabs(_state);
             }
@@ -91,11 +73,12 @@ public sealed class OnboardingPage : ContentPage
             }
         };
         content.Children.Add(UI.Card(
-            UI.Label("Már használtad a Mozdulj!-at?",17,true),
-            UI.Label("Ha újratelepítés után vagy, a kezdő beállítások helyett " +
-                "a korábban exportált teljes mentésedből is visszahozhatod az adataidat.",
+            UI.Label("Van korábbi teljes mentésed?",17,true),
+            UI.Label("Ha már használtad a Mozdulj!-at, a meglévő mentésedet " +
+                "a szokásos visszaállítás funkcióval is betöltheted. " +
+                "A rendszer szükség esetén tájékoztat az elveszett hitelesítő kulcsról.",
                 13,color:UI.Muted),
-            restorePrevious));
+            restore));
 
         foreach (var value in Durations) _minutes.Items.Add($"{value} perc");
         _minutes.SelectedIndex = Math.Max(0, Array.IndexOf(Durations, pref.WorkoutMinutes));
