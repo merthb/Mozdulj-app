@@ -187,9 +187,46 @@ var legacy = new Workout {
 };
 var migrated = RecoveryRoutine.MigrateLegacy(legacy, today);
 Assert(migrated is not null && RecoveryRoutine.IsValid(migrated) &&
-    migrated.Id == legacy.Id && migrated.RemainingSeconds == 488 &&
-    migrated.Items.Count == 1,
-    "Régi hatrészes munkamenet fennmaradó idővel egyblokkosra migrál");
+    migrated.Id == legacy.Id && migrated.RemainingSeconds == 600 &&
+    migrated.Items.Count == 1 && migrated.Status == "planned",
+    "Régi, félbehagyott relaxáció mindig az első másodperctől indul újra");
+var interruptedRelaxation = RecoveryRoutine.Create(today);
+interruptedRelaxation.Status = "in_progress";
+interruptedRelaxation.RemainingSeconds = 177;
+interruptedRelaxation.ActiveSeconds = 423;
+interruptedRelaxation.Items[0].ActiveSeconds = 423;
+interruptedRelaxation.StartedLocalDate = today.ToString("yyyy-MM-dd");
+RecoveryRoutine.Restart(interruptedRelaxation);
+Assert(interruptedRelaxation.Status == "planned" &&
+    interruptedRelaxation.RemainingSeconds == RecoveryRoutine.TotalSeconds &&
+    interruptedRelaxation.ActiveSeconds == 0 &&
+    interruptedRelaxation.Items[0].ActiveSeconds == 0 &&
+    interruptedRelaxation.Items[0].Status == "pending" &&
+    interruptedRelaxation.StartedLocalDate == "",
+    "Megszakított relaxáció időzítője és állapota nullázódik, nincs részleges folytatás");
+interruptedRelaxation.Status = "completed";
+RecoveryRoutine.Restart(interruptedRelaxation);
+Assert(interruptedRelaxation.Status == "completed",
+    "Már befejezett relaxáció jóváírását nem vonjuk vissza");
+var playlistPreferences = new UserPreferences
+{
+    RelaxationPlaylist =
+    [
+        new RelaxationTrack { FileName="relax-user-first.mp3", DisplayName="Első dal" },
+        new RelaxationTrack { FileName="relax-user-second.mp3", DisplayName="Második dal" }
+    ],
+    RelaxationMusicSource = "youtube_music",
+    RelaxationYouTubeMusicPremiumConfirmed = true,
+    RelaxationYouTubeMusicPlaylistUrl = "https://music.youtube.com/playlist?list=example"
+};
+var restoredPlaylistPreferences = JsonSerializer.Deserialize<UserPreferences>(
+    JsonSerializer.Serialize(playlistPreferences, CatalogCodec.JsonOptions), CatalogCodec.JsonOptions);
+Assert(restoredPlaylistPreferences is not null &&
+    restoredPlaylistPreferences.RelaxationPlaylist.Count == 2 &&
+    restoredPlaylistPreferences.RelaxationPlaylist[1].DisplayName == "Második dal" &&
+    restoredPlaylistPreferences.RelaxationMusicSource == "youtube_music" &&
+    restoredPlaylistPreferences.RelaxationYouTubeMusicPremiumConfirmed,
+    "A rendezett relaxációs lista, a zenei forrás és az előfizetés visszaigazolása megmarad adatmentés után");
 recovery.Items[0].TargetSeconds = 4;
 Assert(!RecoveryRoutine.IsValid(recovery), "Túl rövidre módosított relaxáció nem érvényes");
 

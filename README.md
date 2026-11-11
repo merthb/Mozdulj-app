@@ -193,15 +193,17 @@ A modellekhez geometriai ellenőrzések tartoznak, ugyanakkor **a 3D ábrák sze
 
 ## 6. Relaxáció és regeneráló nap
 
-A három alap gyakorlatsor mellett minden nap elérhető egy **különálló, tízperces regeneráló program**.
+A három alap gyakorlatsor mellett minden nap elérhető egy **különálló, tízperces regeneráló program**. Edzés és relaxáció lejátszása közben a telefon képernyőjét az alkalmazás **ébren tartja**; a lejátszóból kilépve ez a beállítás megszűnik.
 
 - Egyetlen, **megszakítás nélküli ellazulási szakaszból** áll.
 - Nem tartalmaz gyakorlatcserét, külön átvezetéseket vagy feladatkihagyást.
 - Rövid, természetes hangvételű útmutatást ad a test ellazításához és a figyelem visszatereléséhez.
-- A visszaszámlálás szüneteltethető, a félbehagyott relaxáció folytatható.
+- A relaxáció **nem szüneteltethető**. A képernyőn lévő és a felső navigációs **Kilépés** gomb, valamint az Android visszalépésének használatakor megerősítés kéri, hogy a felhasználó valóban megszakítja-e a pihenést; az üzenet jelzi, hogy akkor **teljes tíz percet elölről kell kezdenie**. Ha a rendszer háttérbe kerül vagy más módon megszakad a folyamat, az alkalom jóváírás nélkül újrakezdődik.
 - Igény szerint háttérzene szólhat alatta.
 
-A felhasználó választhat az alkalmazásban található alapértelmezett relaxációs hanganyag és **a saját készülékéről kiválasztott hangfájl** között. A kiválasztott fájl az alkalmazás saját tárhelyére kerül, így később offline is használható. A zene be- és kikapcsolható.
+A zene be- és kikapcsolható. A helyi zenei módhoz a felhasználó az alapértelmezett relaxációs hanganyagot használhatja, vagy **több saját hangfájlból rendezett lejátszási listát** állíthat össze. A listában a számok feljebb és lejjebb mozgathatók, illetve eltávolíthatók. A fájlok az alkalmazás saját tárhelyére másolódnak, offline is használhatók, a lista a tíz perc alatt sorrendben szól, majd szükség esetén újraindul.
+
+Alternatívaként elmenthető egy **YouTube Music-lejátszási lista hivatkozása**, de a zeneforrás csak akkor jelenik meg, ha a telefonon telepítve van a YouTube Music alkalmazás és a felhasználó megerősítette, hogy rendelkezik **YouTube Music Premium vagy YouTube Premium** előfizetéssel. A telepítést az alkalmazás ellenőrzi; az előfizetést nem tudja automatikusan ellenőrizni. A relaxáció előnézetéből a lista közvetlenül a telepített YouTube Music alkalmazásban nyitható meg. A felhasználó ott indítja el a zenét, majd visszatér a Mozdulj!-ba, és elindítja a relaxációt. Az alkalmazás nem tölti le és nem kezeli a YouTube Music zeneszámait; a reklámmentességhez és a zene más alkalmazás melletti, háttérbeli lejátszásához **YouTube Premium vagy Music Premium** szükséges. Ebben a módban a Mozdulj! saját relaxációs zenéje nem indul el.
 
 A teljes tíz perc elvégzése **megvédheti az aktuális mozgássorozatot**, de a regeneráció **nem számít aktív edzésnapnak, és nem jár érte XP**. Ez tudatos különbség: a pihenés segíti a szokás fenntartását, de nem helyettesíti a lezárt alap gyakorlatsort az aktív napok statisztikájában.
 
@@ -320,7 +322,7 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 
 A forrás Visual Studióban, telepített **.NET 10 SDK**, **.NET MAUI** és **Android workload** mellett nyitható meg és fordítható. Az Android-alkalmazáshoz megfelelő Android SDK, emulátor vagy csatlakoztatott készülék szükséges.
 
-A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A tényleges Android-fordítást, az eszközön történő működést, a hangot, az értesítéseket, a gombos sorrendváltást, valamint a 3D megjelenítést és szerkesztői navigációt készüléken is ellenőrizni kell.
+A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A tényleges Android-fordítást, az eszközön történő működést, a hangot, a saját és YouTube Music lejátszási listák indítását, a relaxáció megszakítás utáni újrakezdését, a képernyő ébren tartását, az értesítéseket, a gombos sorrendváltást, valamint a 3D megjelenítést és szerkesztői navigációt készüléken is ellenőrizni kell.
 
 ## 13. Fontos használati tudnivalók és korlátok
 

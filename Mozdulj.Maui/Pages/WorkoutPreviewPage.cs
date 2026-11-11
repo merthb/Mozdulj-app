@@ -1,5 +1,6 @@
 using Mozdulj.Core;
 using Mozdulj.Maui.Services;
+using Microsoft.Maui.ApplicationModel;
 namespace Mozdulj.Maui.Pages;
 
 public sealed class WorkoutPreviewPage : ContentPage
@@ -9,6 +10,7 @@ public sealed class WorkoutPreviewPage : ContentPage
     private readonly VerticalStackLayout _content = UI.Stack();
     private readonly ScrollView _scrollView = new();
     private bool _reordering;
+    private YouTubeMusicMiniPlayer? _musicPanel;
     public WorkoutPreviewPage(AppState state, Workout workout)
     {
         _state = state; _workout = workout;
@@ -16,9 +18,23 @@ public sealed class WorkoutPreviewPage : ContentPage
         _scrollView.Content = _content;
         Content = _scrollView;
     }
-    protected override void OnAppearing() { base.OnAppearing(); Draw(); }
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        Draw();
+        _musicPanel?.Start();
+    }
+
+    protected override void OnDisappearing()
+    {
+        _musicPanel?.Stop();
+        base.OnDisappearing();
+    }
+
     private void Draw()
     {
+        _musicPanel?.Stop();
+        _musicPanel = null;
         _content.Children.Clear();
         _content.Children.Add(UI.Label(_workout.Title, 25, true));
         _content.Children.Add(UI.Label(_workout.Kind == "recovery" ? "10 perc · folyamatos relaxáció" : $"{_workout.Items.Count} feladat · {(_workout.TargetMinutes>0?_workout.TargetMinutes:_state.Preferences.WorkoutMinutes)} perc cél · kb. {Math.Ceiling(_workout.EstimatedSeconds/60.0)} perc az átvezetésekkel", 14, color:UI.Muted));
@@ -29,7 +45,40 @@ public sealed class WorkoutPreviewPage : ContentPage
             _content.Children.Add(UI.Card(
                 UI.Label("🌿 Ellazulás", 17, true),
                 UI.Label(RecoveryRoutine.Guidance, 14, color:UI.Muted),
-                UI.Label("10 perc után megőrzi a sorozatot · 0 XP", 12, color:UI.Muted)));
+                UI.Label("10 perc után megőrzi a sorozatot · 0 XP", 12, color:UI.Muted),
+                UI.Label("Nem szüneteltethető. Ha idő előtt kilépsz, elölről kell kezdened.", 13, color:UI.Purple)));
+            var preferences = _state.Preferences;
+            if (_workout.Status != "completed" &&
+                preferences.RelaxationMusicEnabled &&
+                preferences.RelaxationMusicSource == "youtube_music" &&
+                preferences.RelaxationYouTubeMusicPremiumConfirmed &&
+                YouTubeMusicSupport.IsInstalled() &&
+                Uri.TryCreate(preferences.RelaxationYouTubeMusicPlaylistUrl, UriKind.Absolute, out var url) &&
+                url.Scheme == Uri.UriSchemeHttps)
+            {
+                var musicUrl = url;
+                var openMusic = UI.Button("YouTube Music megnyitása", false);
+                openMusic.Clicked += async (_, _) =>
+                {
+                    try
+                    {
+                        Mozdulj.Maui.Platforms.Android.YouTubeMusicMediaBridge
+                            .OpenPlaylistInYouTubeMusic(musicUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlertAsync("YouTube Music", ex.Message, "Rendben");
+                    }
+                };
+                _content.Children.Add(openMusic);
+                _content.Children.Add(UI.Label(
+                    "A mentett lejátszási lista a YouTube Musicban nyílik meg. " +
+                    "Indítsd el a zenét, majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
+                    12, color:UI.Muted));
+                _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
+                _content.Children.Add(_musicPanel);
+                _musicPanel.Start();
+            }
         }
         else
         {
@@ -142,7 +191,8 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         else
         {
-            var start=UI.Button(_workout.Status=="in_progress"?"▶ Folytatás":"▶ Kezdés");
+            var start=UI.Button(_workout.Kind=="recovery" ? "▶ Relaxáció indítása" :
+                _workout.Status=="in_progress" ? "▶ Folytatás" : "▶ Kezdés");
             start.Clicked+=async (_,_) =>
             {
                 if (_workout.Kind == "recovery" ? !RecoveryRoutine.IsValid(_workout) : !WorkoutCoherence.IsReadyToStart(_state.Catalog,_workout))

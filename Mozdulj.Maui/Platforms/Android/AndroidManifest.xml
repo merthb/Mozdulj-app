@@ -2,5 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <application android:allowBackup="true" android:supportsRtl="true" android:label="Mozdulj!" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" />
+  <!-- Android 11+ package visibility: detect only the dedicated Music app. -->
+  <queries>
+    <package android:name="com.google.android.apps.youtube.music" />
+  </queries>
+  <!-- Enable split-screen / resizable windows even if build tooling changes defaults. -->
+  <application android:resizeableActivity="true" android:allowBackup="true" android:supportsRtl="true" android:label="Mozdulj!" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" />
 </manifest>

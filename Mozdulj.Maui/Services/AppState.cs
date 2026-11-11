@@ -176,6 +176,11 @@ public sealed class AppState
             CountdownSoundsEnabled=chosen.CountdownSoundsEnabled,
             RelaxationMusicEnabled=chosen.RelaxationMusicEnabled,
             RelaxationAudioFileName=chosen.RelaxationAudioFileName,
+            RelaxationPlaylist=chosen.RelaxationPlaylist?.Select(t=>new RelaxationTrack
+                {FileName=t.FileName, DisplayName=t.DisplayName}).ToList() ?? [],
+            RelaxationMusicSource=chosen.RelaxationMusicSource,
+            RelaxationYouTubeMusicPremiumConfirmed=chosen.RelaxationYouTubeMusicPremiumConfirmed,
+            RelaxationYouTubeMusicPlaylistUrl=chosen.RelaxationYouTubeMusicPlaylistUrl,
             FocusRegions = chosen.FocusRegions.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
             PreferredCategories = chosen.PreferredCategories.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
             AvailableEquipment = chosen.AvailableEquipment.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
@@ -354,7 +359,12 @@ public sealed class AppState
             FocusRegions=p.FocusRegions.ToList(),PreferredCategories=p.PreferredCategories.ToList(),
             ExcludedExercises=p.ExcludedExercises.ToList(),
             WeeklyTargetDays=p.WeeklyTargetDays,
-            RelaxationAudioFileName=p.RelaxationAudioFileName
+            RelaxationAudioFileName=p.RelaxationAudioFileName,
+            RelaxationPlaylist=p.RelaxationPlaylist?.Select(t=>new RelaxationTrack
+                {FileName=t.FileName,DisplayName=t.DisplayName}).ToList() ?? [],
+            RelaxationMusicSource=p.RelaxationMusicSource,
+            RelaxationYouTubeMusicPremiumConfirmed=p.RelaxationYouTubeMusicPremiumConfirmed,
+            RelaxationYouTubeMusicPlaylistUrl=p.RelaxationYouTubeMusicPlaylistUrl
         };
     }
     public int MaximumMandatoryExercisesFor(Workout workout) =>
@@ -510,6 +520,12 @@ public sealed class AppState
             if (migrated is null)
                 throw new InvalidDataException("A korábbi regenerációs munkamenet nem állítható helyre.");
             plan.RecoveryWorkout = migrated;
+            await SaveAsync();
+        }
+        // An earlier attempt that was interrupted or killed is never resumable.
+        if (plan.RecoveryWorkout.Status == "in_progress")
+        {
+            RecoveryRoutine.Restart(plan.RecoveryWorkout);
             await SaveAsync();
         }
         return plan.RecoveryWorkout;

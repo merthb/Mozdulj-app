@@ -69,13 +69,13 @@ public sealed class TodayPage : ContentPage
         var recoveryStatus = recovery?.Status switch
         {
             "completed" => "✓ Teljesítve – a sorozat megőrizve",
-            "in_progress" => "",
+            "in_progress" => "Korábbi relaxáció megszakadt",
             _ => "Még nem indult el"
         };
         var recover = UI.SubtleAction(recovery?.Status == "completed"
             ? "Regeneráló program megtekintése"
             : recovery?.Status == "in_progress"
-                ? "▶ Regeneráló program folytatása"
+                ? "↻ Relaxáció újrakezdése"
                 : "🌿 10 perces teljes testes relaxáció");
         recover.Clicked += async (_,_) =>
         {
@@ -84,7 +84,7 @@ public sealed class TodayPage : ContentPage
         };
         _content.Children.Add(UI.Card(
             UI.Label("Regeneráló nap – test és elme pihenése", 19, true),
-            UI.Label("10 perc egybefüggő relaxáció · csak a végén védi meg a sorozatot", 13, color:UI.Muted),
+            UI.Label("10 perc egybefüggő relaxáció · nincs szüneteltetés, korai kilépéskor újrakezdés · csak a végén védi meg a sorozatot", 13, color:UI.Muted),
             // Folyamatban: a folytatás már a gombon szerepel, külön címke nem kell.
             // Befejezve: az eredmény visszajelzése maradjon látható.
             new Label { Text=recovery?.Status=="completed" ? recoveryStatus : "",
