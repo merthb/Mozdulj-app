@@ -23,7 +23,7 @@ if (args.Contains("--backup-recovery-only", StringComparer.Ordinal))
         LocalBackupCodec.Import(backup, installed, newKey);
         throw new Exception("TEST FAIL: normal import accepted an unrelated key");
     }
-    catch (InvalidDataException) { Console.WriteLine("PASS strict import still rejects lost key"); }
+    catch (BackupSignatureMismatchException) { Console.WriteLine("PASS signature mismatch is offered for explicit confirmation"); }
     var recovered = LocalBackupCodec.RecoverAfterReinstall(backup, installed);
     if (recovered.Preferences.UserId != sample.Preferences.UserId ||
         recovered.Completions.Single().ItemId != "recovery-check" ||
