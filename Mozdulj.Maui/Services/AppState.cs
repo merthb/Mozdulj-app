@@ -582,6 +582,30 @@ public sealed class AppState
         },[clean.ExerciseId],rebuildPlans:false);
     }
 
+    /// <summary>
+    /// Saves only the 3D pose, preserving all existing text, metadata and the
+    /// current status. Used when editing directly from the catalog 3D viewer.
+    /// </summary>
+    public async Task SaveExercisePoseAsync(string exerciseId, MotionPose pose)
+    {
+        if (_baseCatalog.Exercises.Any(x => x.Id == exerciseId))
+        {
+            // Build an editorial override from the latest effective version,
+            // so the pose-only edit cannot overwrite an older text revision.
+            var patch = BuiltInContentRules.FromExercise(GetBuiltInEffective(exerciseId));
+            patch.Pose = BuiltInContentRules.ClonePose(pose);
+            await SaveBuiltInContentAsync(patch);
+            return;
+        }
+
+        var existing = Data.UserExercises.FirstOrDefault(x =>
+            x.Exercise.Id == exerciseId && x.Status != LibraryStatuses.Archived)
+            ?? throw new InvalidOperationException("A szerkesztendő gyakorlat nem található.");
+        var draft = ExerciseLibraryRules.Clone(existing.Exercise);
+        draft.Pose = BuiltInContentRules.ClonePose(pose);
+        await SaveCustomExerciseAsync(draft, existing.Status);
+    }
+
     public Task ResetBuiltInContentAsync(string id)
     {
         if(!_baseCatalog.Exercises.Any(x=>x.Id==id))
