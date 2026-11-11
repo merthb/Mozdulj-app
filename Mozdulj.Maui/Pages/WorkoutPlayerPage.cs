@@ -126,7 +126,9 @@ public sealed class WorkoutPlayerPage : ContentPage
                 _recoveryStartTicks = Stopwatch.GetTimestamp();
             _timer.Start();
             if(_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
-               _state.Preferences.RelaxationMusicSource!="youtube_music")
+               !(_state.Preferences.RelaxationMusicSource=="youtube_music" &&
+                 _state.Preferences.RelaxationYouTubeMusicPremiumConfirmed &&
+                 YouTubeMusicSupport.IsInstalled()))
                 await _audio.StartRelaxationAsync(
                     _state.Preferences.RelaxationPlaylist,
                     _state.Preferences.RelaxationAudioFileName);
