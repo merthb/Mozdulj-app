@@ -216,6 +216,7 @@ var playlistPreferences = new UserPreferences
         new RelaxationTrack { FileName="relax-user-second.mp3", DisplayName="Második dal" }
     ],
     RelaxationMusicSource = "youtube_music",
+    RelaxationYouTubeMusicPremiumConfirmed = true,
     RelaxationYouTubeMusicPlaylistUrl = "https://music.youtube.com/playlist?list=example"
 };
 var restoredPlaylistPreferences = JsonSerializer.Deserialize<UserPreferences>(
@@ -223,8 +224,9 @@ var restoredPlaylistPreferences = JsonSerializer.Deserialize<UserPreferences>(
 Assert(restoredPlaylistPreferences is not null &&
     restoredPlaylistPreferences.RelaxationPlaylist.Count == 2 &&
     restoredPlaylistPreferences.RelaxationPlaylist[1].DisplayName == "Második dal" &&
-    restoredPlaylistPreferences.RelaxationMusicSource == "youtube_music",
-    "A rendezett relaxációs lejátszási lista és a zenei forrás megmarad adatmentés után");
+    restoredPlaylistPreferences.RelaxationMusicSource == "youtube_music" &&
+    restoredPlaylistPreferences.RelaxationYouTubeMusicPremiumConfirmed,
+    "A rendezett relaxációs lista, a zenei forrás és az előfizetés visszaigazolása megmarad adatmentés után");
 recovery.Items[0].TargetSeconds = 4;
 Assert(!RecoveryRoutine.IsValid(recovery), "Túl rövidre módosított relaxáció nem érvényes");
 
