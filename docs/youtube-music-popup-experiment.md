@@ -41,6 +41,12 @@
   mert a már futó relaxációból alkalmazást váltani megszakításnak számít.
 - Ha a felhasználó az értesítés-hozzáférést nem adja meg, a mini-panel
   nem vezérelhet semmit. A tízperces helyi relaxáció továbbra is működik.
+- **Kézzel telepített APK, Android 13+:** az Android „korlátozott beállítás”
+  figyelmeztetéssel blokkolhatja a kísérleti értesítés-hozzáférést.
+  Ezt nem próbáljuk meg programból megkerülni. A felhasználó saját
+  belátása szerint engedélyezheti a rendszerben a korlátozott
+  beállítást, ha pontosan érti az engedély adatvédelmi kockázatát.
+  Forrás: https://support.google.com/android/answer/12623953
 
 ## Készülékes tesztlista
 
