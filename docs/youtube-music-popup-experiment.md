@@ -1,6 +1,6 @@
 # YouTube Music mini-lejátszó – kísérlet
 
-**Állapot:** Android-készüléken még nem ellenőrzött. Ez a branch a `feature/recovery-playlist-awake`
+**Állapot:** készüléken részlegesen ellenőrzött: a YouTube Music MediaSession mini-lejátszó működik, de a `PlayFromUri` nem indítja a listát. A friss dokumentumablakos mélylinkindítás tesztelésre vár. Ez a branch a `feature/recovery-playlist-awake`
 (PR #5) fejlesztéseire épül, és önmagában nem része a `master` ágnak.
 
 ## Mit próbálunk ki?
@@ -22,17 +22,17 @@
    szolgáltatás nem dolgoz fel és nem ment más értesítéseket, kizárólag
    a média-munkamenethez használja a jogosultságot. A felhasználó az Android
    Beállításokban bármikor visszavonhatja.
-5. A **Lejátszási lista indítása** gomb előbb az aktív YouTube Music
-   `MediaSession` `TransportControls.PlayFromUri` műveletét próbálja
-   meghívni a mentett, ellenőrzött YouTube Music-lista URI-jával.
-   A MediaSession API *nem igazolja vissza* a listát vagy a művelet sikerét:
-   a Mozdulj! legfeljebb 6 másodpercig figyeli, hogy új lejátszás indult-e,
-   vagy megváltozott-e az aktív szám. Ha nem észlel változást, vagy nincs
-   aktív médiakapcsolat / jogosultság, a felhasználó egyértelmű
-   **„Nem sikerült elindítani a zenét”** hibaüzenetet kap, amely a
-   **YouTube Music megnyitása** gombot ajánlja. Ha lejátszásváltozást
-   észlelünk, sem állítjuk bizonyíték nélkül, hogy pontosan a kért lista
-   indult el. Nem indul automatikusan valamilyen másik zene.
+5. A közvetlen `MediaSession.TransportControls.PlayFromUri` kísérlet **nem működött
+   a kipróbált telefonon**, sem leállított, sem már folyó YouTube Music mellett.
+   A félrevezető indítógomb és a hozzá tartozó kód ezért eltávolításra került.
+   A már működő mini-lejátszó változatlanul marad.
+   A felhasználó azt is jelezte, hogy aktív másik zeneszám mellett az
+   egyszerű megnyitás az éppen játszott számot hozta elő a lista helyett.
+   Most a megnyitás előtt a hivatkozást
+   `https://music.youtube.com/playlist?list=...` formára normalizáljuk, és
+   a `NEW_DOCUMENT | MULTIPLE_TASK | NEW_TASK` Android-intent jelzőkkel
+   külön dokumentumablakot kérünk. Ez is csak kísérlet: a célalkalmazás
+   figyelmen kívül hagyhatja a linket, vagy elutasíthatja a többablakos módot.
 6. A zene továbbra is a **bejelentkezett YouTube Music alkalmazásban** szól.
    Nem kérünk Google-jelszót, nincs zenei stream letöltése vagy beágyazása.
    A Premium-előnyök a YouTube Music fiókjától függnek.
@@ -62,11 +62,12 @@
 ## Készülékes tesztlista
 
 - [ ] YouTube Music telepítve, Premium megerősítve, lejátszási lista URL mentve
-- [ ] „Lejátszási lista indítása”: aktív YouTube Music mellett URI-kérés elküldése
-- [ ] Nincs aktív YouTube Music-munkamenet: hibaüzenet és megnyitás gomb ajánlása
-- [ ] Hívás után nincs lejátszásváltozás: legfeljebb 6 mp múlva hibaüzenet és megnyitás gomb
-- [ ] Észlelt lejátszásváltozás esetén nincs bizonyítatlan „a lista sikeresen elindult” állítás
-- [ ] Sikertelen URI-nyitás után a „YouTube Music megnyitása” továbbra is működik
+- [x] A mini-lejátszó működik a kipróbált Android-telefonon
+- [x] A `PlayFromUri` nem indítja a kívánt listát (álló vagy futó YT Music mellett sem)
+- [x] Az eddigi megnyitás aktív szám mellett az aktuális számhoz vitt
+- [ ] Friss, normalizált lista-URI + külön dokumentumablak: listaoldal nyílik aktív szám mellett?
+- [ ] Megnyitás működik akkor is, ha YouTube Music nem játszik semmit?
+- [ ] Ha az Android/YT Music figyelmen kívül hagyja az új ablakot, továbbra is kézzel vissza lehet térni?
 - [ ] Relaxáció előnézet: a gomb a **YouTube Music** appot nyitja meg
 - [ ] Kisebb felugró ablak vagy split-screen megjelenik (ha támogatott)
 - [ ] Ha az OS nem támogatja, teljes képernyő és kézi visszalépés működik
