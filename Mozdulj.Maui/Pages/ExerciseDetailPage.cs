@@ -48,16 +48,14 @@ public sealed class ExerciseDetailPage : ContentPage
                 {
                     edit3d = async () =>
                     {
+                        // Enter the 3D editor directly from the viewer. The
+                        // navigation stack remains: detail -> viewer -> editor.
+                        // Save or Cancel then pops back to the viewer.
                         var current = _state.FindExercise(e.Id) ?? e;
-                        var isBuiltIn = _state.BuiltInCatalog.Exercises.Any(x => x.Id == e.Id);
-                        ContentPage editor = isBuiltIn
-                            ? new BuiltInContentEditorPage(_state, e.Id, open3dImmediately: true)
-                            : new ExerciseEditorPage(_state, current, open3dImmediately: true);
-                        await Navigation.PushModalAsync(new NavigationPage(editor)
-                        {
-                            BarBackgroundColor = UI.Background,
-                            BarTextColor = UI.Ink
-                        });
+                        Func<MotionPose, Task> savePose = pose =>
+                            _state.SaveExercisePoseAsync(e.Id, pose);
+                        await Navigation.PushAsync(new Rig3DEditorPage(
+                            current.Pose, savePose, current.Name));
                     };
                     refreshedPose = () => (_state.FindExercise(e.Id) ?? e).Pose;
                 }
