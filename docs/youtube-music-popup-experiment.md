@@ -5,7 +5,7 @@
 
 ## Mit próbálunk ki?
 
-1. A relaxáció előnézete a **YouTube Music megnyitása kisebb ablakban (próba)** gombbal
+1. A relaxáció előnézete a **YouTube Music megnyitása** gombbal
    `ACTION_VIEW` intentet indít, kizárólag a hivatalos, telepített
    `com.google.android.apps.youtube.music` Android-csomagnak.
 2. `FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT` kéri, hogy – ha a
@@ -22,7 +22,18 @@
    szolgáltatás nem dolgoz fel és nem ment más értesítéseket, kizárólag
    a média-munkamenethez használja a jogosultságot. A felhasználó az Android
    Beállításokban bármikor visszavonhatja.
-5. A zene továbbra is a **bejelentkezett YouTube Music alkalmazásban** szól.
+5. A **Lejátszási lista indítása** gomb előbb az aktív YouTube Music
+   `MediaSession` `TransportControls.PlayFromUri` műveletét próbálja
+   meghívni a mentett, ellenőrzött YouTube Music-lista URI-jával.
+   A MediaSession API *nem igazolja vissza* a listát vagy a művelet sikerét:
+   a Mozdulj! legfeljebb 6 másodpercig figyeli, hogy új lejátszás indult-e,
+   vagy megváltozott-e az aktív szám. Ha nem észlel változást, vagy nincs
+   aktív médiakapcsolat / jogosultság, a felhasználó egyértelmű
+   **„Nem sikerült elindítani a zenét”** hibaüzenetet kap, amely a
+   **YouTube Music megnyitása** gombot ajánlja. Ha lejátszásváltozást
+   észlelünk, sem állítjuk bizonyíték nélkül, hogy pontosan a kért lista
+   indult el. Nem indul automatikusan valamilyen másik zene.
+6. A zene továbbra is a **bejelentkezett YouTube Music alkalmazásban** szól.
    Nem kérünk Google-jelszót, nincs zenei stream letöltése vagy beágyazása.
    A Premium-előnyök a YouTube Music fiókjától függnek.
 
@@ -51,6 +62,11 @@
 ## Készülékes tesztlista
 
 - [ ] YouTube Music telepítve, Premium megerősítve, lejátszási lista URL mentve
+- [ ] „Lejátszási lista indítása”: aktív YouTube Music mellett URI-kérés elküldése
+- [ ] Nincs aktív YouTube Music-munkamenet: hibaüzenet és megnyitás gomb ajánlása
+- [ ] Hívás után nincs lejátszásváltozás: legfeljebb 6 mp múlva hibaüzenet és megnyitás gomb
+- [ ] Észlelt lejátszásváltozás esetén nincs bizonyítatlan „a lista sikeresen elindult” állítás
+- [ ] Sikertelen URI-nyitás után a „YouTube Music megnyitása” továbbra is működik
 - [ ] Relaxáció előnézet: a gomb a **YouTube Music** appot nyitja meg
 - [ ] Kisebb felugró ablak vagy split-screen megjelenik (ha támogatott)
 - [ ] Ha az OS nem támogatja, teljes képernyő és kézi visszalépés működik
