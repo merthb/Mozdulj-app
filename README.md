@@ -6,7 +6,18 @@ A Mozdulj! célja, hogy a rendszeres mozgás könnyen beilleszthető legyen a h�
 
 Az alkalmazás nem egyetlen, mindenkinek azonos edzéstervet kínál: figyelembe veszi a rendelkezésre álló időt, a kívánt nehézséget, a fókuszba helyezett testtájakat, a kedvelt mozgásformákat és az otthon elérhető eszközöket. A felhasználó a gyakorlatokat megismerheti, személyre szabhatja és saját gyakorlatokkal bővítheti.
 
-> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Alkalmazásverzió:** 0.26.0 · **Felület nyelve:** magyar
+> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Kiadás:** Béta 1.0 · **APK-ban szereplő verzió:** 0.26.0 · **Felület nyelve:** magyar
+
+## Béta verzió 1.0 – letöltés és telepítés
+
+A **Béta verzió 1.0** a GitHub Releases oldalon érhető el: **[Mozdulj! – Béta verzió 1.0](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.1)**.
+
+- A kiadás telepíthető, **aláírt Android APK**-t tartalmaz, amely a `master` `fd6de917` commitján készült sikeres GitHub Actions buildből származik. Az APK telepítéséhez a telefonon szükség lehet az adott fájlkezelő vagy böngésző számára az **ismeretlen alkalmazások telepítésének engedélyezésére**.
+- Korábban telepített Mozdulj! fölé a frissítés azonos alkalmazásazonosító és aláírókulcs mellett végezhető el. **Az alkalmazás törlése helyett lehetőleg frissíts**, és előtte készíts adatmentést a Profilban.
+- A GitHub-kiadás neve **Béta 1.0**, a címkéje `v1.0.0-beta.1`. Mivel az **előzőleg elkészített és tesztelt APK-t** tesszük közzé változtatás nélkül, az Android az alkalmazás belső verziójaként továbbra is `0.26.0`-t mutathat. Ez a GitHub-kiadás megnevezése és az APK belső verziója közötti tudatos különbség; későbbi buildben összehangolható.
+- A fő funkciók internet nélkül is működnek; **a YouTube Music online szolgáltatás**, amelyhez telepített YouTube Music alkalmazás és a szükséges előfizetés kell.
+
+A béta még **visszajelzésekre és készülékes tesztelésre szánt változat**. A mozgásadatok mentése fontos; telepítés, frissítés vagy adatvisszaállítás előtt célszerű biztonsági mentést készíteni.
 
 ## Mire használható?
 
@@ -203,7 +214,13 @@ A három alap gyakorlatsor mellett minden nap elérhető egy **különálló, t�
 
 A zene be- és kikapcsolható. A helyi zenei módhoz a felhasználó az alapértelmezett relaxációs hanganyagot használhatja, vagy **több saját hangfájlból rendezett lejátszási listát** állíthat össze. A listában a számok feljebb és lejjebb mozgathatók, illetve eltávolíthatók. A fájlok az alkalmazás saját tárhelyére másolódnak, offline is használhatók, a lista a tíz perc alatt sorrendben szól, majd szükség esetén újraindul.
 
-Alternatívaként elmenthető egy **YouTube Music-lejátszási lista hivatkozása**, de a zeneforrás csak akkor jelenik meg, ha a telefonon telepítve van a YouTube Music alkalmazás és a felhasználó megerősítette, hogy rendelkezik **YouTube Music Premium vagy YouTube Premium** előfizetéssel. A telepítést az alkalmazás ellenőrzi; az előfizetést nem tudja automatikusan ellenőrizni. A relaxáció előnézetéből a lista közvetlenül a telepített YouTube Music alkalmazásban nyitható meg. A felhasználó ott indítja el a zenét, majd visszatér a Mozdulj!-ba, és elindítja a relaxációt. Az alkalmazás nem tölti le és nem kezeli a YouTube Music zeneszámait; a reklámmentességhez és a zene más alkalmazás melletti, háttérbeli lejátszásához **YouTube Premium vagy Music Premium** szükséges. Ebben a módban a Mozdulj! saját relaxációs zenéje nem indul el.
+Alternatívaként elmenthető egy **YouTube Music-lejátszási lista hivatkozása**, de a zeneforrás csak akkor jelenik meg, ha a telefonon telepítve van a YouTube Music alkalmazás és a felhasználó megerősítette, hogy rendelkezik **YouTube Music Premium vagy YouTube Premium** előfizetéssel. A telepítést az alkalmazás ellenőrzi; az előfizetést nem tudja automatikusan ellenőrizni.
+
+A relaxáció előnézetében a **„YouTube Music megnyitása”** gomb a mentett listát a telepített YouTube Music alkalmazásban nyitja meg. A felhasználó ott indítja a zenét, majd visszatér a Mozdulj!-ba, és elindítja a tízperces relaxációt. A lista **nem indítható garantáltan az alkalmazás elhagyása nélkül**: a YouTube Music nem biztosít ehhez nyilvános, teljes értékű Premium-lejátszási API-t. A Mozdulj! nem tölti le és nem játssza le saját maga a YouTube Music-hangfolyamot.
+
+**YouTube Music mini-lejátszó:** a relaxáció előnézetében és a futó relaxáció alatt az aktuális szám címe és előadója, valamint a **lejátszás/szünet, előző és következő** vezérlők megjelenhetnek. Ezek az Android `MediaSession` felületén működnek; a használatukhoz a felhasználónak külön engedélyeznie kell a **rendszerszintű értesítés-hozzáférést**. Ez a jogosultság önmagában széles körű (más alkalmazások értesítéseihez is hozzáférést biztosíthat); a Mozdulj! megvalósítása kizárólag a YouTube Music aktív médiaállapotát kérdezi le, más értesítéseket nem dolgoz fel vagy tárol. Az engedély bármikor visszavonható.
+
+**A relaxáció megszakításakor és sikeres befejezésekor** a Mozdulj! szüneteltetési parancsot küld a YouTube Musicnak, ha van elérhető média-munkamenet és szükséges jogosultság. A kilépési megerősítés **„Maradok”** válasza nem állítja le a zenét. A szüneteltetés kérése és a külső alkalmazás által való végrehajtása külön dolog, ezért az eredmény készülékfüggő. A YouTube Music saját alkalmazásablakát a Mozdulj! nem zárja be. Ebben a módban a Mozdulj! saját relaxációs zenéje nem indul el.
 
 A teljes tíz perc elvégzése **megvédheti az aktuális mozgássorozatot**, de a regeneráció **nem számít aktív edzésnapnak, és nem jár érte XP**. Ez tudatos különbség: a pihenés segíti a szokás fenntartását, de nem helyettesíti a lezárt alap gyakorlatsort az aktív napok statisztikájában.
 
@@ -281,7 +298,7 @@ A Mozdulj! **offline szemléletű alkalmazás**: a gyakorlattár, az edzésterve
 - napi tervek és folyamatban lévő edzések állapota;
 - teljesítések, mozgásidők, XP, szintek, jelvények és kihívások;
 - a regenerációk és a mozgássorozat védelmének adatai;
-- a kiválasztott személyes relaxációs hangfájl helyi másolata.
+- a felhasználó által kiválasztott **relaxációs hangfájlok** helyi másolatai, lejátszási sorrendje és zenei beállításai.
 
 ### Mentési és visszaállítási lehetőségek
 
@@ -311,7 +328,8 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 | Tulajdonság | Érték |
 | --- | --- |
 | Alkalmazás neve | Mozdulj! |
-| Megjelenített verzió | 0.26.0 |
+| GitHub-kiadás | **Béta verzió 1.0** · `v1.0.0-beta.1` |
+| APK belső verziója | **0.26.0** (a kiadott, meglévő aláírt build) |
 | Android alkalmazásazonosító | `hu.mozdulj.preview` |
 | Célkeretrendszer | `net10.0-android` |
 | Minimum Android API | 24 (Android 7.0) |
@@ -322,7 +340,9 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 
 A forrás Visual Studióban, telepített **.NET 10 SDK**, **.NET MAUI** és **Android workload** mellett nyitható meg és fordítható. Az Android-alkalmazáshoz megfelelő Android SDK, emulátor vagy csatlakoztatott készülék szükséges.
 
-A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A tényleges Android-fordítást, az eszközön történő működést, a hangot, a saját és YouTube Music lejátszási listák indítását, a relaxáció megszakítás utáni újrakezdését, a képernyő ébren tartását, az értesítéseket, a gombos sorrendváltást, valamint a 3D megjelenítést és szerkesztői navigációt készüléken is ellenőrizni kell.
+A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A `master` ágra érkező commitok után a **GitHub Actions automatikusan épít és ellenőrzi az aláírt Android APK-t**, amely a sikeres futás `Artifacts` részében található. A **Béta verzió 1.0** APK-ja a kapcsolódó **GitHub Release** oldalról is letölthető, a workflow-artifact lejáratától függetlenül.
+
+A sikeres CI-fordítás nem helyettesíti az eszközön történő tesztelést: a zene, a relaxáció megszakítás utáni újrakezdése, a kijelző ébren tartása, az értesítések, a gombos sorrendváltás, a 3D nézet és a különböző Android-verziók továbbra is készülékes ellenőrzést igényelnek.
 
 ## 13. Fontos használati tudnivalók és korlátok
 
