@@ -111,57 +111,22 @@ public sealed class ProfilePage : ContentPage
         };
         _content.Children.Add(backup);
         var restore=UI.Button("Teljes adatmentés visszaállítása (.json)",false);
-        restore.Clicked+=async (_,_)=>
+        restore.Clicked+=async (_, _)=>
         {
             try
             {
-                var chosen=await FilePicker.Default.PickAsync(new PickOptions{PickerTitle="Válassz teljes Mozdulj! mentést"});
-                if(chosen is null)return;
-                if(!await DisplayAlertAsync("Teljes adatvisszaállítás?",
-                    "A hitelesített mentés visszatölti a profilt, saját gyakorlatokat és előzményeket. A jelenlegi haladást megőrizzük. Csak ezen a telepítésen hitelesített mentés tölthető vissza.",
-                    "Visszaállítás","Mégse"))return;
-                using var stream=await chosen.OpenReadAsync();
-                await _state.RestoreUserBackupAsync(stream);
-                await DisplayAlertAsync("Sikeres visszaállítás","A korábbi profil és haladás betöltődött.","Rendben");
-                Draw();
+                if (await BackupRestoreFlow.RunAsync(this,_state)) Draw();
             }
-            catch(Exception ex){await DisplayAlertAsync("Visszaállítás sikertelen",ex.Message,"Rendben");}
+            catch(Exception ex)
+            {
+                await DisplayAlertAsync("Visszaállítás sikertelen",ex.Message,"Rendben");
+            }
         };
         _content.Children.Add(restore);
-
-        var recoverAfterReinstall=UI.Button("Mentés visszaállítása újratelepítés után",false);
-        recoverAfterReinstall.Clicked+=async (_,_)=>
-        {
-            try
-            {
-                if(!await DisplayAlertAsync("Régi mentés helyreállítása",
-                    "Újratelepítéskor a régi mentés titkos hitelesítő kulcsa elveszhet. " +
-                    "A helyreállítás megtartja a fájlban lévő profilt, gyakorlatokat és haladást, " +
-                    "de a régi aláírás eredetiségét NEM tudja ellenőrizni. " +
-                    "Csak saját, megbízható mentést használj! A jelenlegi adatok is módosulhatnak. " +
-                    "Előtte érdemes a jelenlegi állapotról külön mentést készíteni.",
-                    "Értem, folytatom","Mégse"))return;
-                var chosen=await FilePicker.Default.PickAsync(new PickOptions
-                    {PickerTitle="Válaszd ki a régi teljes Mozdulj! mentést"});
-                if(chosen is null)return;
-                if(!await DisplayAlertAsync("Megerősítés",
-                    "Biztosan ezt a saját mentésedet szeretnéd visszaállítani? " +
-                    "Az eredeti hitelesítő kulcs nélkül a fájl módosítatlansága nem igazolható.",
-                    "Igen, visszaállítom","Mégse"))return;
-                using var stream=await chosen.OpenReadAsync();
-                await _state.RestoreUserBackupAsync(stream,recoveryAfterReinstall:true);
-                await DisplayAlertAsync("Sikeres helyreállítás",
-                    "A régi adatok betöltődtek. Most készíts új teljes adatmentést " +
-                    "az aktuális telepítésből is!","Rendben");
-                Draw();
-            }
-            catch(Exception ex){await DisplayAlertAsync("Helyreállítás sikertelen",ex.Message,"Rendben");}
-        };
-        _content.Children.Add(recoverAfterReinstall);
         _content.Children.Add(UI.Label(
-            "Normál visszaállítás: a mentés eredetét az alkalmazás ellenőrzi. " +
-            "Újratelepítés után a régi kulcs elveszhet; ilyenkor a külön helyreállítás " +
-            "csak kifejezett jóváhagyással és adatellenőrzéssel használható.",
+            "A régebbi mentések is ugyanitt tölthetők vissza. Újratelepítés után, " +
+            "ha elveszett a korábbi hitelesítő kulcs, az alkalmazás külön " +
+            "figyelmeztetést és jóváhagyást kér. Csak saját mentést használj.",
             12,color:UI.Muted));
         _content.Children.Add(UI.Label("Mozogj a saját tempódban. Fájdalom vagy bizonytalanság esetén kérj szakmai segítséget.",12,color:UI.Muted));
     }
