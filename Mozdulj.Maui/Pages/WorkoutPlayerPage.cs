@@ -28,6 +28,8 @@ public sealed class WorkoutPlayerPage : ContentPage
     private bool _finished;
     private bool _busy;
     private bool _leaving;
+    private Window? _lifecycleWindow;
+    private bool _interruptedByBackground;
 
     public WorkoutPlayerPage(AppState state,Workout workout)
     {
@@ -90,6 +92,20 @@ public sealed class WorkoutPlayerPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        if (_lifecycleWindow != Window)
+        {
+            if (_lifecycleWindow is not null)
+            {
+                _lifecycleWindow.Stopped -= OnWindowStopped;
+                _lifecycleWindow.Resumed -= OnWindowResumed;
+            }
+            _lifecycleWindow = Window;
+            if (_lifecycleWindow is not null)
+            {
+                _lifecycleWindow.Stopped += OnWindowStopped;
+                _lifecycleWindow.Resumed += OnWindowResumed;
+            }
+        }
         if (!_finished)
         {
             if (string.IsNullOrWhiteSpace(_workout.StartedLocalDate))
@@ -115,6 +131,12 @@ public sealed class WorkoutPlayerPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        if (_lifecycleWindow is not null)
+        {
+            _lifecycleWindow.Stopped -= OnWindowStopped;
+            _lifecycleWindow.Resumed -= OnWindowResumed;
+            _lifecycleWindow = null;
+        }
         _paused=true;
         _timer.Stop();
         _audio.Stop();
@@ -124,6 +146,36 @@ public sealed class WorkoutPlayerPage : ContentPage
         if(!_finished && _workout.Kind=="recovery" && _workout.Status=="in_progress")
             RecoveryRoutine.Restart(_workout);
         if(!_finished) _= _state.SaveAsync();
+    }
+
+    private void OnWindowStopped(object? sender, EventArgs e)
+    {
+        // Leaving the app during recovery also interrupts the continuous block.
+        // The next entry must start from 10:00, even when Android kept this page alive.
+        if (_workout.Kind != "recovery" || _finished ||
+            _workout.Status != "in_progress") return;
+        _interruptedByBackground = true;
+        _paused = true;
+        _timer.Stop();
+        _audio.Stop();
+        DeviceDisplay.Current.KeepScreenOn = false;
+        RecoveryRoutine.Restart(_workout);
+        _ = _state.SaveAsync();
+    }
+
+    private async void OnWindowResumed(object? sender, EventArgs e)
+    {
+        if (!_interruptedByBackground || _leaving) return;
+        _interruptedByBackground = false;
+        _leaving = true;
+        try
+        {
+            await DisplayAlertAsync("Relaxáció megszakadt",
+                "Az alkalmazás elhagyása megszakította a relaxációt. A következő alkalommal újraindul a teljes tíz perc.",
+                "Rendben");
+            await Navigation.PopAsync();
+        }
+        catch { _leaving = false; }
     }
 
     protected override bool OnBackButtonPressed()
