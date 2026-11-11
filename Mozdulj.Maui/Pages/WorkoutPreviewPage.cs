@@ -57,73 +57,6 @@ public sealed class WorkoutPreviewPage : ContentPage
                 url.Scheme == Uri.UriSchemeHttps)
             {
                 var musicUrl = url;
-                var launchStatus = UI.Label(
-                    "Próbáld meg a lista közvetlen indítását, vagy nyisd meg a YouTube Musicot.",
-                    12, color:UI.Muted);
-                var directStart = UI.Button("Lejátszási lista indítása", false);
-                var requestingPlaylist = false;
-                directStart.Clicked += async (_, _) =>
-                {
-                    if (requestingPlaylist) return;
-                    requestingPlaylist = true;
-                    directStart.IsEnabled = false;
-                    try
-                    {
-                        launchStatus.Text = "Lejátszás indításának ellenőrzése…";
-                        var request = Mozdulj.Maui.Platforms.Android.YouTubeMusicMediaBridge
-                            .RequestPlaylistFromUri(musicUrl);
-                        if (!request.Sent)
-                        {
-                            launchStatus.Text = "A közvetlen indítás nem sikerült.";
-                            await DisplayAlertAsync("Nem sikerült elindítani a zenét",
-                                request.FailureReason +
-                                "\n\nHasználd a „YouTube Music megnyitása” gombot a lista elindításához.",
-                                "Rendben");
-                            return;
-                        }
-
-                        // An API call returning without an exception is not proof
-                        // that YouTube Music accepted or played the requested URI.
-                        var observed = false;
-                        for (var attempt = 0; attempt < 12; attempt++)
-                        {
-                            await Task.Delay(500);
-                            if (Mozdulj.Maui.Platforms.Android.YouTubeMusicMediaBridge
-                                .HasPlaylistStartEvidence(request))
-                            {
-                                observed = true;
-                                break;
-                            }
-                        }
-                        if (observed)
-                        {
-                            launchStatus.Text = "♪ Elindult vagy megváltozott a YouTube Music lejátszása. " +
-                                "Ellenőrizd, hogy a kiválasztott lista szól-e.";
-                        }
-                        else
-                        {
-                            launchStatus.Text = "A közvetlen indítást nem sikerült visszaigazolni.";
-                            await DisplayAlertAsync("Nem sikerült elindítani a zenét",
-                                "A YouTube Music nem indított új, felismerhető lejátszást. " +
-                                "A listát nem tudtuk elindítani vagy ellenőrizni.\n\n" +
-                                "Használd a „YouTube Music megnyitása” gombot, és indítsd el ott a zenét.",
-                                "Rendben");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        launchStatus.Text = "A közvetlen indítás nem sikerült.";
-                        await DisplayAlertAsync("Nem sikerült elindítani a zenét",
-                            ex.Message + "\n\nHasználd a „YouTube Music megnyitása” gombot.",
-                            "Rendben");
-                    }
-                    finally
-                    {
-                        directStart.IsEnabled = true;
-                        requestingPlaylist = false;
-                    }
-                };
-
                 var openMusic = UI.Button("YouTube Music megnyitása", false);
                 openMusic.Clicked += async (_, _) =>
                 {
@@ -137,13 +70,11 @@ public sealed class WorkoutPreviewPage : ContentPage
                         await DisplayAlertAsync("YouTube Music", ex.Message, "Rendben");
                     }
                 };
-                _content.Children.Add(directStart);
                 _content.Children.Add(openMusic);
-                _content.Children.Add(launchStatus);
                 _content.Children.Add(UI.Label(
-                    "A közvetlen indítás nem minden YouTube Music-verzióban támogatott. " +
-                    "Ha nem indul a zene, a megnyitás gombbal indítsd el a listát a YouTube Musicban. " +
-                    "Ezután térj vissza a Mozdulj!-ba a relaxáció indításához.",
+                    "A mentett lejátszási listát megpróbáljuk közvetlenül a YouTube Musicban megnyitni. " +
+                    "Ha az alkalmazás mégis az éppen szóló számra lép, válaszd ki ott a listát, " +
+                    "majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
                     12, color:UI.Muted));
                 _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
                 _content.Children.Add(_musicPanel);
