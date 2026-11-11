@@ -24,6 +24,9 @@ public sealed class ProfileEditPage : ContentPage
     private readonly TimePicker _reminderTime = new();
     private readonly Switch _countdownSounds = new() { OnColor=UI.Teal };
     private readonly Switch _relaxationMusic = new() { OnColor=UI.Teal };
+    private readonly Picker _relaxationSource = new() { Title = "Relaxációs zene forrása" };
+    private readonly Entry _youtubePlaylistUrl = new()
+        { Placeholder = "https://music.youtube.com/playlist?list=...", Keyboard = Keyboard.Url };
     private readonly Button _save=UI.Button("Beállítások mentése");
     private bool _saving;
     private static readonly int[] DurationOptions=[5,10,15,20,30];
@@ -44,6 +47,10 @@ public sealed class ProfileEditPage : ContentPage
             CountdownSoundsEnabled=p.CountdownSoundsEnabled,
             RelaxationMusicEnabled=p.RelaxationMusicEnabled,
             RelaxationAudioFileName=p.RelaxationAudioFileName,
+            RelaxationPlaylist=p.RelaxationPlaylist?.Select(t=>new RelaxationTrack
+                {FileName=t.FileName,DisplayName=t.DisplayName}).ToList() ?? [],
+            RelaxationMusicSource=p.RelaxationMusicSource,
+            RelaxationYouTubeMusicPlaylistUrl=p.RelaxationYouTubeMusicPlaylistUrl,
             FocusRegions=p.FocusRegions.ToList(), PreferredCategories=p.PreferredCategories.ToList(),
             AvailableEquipment=p.AvailableEquipment.ToList(),ExcludedExercises=p.ExcludedExercises.ToList()
         };
@@ -69,54 +76,170 @@ public sealed class ProfileEditPage : ContentPage
         _reminderTime.Time=new TimeSpan(p.DailyReminderHour,p.DailyReminderMinute,0);
         _countdownSounds.IsToggled=p.CountdownSoundsEnabled;
         _relaxationMusic.IsToggled=p.RelaxationMusicEnabled;
-        var chosenTrack=UI.Label(string.IsNullOrWhiteSpace(p.RelaxationAudioFileName)
-            ? "Alapértelmezett háttérzene" : "Saját hangfájl kiválasztva",13,color:UI.Muted);
-        var selectTrack=UI.Button("♫ Saját relaxációs hang kiválasztása",false);
-        selectTrack.Clicked+=async (_,_) =>
+        // Upgrade a previous single-file selection to a one-track playlist.
+        if (_draft.RelaxationPlaylist.Count == 0 &&
+            !string.IsNullOrWhiteSpace(_draft.RelaxationAudioFileName))
+            _draft.RelaxationPlaylist.Add(new RelaxationTrack
+            {
+                FileName = _draft.RelaxationAudioFileName,
+                DisplayName = "Korábbi saját hangfájl"
+            });
+
+        _relaxationSource.Items.Add("Saját zenék / alapzene");
+        _relaxationSource.Items.Add("YouTube Music");
+        _relaxationSource.SelectedIndex =
+            _draft.RelaxationMusicSource == "youtube_music" ? 1 : 0;
+        _youtubePlaylistUrl.Text = _draft.RelaxationYouTubeMusicPlaylistUrl;
+
+        var playlistContainer = new VerticalStackLayout { Spacing = 7 };
+        var localMusicPanel = new VerticalStackLayout { Spacing = 7 };
+        var youtubeMusicPanel = new VerticalStackLayout { Spacing = 7 };
+        var playlistHint = UI.Label("", 13, color: UI.Muted);
+
+        void RebuildPlaylist()
+        {
+            playlistContainer.Children.Clear();
+            var list = _draft.RelaxationPlaylist;
+            if (list.Count == 0)
+                playlistContainer.Children.Add(UI.Label(
+                    "A beépített relaxációs zene szól. Saját fájlok hozzáadásával lejátszási listát állíthatsz össze.",
+                    13, color: UI.Muted));
+            for (var index = 0; index < list.Count; index++)
+            {
+                var position = index;
+                var track = list[index];
+                var row = new Grid { ColumnSpacing = 5, ColumnDefinitions =
+                {
+                    new ColumnDefinition { Width = GridLength.Star },
+                    new ColumnDefinition { Width = GridLength.Auto },
+                    new ColumnDefinition { Width = GridLength.Auto },
+                    new ColumnDefinition { Width = GridLength.Auto }
+                }};
+                var title = UI.Label($"{index + 1}. {track.DisplayName}", 13);
+                title.VerticalOptions = LayoutOptions.Center;
+                var up = UI.Button("↑", false);
+                var down = UI.Button("↓", false);
+                var remove = UI.Button("×", false);
+                foreach (var button in new[] { up, down, remove })
+                {
+                    button.FontSize = 17;
+                    button.WidthRequest = 36;
+                    button.HeightRequest = 36;
+                    button.Padding = 0;
+                }
+                up.IsEnabled = index > 0;
+                down.IsEnabled = index < list.Count - 1;
+                up.Clicked += (_, _) =>
+                {
+                    (list[position - 1], list[position]) = (list[position], list[position - 1]);
+                    RebuildPlaylist();
+                };
+                down.Clicked += (_, _) =>
+                {
+                    (list[position + 1], list[position]) = (list[position], list[position + 1]);
+                    RebuildPlaylist();
+                };
+                remove.Clicked += (_, _) =>
+                {
+                    list.RemoveAt(position);
+                    _draft.RelaxationAudioFileName = "";
+                    RebuildPlaylist();
+                };
+                row.Add(title, 0, 0);
+                row.Add(up, 1, 0); row.Add(down, 2, 0); row.Add(remove, 3, 0);
+                playlistContainer.Children.Add(row);
+            }
+            playlistHint.Text = list.Count == 0
+                ? "Alapzene"
+                : $"{list.Count} zeneszám · sorrendben lejátszva, szükség esetén ismételve a teljes 10 perc alatt";
+        }
+        RebuildPlaylist();
+
+        var selectTracks = UI.Button("♫ Zenék hozzáadása", false);
+        selectTracks.Clicked += async (_, _) =>
         {
             try
             {
-                var result=await FilePicker.Default.PickAsync(new PickOptions
+                var selected = await FilePicker.Default.PickMultipleAsync(new PickOptions
                 {
-                    PickerTitle="Válassz hangfájlt",
-                    FileTypes=new FilePickerFileType(new Dictionary<DevicePlatform,IEnumerable<string>>
+                    PickerTitle = "Válassz relaxációs zenéket",
+                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                     {
-                        {DevicePlatform.Android,new [] {"audio/*"}}
+                        { DevicePlatform.Android, new[] { "audio/*" } }
                     })
                 });
-                if(result is null)return;
-                var extension=Path.GetExtension(result.FileName).ToLowerInvariant();
-                if(extension is not (".mp3" or ".wav" or ".m4a" or ".aac" or ".ogg" or ".flac"))
-                    throw new InvalidDataException("MP3, WAV, M4A, AAC, OGG vagy FLAC hangfájl választható.");
-                var fileName="relax-user-"+Guid.NewGuid().ToString("N")+extension;
-                var target=Path.Combine(FileSystem.Current.AppDataDirectory,fileName);
-                try
+                if (selected is null) return;
+                foreach (var result in selected)
                 {
-                    await using var input=await result.OpenReadAsync();
-                    await using var output=File.Create(target);
-                    var buffer=new byte[81920];int n;long total=0;
-                    while((n=await input.ReadAsync(buffer))>0)
+                    var extension = Path.GetExtension(result.FileName).ToLowerInvariant();
+                    if (extension is not (".mp3" or ".wav" or ".m4a" or ".aac" or ".ogg" or ".flac"))
+                        throw new InvalidDataException("MP3, WAV, M4A, AAC, OGG vagy FLAC hangfájl választható.");
+                    var fileName = "relax-user-" + Guid.NewGuid().ToString("N") + extension;
+                    var target = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
+                    try
                     {
-                        total+=n;
-                        if(total>40*1024*1024)throw new InvalidDataException("A hangfájl legfeljebb 40 MB lehet.");
-                        await output.WriteAsync(buffer.AsMemory(0,n));
+                        await using var input = await result.OpenReadAsync();
+                        await using var output = File.Create(target);
+                        var buffer = new byte[81920];
+                        int count; long total = 0;
+                        while ((count = await input.ReadAsync(buffer)) > 0)
+                        {
+                            total += count;
+                            if (total > 40 * 1024 * 1024)
+                                throw new InvalidDataException("Egy hangfájl legfeljebb 40 MB lehet.");
+                            await output.WriteAsync(buffer.AsMemory(0, count));
+                        }
+                        if (total == 0) throw new InvalidDataException("Üres hangfájl.");
                     }
-                    if(total==0)throw new InvalidDataException("Üres hangfájl.");
+                    catch
+                    {
+                        if (File.Exists(target)) File.Delete(target);
+                        throw;
+                    }
+                    _draft.RelaxationPlaylist.Add(new RelaxationTrack
+                        { FileName = fileName, DisplayName = result.FileName });
                 }
-                catch {if(File.Exists(target))File.Delete(target);throw;}
-                _draft.RelaxationAudioFileName=fileName;
-                chosenTrack.Text="Saját zene: "+result.FileName;
+                _draft.RelaxationAudioFileName = "";
+                RebuildPlaylist();
             }
-            catch(Exception ex){await DisplayAlertAsync("Hangfájl nem választható",ex.Message,"Rendben");}
+            catch (Exception ex)
+            {
+                RebuildPlaylist();
+                await DisplayAlertAsync("Hangfájl nem választható", ex.Message, "Rendben");
+            }
         };
-        var defaultTrack=UI.Button("Vissza az alapzenére",false);
-        defaultTrack.Clicked+=(_,_)=>{_draft.RelaxationAudioFileName="";
-            chosenTrack.Text="Alapértelmezett háttérzene";};
+
+        var defaultTracks = UI.Button("Vissza az alapzenére", false);
+        defaultTracks.Clicked += (_, _) =>
+        {
+            _draft.RelaxationPlaylist.Clear();
+            _draft.RelaxationAudioFileName = "";
+            RebuildPlaylist();
+        };
+        localMusicPanel.Children.Add(playlistHint);
+        localMusicPanel.Children.Add(playlistContainer);
+        localMusicPanel.Children.Add(selectTracks);
+        localMusicPanel.Children.Add(defaultTracks);
+        youtubeMusicPanel.Children.Add(UI.Label(
+            "A link a telefon YouTube Music alkalmazásában nyílik meg. A Premium háttérlejátszás a YouTube Musicban működik; a Mozdulj! nem kezeli a zeneszámokat.",
+            13, color: UI.Muted));
+        youtubeMusicPanel.Children.Add(UI.Label("YouTube Music-lejátszási lista linkje", 14, true));
+        youtubeMusicPanel.Children.Add(_youtubePlaylistUrl);
+
+        void UpdateMusicPanel()
+        {
+            localMusicPanel.IsVisible = _relaxationSource.SelectedIndex != 1;
+            youtubeMusicPanel.IsVisible = _relaxationSource.SelectedIndex == 1;
+        }
+        _relaxationSource.SelectedIndexChanged += (_, _) => UpdateMusicPanel();
+        UpdateMusicPanel();
+
         body.Children.Add(UI.Card(
             UI.Label("Hangok és emlékeztető",19,true),
             UI.Label("Visszaszámlálás: jelzés az utolsó három másodpercben",14),_countdownSounds,
             UI.Label("Nyugtató zene a regeneráló relaxációhoz",14),_relaxationMusic,
-            chosenTrack,selectTrack,defaultTrack,
+            UI.Label("Relaxációs zene forrása", 14, true), _relaxationSource,
+            localMusicPanel, youtubeMusicPanel,
             UI.Label("Napi streak-emlékeztető",14),_reminderEnabled,
             UI.Label("Értesítés időpontja",14),_reminderTime,
             UI.Label("Csak akkor jelez, ha aznap még nem volt mozgás vagy teljes regeneráció. Az értesítésekhez Android-engedély szükséges.",12,color:UI.Muted)
@@ -158,6 +281,18 @@ public sealed class ProfileEditPage : ContentPage
             _draft.DailyReminderMinute=chosenTime.Minutes;
             _draft.CountdownSoundsEnabled=_countdownSounds.IsToggled;
             _draft.RelaxationMusicEnabled=_relaxationMusic.IsToggled;
+            _draft.RelaxationMusicSource =
+                _relaxationSource.SelectedIndex == 1 ? "youtube_music" : "local";
+            _draft.RelaxationYouTubeMusicPlaylistUrl = (_youtubePlaylistUrl.Text ?? "").Trim();
+            if (_draft.RelaxationMusicEnabled && _draft.RelaxationMusicSource == "youtube_music")
+            {
+                if (!Uri.TryCreate(_draft.RelaxationYouTubeMusicPlaylistUrl, UriKind.Absolute, out var musicUrl) ||
+                    musicUrl.Scheme != Uri.UriSchemeHttps ||
+                    musicUrl.Host is not ("music.youtube.com" or "www.youtube.com" or "youtube.com") ||
+                    !musicUrl.AbsolutePath.Equals("/playlist", StringComparison.OrdinalIgnoreCase) ||
+                    !musicUrl.Query.Contains("list=", StringComparison.Ordinal))
+                    throw new InvalidDataException("Érvényes YouTube Music-lejátszási lista linkjét add meg.");
+            }
             var previous=_state.Preferences;
             bool planningChanged = previous.WorkoutMinutes!=_draft.WorkoutMinutes ||
                 previous.MaximumDifficulty!=_draft.MaximumDifficulty ||
