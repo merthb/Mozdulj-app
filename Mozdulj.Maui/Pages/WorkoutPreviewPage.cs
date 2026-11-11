@@ -7,19 +7,18 @@ public sealed class WorkoutPreviewPage : ContentPage
     private readonly AppState _state;
     private readonly Workout _workout;
     private readonly VerticalStackLayout _content = UI.Stack();
-    private readonly List<ReorderCard> _reorderCards = new();
-    private bool _reorderBusy;
-    private sealed record ReorderCard(string Id, string Phase, Border Card);
+    private readonly ScrollView _scrollView = new();
+    private bool _reordering;
     public WorkoutPreviewPage(AppState state, Workout workout)
     {
         _state = state; _workout = workout;
         UI.Setup(this, "Gyakorlatsor");
-        Content = new ScrollView { Content = _content };
+        _scrollView.Content = _content;
+        Content = _scrollView;
     }
     protected override void OnAppearing() { base.OnAppearing(); Draw(); }
     private void Draw()
     {
-        _reorderCards.Clear();
         _content.Children.Clear();
         _content.Children.Add(UI.Label(_workout.Title, 25, true));
         _content.Children.Add(UI.Label(_workout.Kind == "recovery" ? "10 perc · folyamatos relaxáció" : $"{_workout.Items.Count} feladat · {(_workout.TargetMinutes>0?_workout.TargetMinutes:_state.Preferences.WorkoutMinutes)} perc cél · kb. {Math.Ceiling(_workout.EstimatedSeconds/60.0)} perc az átvezetésekkel", 14, color:UI.Muted));
@@ -38,7 +37,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             if(!string.IsNullOrWhiteSpace(_workout.PlanningNote))
                 _content.Children.Add(UI.Card(UI.Label(_workout.PlanningNote,13,color:UI.Muted)));
             _content.Children.Add(UI.Label(_workout.Status == "planned"
-                ? "A leíráshoz koppints a gyakorlat nevére. Átrendezéshez fogd meg a bal oldali háromvonalas ikont, és húzd a gyakorlatot a kívánt helyre ugyanabban a blokkban."
+                ? "A gyakorlat nevére koppintva megnyílik a leírás. A bal oldali ↑ és ↓ gombokkal a gyakorlatokat a saját blokkjukon belül átrendezheted."
                 : "A gyakorlat nevére koppintva megnyithatod a részleteket.",
                 13, color:UI.Muted));
             if (_workout.Status=="planned")
@@ -74,64 +73,40 @@ public sealed class WorkoutPreviewPage : ContentPage
                 {"warmup"=>"1. Bemelegítés","main"=>"2. Fő blokk","cooldown"=>"3. Levezetés","recovery"=>"Ellazulási szakaszok",_=>"Feladatok"},19,true));
                 previousPhase=phase;
             }
-            // The drag handle occupies its own touch target at the far left.
-            // Only the middle text area opens the details; the right action swaps.
-            // There are no per-exercise numbers in this view.
+            // Separate tap buttons work reliably inside the Android ScrollView.
+            // A left column reorders the workout; the middle opens details;
+            // the far-right action still replaces the exercise.
             var canReorder = _workout.Status == "planned";
             var row = new Grid { ColumnSpacing = 6 };
             if (canReorder)
-                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             var textColumn = canReorder ? 1 : 0;
             var actionColumn = textColumn + 1;
 
-            Border? dragHandle = null;
             if (canReorder)
             {
-                // Three real bars rather than a font glyph: consistent on Android.
-                // The 42x54 dp surface is larger than the visible symbol, so it is
-                // easy to grab without accidentally opening the exercise details.
-                var bars = new VerticalStackLayout
+                var arrows = new VerticalStackLayout
                 {
-                    Spacing = 4,
-                    HorizontalOptions = LayoutOptions.Center,
-                    VerticalOptions = LayoutOptions.Center,
-                    InputTransparent = true
-                };
-                for (var bar = 0; bar < 3; bar++)
-                    bars.Children.Add(new BoxView
-                    {
-                        Color = UI.Purple,
-                        WidthRequest = 19,
-                        HeightRequest = 3,
-                        InputTransparent = true
-                    });
-
-                var handle = new Border
-                {
-                    Content = bars,
-                    WidthRequest = 42,
-                    HeightRequest = 54,
-                    Padding = 0,
-                    VerticalOptions = LayoutOptions.Center,
+                    Spacing = 3,
                     HorizontalOptions = LayoutOptions.Start,
-                    BackgroundColor = UI.Lavender,
-                    StrokeThickness = 0,
-                    StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle
-                    { CornerRadius = new CornerRadius(10) }
+                    VerticalOptions = LayoutOptions.Center
                 };
-                SemanticProperties.SetDescription(handle, $"{it.Name}: átrendezés");
-                SemanticProperties.SetHint(handle, "Fogd meg, és húzd egy másik gyakorlatra ugyanebben a blokkban.");
-                dragHandle = handle;
-#if !ANDROID
-                // Other platforms can keep the standard MAUI drag-and-drop path.
-                var drag = new DragGestureRecognizer { CanDrag = true };
-                drag.DragStarting += (_, args) => args.Data.Text = it.Id;
-                handle.GestureRecognizers.Add(drag);
-#endif
-                Grid.SetColumn(handle, 0);
-                row.Children.Add(handle);
+                var up = ReorderButton("↑", "Feljebb");
+                var down = ReorderButton("↓", "Lejjebb");
+                up.IsEnabled = AdjacentItem(it, -1) != null;
+                down.IsEnabled = AdjacentItem(it, 1) != null;
+                up.Opacity = up.IsEnabled ? 1 : 0.3;
+                down.Opacity = down.IsEnabled ? 1 : 0.3;
+                SemanticProperties.SetDescription(up, it.Name + ": feljebb");
+                SemanticProperties.SetDescription(down, it.Name + ": lejjebb");
+                up.Clicked += async (_, _) => await MoveOneStepAsync(it, -1);
+                down.Clicked += async (_, _) => await MoveOneStepAsync(it, 1);
+                arrows.Children.Add(up);
+                arrows.Children.Add(down);
+                Grid.SetColumn(arrows, 0);
+                row.Children.Add(arrows);
             }
 
             var heading = new VerticalStackLayout { Spacing = 4, VerticalOptions = LayoutOptions.Center };
@@ -149,6 +124,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             heading.GestureRecognizers.Add(tap);
             Grid.SetColumn(heading, textColumn);
             row.Children.Add(heading);
+
             if (canReorder && it.Status == "pending" && !it.IsRequired && phase != "unknown")
             {
                 var replace = UI.SubtleAction("⇄ Csere");
@@ -158,26 +134,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 Grid.SetColumn(replace, actionColumn);
                 row.Children.Add(replace);
             }
-            var card=UI.Card(row);
-            if (_workout.Status == "planned")
-            {
-                _reorderCards.Add(new ReorderCard(it.Id, phase, card));
-#if ANDROID
-                if (dragHandle != null)
-                    InstallAndroidReorderHandle(dragHandle, card, it.Id, phase);
-#else
-                var drop=new DropGestureRecognizer();
-                drop.Drop+=async (_,args)=>
-                {
-                    var dragged=await args.Data.GetTextAsync();
-                    if(string.IsNullOrWhiteSpace(dragged) || dragged==it.Id)return;
-                    try {await _state.MoveWorkoutItemAsync(_workout,dragged,it.Id);Draw();}
-                    catch(Exception ex){await DisplayAlert("Nem rendezhető át",ex.Message,"Rendben");}
-                };
-                card.GestureRecognizers.Add(drop);
-#endif
-            }
-            _content.Children.Add(card);
+            _content.Children.Add(UI.Card(row));
         }
         if (_workout.Status is "completed" or "partial" or "cancelled")
         {
@@ -200,135 +157,66 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
     }
 
-#if ANDROID
-    // Android's ScrollView intercepts vertical drag gestures inside its content.
-    // On the dedicated grip we capture the touch BEFORE the parent can scroll,
-    // then move the card visually and resolve the drop against visible cards.
-    // The rest of the row remains a normal scroll/tap surface.
-    private void InstallAndroidReorderHandle(Border handle, Border sourceCard, string sourceId, string phase)
+    // Tiny but comfortable, always visible tap targets next to the list items.
+    private static Button ReorderButton(string label, string hint) => new()
     {
-        Android.Views.View? nativeHandle = null;
-        EventHandler<Android.Views.View.TouchEventArgs>? touchHandler = null;
-        handle.HandlerChanged += (_, _) =>
+        Text = label,
+        FontSize = 19,
+        FontAttributes = FontAttributes.Bold,
+        TextColor = UI.Purple,
+        BackgroundColor = UI.Lavender,
+        WidthRequest = 38,
+        HeightRequest = 36,
+        CornerRadius = 9,
+        Padding = new Thickness(0),
+        HorizontalOptions = LayoutOptions.Start
+    };
+
+    // Partner exercises are one movable unit. This is the same pairing logic
+    // used by WorkoutPlanEditing.MoveBefore in the core library.
+    private List<WorkoutItem> PairGroup(WorkoutItem item)
+    {
+        var group = new List<WorkoutItem> { item };
+        var exercise = _state.FindExercise(item.ExerciseId);
+        var other = exercise == null ? null : SidePairing.Counterpart(_state.Catalog, exercise);
+        if (other != null)
         {
-            if (nativeHandle != null && touchHandler != null)
-                nativeHandle.Touch -= touchHandler;
-            nativeHandle = handle.Handler?.PlatformView as Android.Views.View;
-            if (nativeHandle is null) return;
-
-            var downY = 0f;
-            var pressed = false;
-            Border? target = null;
-            var originalStroke = sourceCard.Stroke;
-
-            void SetTarget(Border? next)
-            {
-                if (ReferenceEquals(target, next)) return;
-                if (target != null)
-                {
-                    target.Stroke = Color.FromArgb("#E7E2F1");
-                    target.StrokeThickness = 1;
-                }
-                target = next;
-                if (target != null)
-                {
-                    target.Stroke = UI.Purple;
-                    target.StrokeThickness = 3;
-                }
-            }
-
-            void Restore()
-            {
-                sourceCard.TranslationY = 0;
-                sourceCard.ZIndex = 0;
-                sourceCard.Opacity = 1;
-                sourceCard.Stroke = originalStroke;
-                SetTarget(null);
-                nativeHandle?.Parent?.RequestDisallowInterceptTouchEvent(false);
-                pressed = false;
-            }
-
-            Border? FindDestination(float rawY)
-            {
-                Border? result = null;
-                double distance = double.MaxValue;
-                var tolerance = 9 * Microsoft.Maui.Devices.DeviceDisplay.MainDisplayInfo.Density;
-                foreach (var row in _reorderCards)
-                {
-                    if (row.Id == sourceId || row.Phase != phase) continue;
-                    if (row.Card.Handler?.PlatformView is not Android.Views.View view) continue;
-                    var coords = new int[2];
-                    view.GetLocationOnScreen(coords);
-                    var top = coords[1];
-                    var bottom = top + view.Height;
-                    if (rawY < top - tolerance || rawY > bottom + tolerance) continue;
-                    var delta = Math.Abs(rawY - (top + bottom) / 2d);
-                    if (delta >= distance) continue;
-                    distance = delta;
-                    result = row.Card;
-                }
-                return result;
-            }
-
-            touchHandler = (_, args) =>
-            {
-                var ev = args.Event;
-                if (ev == null) return;
-                switch (ev.ActionMasked)
-                {
-                    case Android.Views.MotionEventActions.Down:
-                        if (_reorderBusy || _workout.Status != "planned") return;
-                        downY = ev.RawY;
-                        pressed = true;
-                        // This prevents the ScrollView from stealing subsequent MOVE events.
-                        nativeHandle?.Parent?.RequestDisallowInterceptTouchEvent(true);
-                        args.Handled = true;
-                        break;
-                    case Android.Views.MotionEventActions.Move:
-                        if (!pressed) return;
-                        args.Handled = true;
-                        var density = Microsoft.Maui.Devices.DeviceDisplay.MainDisplayInfo.Density;
-                        sourceCard.TranslationY = (ev.RawY - downY) / density;
-                        sourceCard.ZIndex = 10;
-                        sourceCard.Opacity = 0.82;
-                        SetTarget(FindDestination(ev.RawY));
-                        break;
-                    case Android.Views.MotionEventActions.Up:
-                        if (!pressed) return;
-                        args.Handled = true;
-                        var selected = _reorderCards.FirstOrDefault(x => ReferenceEquals(x.Card, target))?.Id;
-                        Restore();
-                        if (selected != null && selected != sourceId)
-                        {
-                            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(
-                                async () => await ApplyReorderAsync(sourceId, selected));
-                        }
-                        break;
-                    case Android.Views.MotionEventActions.Cancel:
-                        if (!pressed) return;
-                        args.Handled = true;
-                        Restore();
-                        break;
-                }
-            };
-            nativeHandle.Touch += touchHandler;
-        };
-        handle.HandlerChanging += (_, args) =>
-        {
-            if (nativeHandle != null && touchHandler != null)
-                nativeHandle.Touch -= touchHandler;
-            nativeHandle = null;
-        };
+            var counterpart = _workout.Items.FirstOrDefault(x => x.ExerciseId == other.Id);
+            if (counterpart != null && counterpart.Id != item.Id)
+                group.Add(counterpart);
+        }
+        return group.OrderBy(x => _workout.Items.IndexOf(x)).ToList();
     }
 
-    private async Task ApplyReorderAsync(string sourceId, string destinationId)
+    private WorkoutItem? AdjacentItem(WorkoutItem item, int direction)
     {
-        if (_reorderBusy || _workout.Status != "planned") return;
-        _reorderBusy = true;
+        if (_workout.Status != "planned" || direction == 0) return null;
+        var unit = PairGroup(item);
+        var index = _workout.Items.IndexOf(direction < 0 ? unit[0] : unit[^1]) + Math.Sign(direction);
+        if (index < 0 || index >= _workout.Items.Count) return null;
+        var neighbor = _workout.Items[index];
+        return neighbor.Phase == item.Phase ? neighbor : null;
+    }
+
+    private async Task MoveOneStepAsync(WorkoutItem item, int direction)
+    {
+        if (_reordering || _workout.Status != "planned") return;
+        var adjacent = AdjacentItem(item, direction);
+        if (adjacent == null) return;
+
+        _reordering = true;
+        var previousScroll = _scrollView.ScrollY;
         try
         {
-            await _state.MoveWorkoutItemAsync(_workout, sourceId, destinationId);
+            if (direction < 0)
+                await _state.MoveWorkoutItemAsync(_workout, item.Id, adjacent.Id);
+            else
+                // Move the following unit before this one: equivalent to moving
+                // this unit down by one step, including both members of a pair.
+                await _state.MoveWorkoutItemAsync(_workout, adjacent.Id, item.Id);
+
             Draw();
+            await _scrollView.ScrollToAsync(0, previousScroll, false);
         }
         catch (Exception ex)
         {
@@ -336,8 +224,8 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         finally
         {
-            _reorderBusy = false;
+            _reordering = false;
         }
     }
-#endif
+
 }
