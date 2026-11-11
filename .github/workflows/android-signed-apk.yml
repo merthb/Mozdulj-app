@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-      # Temporary signed APK for testing the backup-recovery fix; remove before merge.
-      - fix/restore-backup-after-reinstall
   workflow_dispatch:
 
 permissions:
