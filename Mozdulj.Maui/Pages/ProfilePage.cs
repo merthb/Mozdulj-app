@@ -128,7 +128,41 @@ public sealed class ProfilePage : ContentPage
             catch(Exception ex){await DisplayAlertAsync("Visszaállítás sikertelen",ex.Message,"Rendben");}
         };
         _content.Children.Add(restore);
-        _content.Children.Add(UI.Label("A fejlődési adatok hitelesített mentésben tárolhatók. Az exportált fájl átírása érvényteleníti a visszaállítást; alkalmazáseltávolítás után a hitelesítő kulcs elveszhet.",12,color:UI.Muted));
+
+        var recoverAfterReinstall=UI.Button("Mentés visszaállítása újratelepítés után",false);
+        recoverAfterReinstall.Clicked+=async (_,_)=>
+        {
+            try
+            {
+                if(!await DisplayAlertAsync("Régi mentés helyreállítása",
+                    "Újratelepítéskor a régi mentés titkos hitelesítő kulcsa elveszhet. " +
+                    "A helyreállítás megtartja a fájlban lévő profilt, gyakorlatokat és haladást, " +
+                    "de a régi aláírás eredetiségét NEM tudja ellenőrizni. " +
+                    "Csak saját, megbízható mentést használj! A jelenlegi adatok is módosulhatnak. " +
+                    "Előtte érdemes a jelenlegi állapotról külön mentést készíteni.",
+                    "Értem, folytatom","Mégse"))return;
+                var chosen=await FilePicker.Default.PickAsync(new PickOptions
+                    {PickerTitle="Válaszd ki a régi teljes Mozdulj! mentést"});
+                if(chosen is null)return;
+                if(!await DisplayAlertAsync("Megerősítés",
+                    "Biztosan ezt a saját mentésedet szeretnéd visszaállítani? " +
+                    "Az eredeti hitelesítő kulcs nélkül a fájl módosítatlansága nem igazolható.",
+                    "Igen, visszaállítom","Mégse"))return;
+                using var stream=await chosen.OpenReadAsync();
+                await _state.RestoreUserBackupAsync(stream,recoveryAfterReinstall:true);
+                await DisplayAlertAsync("Sikeres helyreállítás",
+                    "A régi adatok betöltődtek. Most készíts új teljes adatmentést " +
+                    "az aktuális telepítésből is!","Rendben");
+                Draw();
+            }
+            catch(Exception ex){await DisplayAlertAsync("Helyreállítás sikertelen",ex.Message,"Rendben");}
+        };
+        _content.Children.Add(recoverAfterReinstall);
+        _content.Children.Add(UI.Label(
+            "Normál visszaállítás: a mentés eredetét az alkalmazás ellenőrzi. " +
+            "Újratelepítés után a régi kulcs elveszhet; ilyenkor a külön helyreállítás " +
+            "csak kifejezett jóváhagyással és adatellenőrzéssel használható.",
+            12,color:UI.Muted));
         _content.Children.Add(UI.Label("Mozogj a saját tempódban. Fájdalom vagy bizonytalanság esetén kérj szakmai segítséget.",12,color:UI.Muted));
     }
     private static View Field(string key,string value)=>new VerticalStackLayout{Spacing=2,Children={
