@@ -171,6 +171,7 @@ public sealed class ProfileEditPage : ContentPage
                 if (selected is null) return;
                 foreach (var result in selected)
                 {
+                    if (result is null) continue;
                     var extension = Path.GetExtension(result.FileName).ToLowerInvariant();
                     if (extension is not (".mp3" or ".wav" or ".m4a" or ".aac" or ".ogg" or ".flac"))
                         throw new InvalidDataException("MP3, WAV, M4A, AAC, OGG vagy FLAC hangfájl választható.");
