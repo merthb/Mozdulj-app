@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+      # Experimental test APK only; remove this branch trigger before merging.
+      - experiment/youtube-music-popup-media-controls
   workflow_dispatch:
 
 permissions:
