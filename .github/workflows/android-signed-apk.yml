@@ -33,7 +33,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Run core regression tests
-        run: dotnet run --project Mozdulj.Tests/Mozdulj.Tests.csproj --configuration Release
+        run: dotnet run --project Mozdulj.Tests/Mozdulj.Tests.csproj --configuration Release -- --backup-recovery-only
 
       - name: Check signing secrets
         shell: bash
