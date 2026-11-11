@@ -1,4 +1,6 @@
 using Microsoft.Maui.Storage;
+using Microsoft.Maui.ApplicationModel;
+using Mozdulj.Core;
 
 namespace Mozdulj.Maui.Services;
 
@@ -8,6 +10,9 @@ public sealed class WorkoutAudio : IDisposable
 #if ANDROID
     private global::Android.Media.MediaPlayer? _music;
     private global::Android.Media.ToneGenerator? _beeper;
+    private readonly List<string> _musicFiles = [];
+    private int _musicIndex;
+    private bool _musicRunning;
 #endif
     public void Countdown(int secondsRemaining)
     {
@@ -25,37 +30,100 @@ public sealed class WorkoutAudio : IDisposable
         catch { /* Audio unavailable: never interrupt the exercise. */ }
 #endif
     }
-    public async Task StartRelaxationAsync(string? personalAudioFileName=null)
+    /// <summary>Play the selected on-device files in order, repeating as needed
+    /// until the relaxation timer finishes. Never copies or streams YouTube music.</summary>
+    public async Task StartRelaxationAsync(
+        IEnumerable<RelaxationTrack>? tracks = null, string? legacyFileName = null)
     {
 #if ANDROID
-        if(_music is not null) { if(!_music.IsPlaying) _music.Start(); return; }
+        Stop();
         try
         {
-            var safeName=Path.GetFileName(personalAudioFileName ?? "");
-            var custom=!string.IsNullOrWhiteSpace(safeName) && safeName.StartsWith("relax-user-",StringComparison.Ordinal) &&
-                safeName==personalAudioFileName ? Path.Combine(FileSystem.Current.AppDataDirectory,safeName) : "";
-            var file=!string.IsNullOrWhiteSpace(custom) && File.Exists(custom)
-                ? custom : Path.Combine(FileSystem.Current.CacheDirectory,"relax-ambient-v254.wav");
-            if(!File.Exists(file))
+            _musicFiles.Clear();
+            foreach (var track in tracks ?? [])
             {
-                await using var source=await FileSystem.Current.OpenAppPackageFileAsync("audio/relax-ambient.wav");
-                await using var dest=File.Create(file);
-                await source.CopyToAsync(dest);
+                var fullPath = ResolveCustomAudio(track.FileName);
+                if (fullPath is not null) _musicFiles.Add(fullPath);
             }
-            _music=new global::Android.Media.MediaPlayer();
-            _music.SetDataSource(file);
-            _music.Looping=true;
-            // Gentle but clearly audible on phone speakers; the replacement WAV has
-            // safe peaks and no sub-bass that could overload tiny speakers.
-            _music.SetVolume(file==custom ? .72f : .65f, file==custom ? .72f : .65f);
-            _music.Prepare();
-            _music.Start();
+
+            // Existing installs retain their former one-file selection.
+            if (_musicFiles.Count == 0)
+            {
+                var oldFile = ResolveCustomAudio(legacyFileName);
+                if (oldFile is not null) _musicFiles.Add(oldFile);
+            }
+            if (_musicFiles.Count == 0)
+            {
+                var file = Path.Combine(FileSystem.Current.CacheDirectory, "relax-ambient-v254.wav");
+                if (!File.Exists(file))
+                {
+                    await using var source = await FileSystem.Current.OpenAppPackageFileAsync("audio/relax-ambient.wav");
+                    await using var dest = File.Create(file);
+                    await source.CopyToAsync(dest);
+                }
+                _musicFiles.Add(file);
+            }
+
+            _musicRunning = true;
+            _musicIndex = 0;
+            PlayNextTrack();
         }
-        catch { Stop(); /* No background audio is safer than playback failure. */ }
+        catch { Stop(); /* Silent fallback: the timer must remain independent. */ }
 #else
         await Task.CompletedTask;
 #endif
     }
+
+#if ANDROID
+    private static string? ResolveCustomAudio(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName) ||
+            Path.GetFileName(fileName) != fileName ||
+            !fileName.StartsWith("relax-user-", StringComparison.Ordinal))
+            return null;
+        var path = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
+        return File.Exists(path) ? path : null;
+    }
+
+    private void PlayNextTrack()
+    {
+        if (!_musicRunning || _musicFiles.Count == 0) return;
+        try
+        {
+            _music?.Release();
+            _music?.Dispose();
+            _music = null;
+            // Each file plays to completion, then the next track starts.
+            // At the end of the list, playback cycles until the ten-minute timer stops.
+            for (var attempt = 0; attempt < _musicFiles.Count; attempt++)
+            {
+                var file = _musicFiles[_musicIndex % _musicFiles.Count];
+                _musicIndex++;
+                if (!File.Exists(file)) continue;
+                try
+                {
+                    var player = new global::Android.Media.MediaPlayer();
+                    player.SetDataSource(file);
+                    player.Looping = false;
+                    player.SetVolume(.68f, .68f);
+                    player.Completion += (_, _) => MainThread.BeginInvokeOnMainThread(PlayNextTrack);
+                    player.Prepare();
+                    _music = player;
+                    player.Start();
+                    return;
+                }
+                catch
+                {
+                    _music?.Release();
+                    _music?.Dispose();
+                    _music = null;
+                }
+            }
+        }
+        catch { /* A silent track is better than a crashed workout. */ }
+        Stop();
+    }
+#endif
     public void SetPaused(bool paused)
     {
 #if ANDROID
@@ -67,8 +135,11 @@ public sealed class WorkoutAudio : IDisposable
     public void Stop()
     {
 #if ANDROID
+        _musicRunning = false;
         try { _music?.Stop(); } catch { }
         _music?.Release(); _music?.Dispose(); _music=null;
+        _musicFiles.Clear();
+        _musicIndex = 0;
 #endif
     }
     public void Dispose()
