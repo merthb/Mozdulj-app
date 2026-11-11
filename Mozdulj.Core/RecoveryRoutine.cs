@@ -77,8 +77,8 @@ public static class RecoveryRoutine
     }
 
     /// <summary>
-    /// A korábbi, hatrészes kísérleti v0.8 relaxációt ugyanannyi HÁTRALÉVŐ idővel
-    /// egységesítjük; a lezárt jóváírás és az ID megmarad. Más workoutot nem migrálunk.
+    /// A korábbi, hatrészes kísérleti v0.8 relaxációt egységesítjük;
+    /// a lezárt jóváírás és az ID megmarad, a megszakított alkalom elölről indul.
     /// </summary>
     public static Workout? MigrateLegacy(Workout old, DateOnly day)
     {
