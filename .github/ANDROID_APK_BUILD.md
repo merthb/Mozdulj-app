@@ -33,7 +33,7 @@ A vágólap tartalmát **közvetlenül a GitHub Secret értékmezőjébe** illes
 
 - Indítás: a `master` branchre történő `push`, illetve manuálisan az Actions → Build signed Android APK → Run workflow.
 - Kimenet: a futás **Artifacts** részén `Mozdulj-signed-apk-<run number>`, benne a telepíthető APK.
-- A CI automatikusan növekvő Android `versionCode`-ot állít be (`100000 + github.run_number`). A megjelenített alkalmazásverzió (`ApplicationDisplayVersion`) továbbra is a projektfájlból jön.
+- Az Android `versionCode` (`ApplicationVersion`) és a megjelenített verzió (`ApplicationDisplayVersion`) a projektfájlból jön. Új kiadásoknál a `Mozdulj.Maui.csproj` verzióit tudatosan emeld: az automatikus CI build nem ugrik magasabb `versionCode`-ra, így nem akadályozza a Visual Studióból készített APK-kkal való későbbi frissítést.
 - A jelszavakat a .NET Android aláírás `env:` mechanizmusával adjuk át, nem parancssori argumentumként.
 - Az APK aláírását Android SDK `apksigner verify` ellenőrzi.
 - Az artifact megőrzése 90 nap, amennyiben a repository szabályozása ezt megengedi. Ez nem GitHub Release és nem Google Play publikálás.
