@@ -62,7 +62,7 @@ public sealed class FullBackup
 /// installation key. It can mean either an edited file or a lost key after
 /// reinstall; the UI must not automatically trust the data.
 /// </summary>
-public sealed class BackupSignatureMismatchException : InvalidDataException
+public sealed class BackupSignatureMismatchException : IOException
 {
     public BackupSignatureMismatchException(string message) : base(message) { }
 }
