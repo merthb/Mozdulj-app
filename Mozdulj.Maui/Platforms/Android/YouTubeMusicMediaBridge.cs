@@ -160,8 +160,8 @@ public static class YouTubeMusicMediaBridge
         // screen (often the currently playing track). A dedicated document task
         // asks Android to pass the playlist URL to a fresh Music activity.
         // The Music app may still ignore this, depending on its launch mode.
-        intent.AddFlags(ActivityFlags.NewDocument | ActivityFlags.MultipleTask |
-            ActivityFlags.LaunchAdjacent);
+        intent.AddFlags(ActivityFlags.NewTask | ActivityFlags.NewDocument |
+            ActivityFlags.MultipleTask | ActivityFlags.LaunchAdjacent);
 
         var freeform = activity.PackageManager?.HasSystemFeature(
             PackageManager.FeatureFreeformWindowManagement) == true;
