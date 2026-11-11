@@ -34,21 +34,35 @@ public sealed class ExerciseDetailPage : ContentPage
                     {BarBackgroundColor=UI.Background,BarTextColor=UI.Ink});
             };
             _content.Children.Add(edit);
-            var rigEdit = UI.Button("✎ 3D ábra szerkesztése", false);
-            rigEdit.Clicked += async (_,_) =>
-            {
-                // Open the normal editor, which owns persistence and validation of the pose.
-                if (isBuiltIn) await Navigation.PushModalAsync(new NavigationPage(new BuiltInContentEditorPage(_state,e.Id, open3dImmediately:true))
-                    {BarBackgroundColor=UI.Background,BarTextColor=UI.Ink});
-                else await Navigation.PushModalAsync(new NavigationPage(new ExerciseEditorPage(_state,e, open3dImmediately:true))
-                    {BarBackgroundColor=UI.Background,BarTextColor=UI.Ink});
-            };
-            _content.Children.Add(rigEdit);
         }
         if(e.Pose.Rig3D is not null)
         {
-            var open3d=UI.Button("3D ábra megtekintése",false);
-            open3d.Clicked+=async (_,_)=>await Navigation.PushAsync(new Rig3DViewerPage(e.Pose,e.Name));
+            var open3d = UI.Button("3D ábra megtekintése", false);
+            open3d.Clicked += async (_, _) =>
+            {
+                // Only library navigation supplies an edit action. Workout previews
+                // and workout playback keep the viewer strictly read-only.
+                Func<Task>? edit3d = null;
+                Func<MotionPose>? refreshedPose = null;
+                if (_fromCatalog)
+                {
+                    edit3d = async () =>
+                    {
+                        var current = _state.FindExercise(e.Id) ?? e;
+                        var isBuiltIn = _state.BuiltInCatalog.Exercises.Any(x => x.Id == e.Id);
+                        ContentPage editor = isBuiltIn
+                            ? new BuiltInContentEditorPage(_state, e.Id, open3dImmediately: true)
+                            : new ExerciseEditorPage(_state, current, open3dImmediately: true);
+                        await Navigation.PushModalAsync(new NavigationPage(editor)
+                        {
+                            BarBackgroundColor = UI.Background,
+                            BarTextColor = UI.Ink
+                        });
+                    };
+                    refreshedPose = () => (_state.FindExercise(e.Id) ?? e).Pose;
+                }
+                await Navigation.PushAsync(new Rig3DViewerPage(e.Pose, e.Name, edit3d, refreshedPose));
+            };
             _content.Children.Add(open3d);
         }
         else
