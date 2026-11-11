@@ -198,7 +198,7 @@ A három alap gyakorlatsor mellett minden nap elérhető egy **különálló, t�
 - Egyetlen, **megszakítás nélküli ellazulási szakaszból** áll.
 - Nem tartalmaz gyakorlatcserét, külön átvezetéseket vagy feladatkihagyást.
 - Rövid, természetes hangvételű útmutatást ad a test ellazításához és a figyelem visszatereléséhez.
-- A relaxáció **nem szüneteltethető**. Ha a felhasználó idő előtt kilép, vagy a program megszakad, a következő alkalommal **teljes tíz percet elölről kell kezdenie**.
+- A relaxáció **nem szüneteltethető**. A képernyőn lévő és a felső navigációs **Kilépés** gomb, valamint az Android visszalépésének használatakor megerősítés kéri, hogy a felhasználó valóban megszakítja-e a pihenést; az üzenet jelzi, hogy akkor **teljes tíz percet elölről kell kezdenie**. Ha a rendszer háttérbe kerül vagy más módon megszakad a folyamat, az alkalom jóváírás nélkül újrakezdődik.
 - Igény szerint háttérzene szólhat alatta.
 
 A zene be- és kikapcsolható. A helyi zenei módhoz a felhasználó az alapértelmezett relaxációs hanganyagot használhatja, vagy **több saját hangfájlból rendezett lejátszási listát** állíthat össze. A listában a számok feljebb és lejjebb mozgathatók, illetve eltávolíthatók. A fájlok az alkalmazás saját tárhelyére másolódnak, offline is használhatók, a lista a tíz perc alatt sorrendben szól, majd szükség esetén újraindul.
