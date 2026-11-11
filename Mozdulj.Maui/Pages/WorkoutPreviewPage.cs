@@ -63,7 +63,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                     try
                     {
                         Mozdulj.Maui.Platforms.Android.YouTubeMusicMediaBridge
-                            .OpenMusicInCompanionWindow(musicUrl);
+                            .OpenPlaylistInYouTubeMusic(musicUrl);
                     }
                     catch (Exception ex)
                     {
@@ -72,9 +72,8 @@ public sealed class WorkoutPreviewPage : ContentPage
                 };
                 _content.Children.Add(openMusic);
                 _content.Children.Add(UI.Label(
-                    "A mentett lejátszási listát megpróbáljuk közvetlenül a YouTube Musicban megnyitni. " +
-                    "Ha az alkalmazás mégis az éppen szóló számra lép, válaszd ki ott a listát, " +
-                    "majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
+                    "A mentett lejátszási lista a YouTube Musicban nyílik meg. " +
+                    "Indítsd el a zenét, majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
                     12, color:UI.Muted));
                 _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
                 _content.Children.Add(_musicPanel);
