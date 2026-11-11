@@ -53,18 +53,18 @@ public sealed class ProfilePage : ContentPage
             {
                 var result=await FilePicker.Default.PickAsync(new PickOptions {PickerTitle="Válassz Mozdulj könyvtár-JSON-t"});
                 if(result is null) return;
-                var option=await DisplayActionSheet("Hogyan importáljuk a saját gyakorlatokat?", "Mégse", null,
+                var option=await DisplayActionSheetAsync("Hogyan importáljuk a saját gyakorlatokat?", "Mégse", null,
                     "Újak hozzáadása", "Összefésülés", "Saját lista cseréje");
                 var mode=option switch {"Újak hozzáadása"=>"append","Összefésülés"=>"merge","Saját lista cseréje"=>"replace",_=>null};
                 if(mode is null)return;
-                if(mode=="replace" && !await DisplayAlert("Saját lista cseréje?",
+                if(mode=="replace" && !await DisplayAlertAsync("Saját lista cseréje?",
                     "Az eddigi saját gyakorlatok archiválódnak. Az alapgyakorlatok sosem íródnak felül.","Csere","Mégse"))return;
                 using var stream=await result.OpenReadAsync();
                 var counts=await _state.ImportCatalogAsync(stream,mode);
-                await DisplayAlert("Importálva",$"{counts.previous} → {counts.current} gyakorlat. A katalógust belső tárhelyre másoltuk.","Rendben");
+                await DisplayAlertAsync("Importálva",$"{counts.previous} → {counts.current} gyakorlat. A katalógust belső tárhelyre másoltuk.","Rendben");
                 Draw();
             }
-            catch(Exception ex) {await DisplayAlert("Sikertelen import",ex.Message,"Rendben");}
+            catch(Exception ex) {await DisplayAlertAsync("Sikertelen import",ex.Message,"Rendben");}
         };
         _content.Children.Add(import);
         var export=UI.Button("Aktuális gyakorlattár exportálása (.json)",false);
@@ -77,14 +77,14 @@ public sealed class ProfilePage : ContentPage
                 if(Platform.CurrentActivity is not MainActivity activity)
                     throw new InvalidOperationException("Az Android fájlmentő nem érhető el.");
                 var saved=await activity.SaveCatalogAsAsync($"mozdulj-gyakorlattar.json",data);
-                if(saved) await DisplayAlert("Exportálva","A beépített és saját gyakorlatokat, állapotokkal együtt mentettük.","Rendben");
+                if(saved) await DisplayAlertAsync("Exportálva","A beépített és saját gyakorlatokat, állapotokkal együtt mentettük.","Rendben");
 #else
                 var path=Path.Combine(FileSystem.CacheDirectory,"exercises.catalog.json");
                 await File.WriteAllBytesAsync(path,data);
                 await Share.Default.RequestAsync(new ShareFileRequest("Gyakorlattár exportálása",new ShareFile(path)));
 #endif
             }
-            catch(Exception ex) {await DisplayAlert("Exportálási hiba",ex.Message,"Rendben");}
+            catch(Exception ex) {await DisplayAlertAsync("Exportálási hiba",ex.Message,"Rendben");}
         };
         _content.Children.Add(export);
         _content.Children.Add(UI.Label("Gyakorlattár mentése: alap- és saját gyakorlatok, kikapcsolások és helyi javítások. Az alapgyakorlatok edzésadatai védettek.",13,color:UI.Muted));
@@ -100,14 +100,14 @@ public sealed class ProfilePage : ContentPage
                 if(Platform.CurrentActivity is not MainActivity activity)
                     throw new InvalidOperationException("A rendszerfájlmentő nem elérhető.");
                 var saved=await activity.SaveCatalogAsAsync("mozdulj-teljes-mentes.json",bytes);
-                if(saved)await DisplayAlert("Mentés kész","Profil, kedvencek, XP, badge-ek, előzmények, saját gyakorlatok és korrektúrák exportálva.","Rendben");
+                if(saved)await DisplayAlertAsync("Mentés kész","Profil, kedvencek, XP, badge-ek, előzmények, saját gyakorlatok és korrektúrák exportálva.","Rendben");
 #else
                 var path=Path.Combine(FileSystem.CacheDirectory,"mozdulj-teljes-mentes.json");
                 await File.WriteAllBytesAsync(path,bytes);
                 await Share.Default.RequestAsync(new ShareFileRequest("Teljes adatmentés",new ShareFile(path)));
 #endif
             }
-            catch(Exception ex){await DisplayAlert("Mentési hiba",ex.Message,"Rendben");}
+            catch(Exception ex){await DisplayAlertAsync("Mentési hiba",ex.Message,"Rendben");}
         };
         _content.Children.Add(backup);
         var restore=UI.Button("Teljes adatmentés visszaállítása (.json)",false);
@@ -117,15 +117,15 @@ public sealed class ProfilePage : ContentPage
             {
                 var chosen=await FilePicker.Default.PickAsync(new PickOptions{PickerTitle="Válassz teljes Mozdulj! mentést"});
                 if(chosen is null)return;
-                if(!await DisplayAlert("Teljes adatvisszaállítás?",
+                if(!await DisplayAlertAsync("Teljes adatvisszaállítás?",
                     "A hitelesített mentés visszatölti a profilt, saját gyakorlatokat és előzményeket. A jelenlegi haladást megőrizzük. Csak ezen a telepítésen hitelesített mentés tölthető vissza.",
                     "Visszaállítás","Mégse"))return;
                 using var stream=await chosen.OpenReadAsync();
                 await _state.RestoreUserBackupAsync(stream);
-                await DisplayAlert("Sikeres visszaállítás","A korábbi profil és haladás betöltődött.","Rendben");
+                await DisplayAlertAsync("Sikeres visszaállítás","A korábbi profil és haladás betöltődött.","Rendben");
                 Draw();
             }
-            catch(Exception ex){await DisplayAlert("Visszaállítás sikertelen",ex.Message,"Rendben");}
+            catch(Exception ex){await DisplayAlertAsync("Visszaállítás sikertelen",ex.Message,"Rendben");}
         };
         _content.Children.Add(restore);
         _content.Children.Add(UI.Label("A fejlődési adatok hitelesített mentésben tárolhatók. Az exportált fájl átírása érvényteleníti a visszaállítást; alkalmazáseltávolítás után a hitelesítő kulcs elveszhet.",12,color:UI.Muted));

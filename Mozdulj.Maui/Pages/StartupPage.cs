@@ -33,7 +33,7 @@ public sealed class StartupPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Indítási hiba", ex.Message, "Rendben");
+            await DisplayAlertAsync("Indítási hiba", ex.Message, "Rendben");
         }
     }
 }

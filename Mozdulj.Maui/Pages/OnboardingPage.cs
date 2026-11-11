@@ -135,7 +135,7 @@ public sealed class OnboardingPage : ContentPage
         }
         catch (Exception e)
         {
-            await DisplayAlert("Nem sikerült elmenteni a beállításokat", e.Message, "Rendben");
+            await DisplayAlertAsync("Nem sikerült elmenteni a beállításokat", e.Message, "Rendben");
         }
         finally
         {

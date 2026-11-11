@@ -107,7 +107,7 @@ public sealed class ProfileEditPage : ContentPage
                 _draft.RelaxationAudioFileName=fileName;
                 chosenTrack.Text="Saját zene: "+result.FileName;
             }
-            catch(Exception ex){await DisplayAlert("Hangfájl nem választható",ex.Message,"Rendben");}
+            catch(Exception ex){await DisplayAlertAsync("Hangfájl nem választható",ex.Message,"Rendben");}
         };
         var defaultTrack=UI.Button("Vissza az alapzenére",false);
         defaultTrack.Clicked+=(_,_)=>{_draft.RelaxationAudioFileName="";
@@ -173,11 +173,11 @@ public sealed class ProfileEditPage : ContentPage
                 !previous.AvailableEquipment.SequenceEqual(_draft.AvailableEquipment);
             bool applyToday=false,refreshMonth=false;
             if(planningChanged)
-                applyToday=await DisplayAlert("Mikortól érvényesüljön?",
+                applyToday=await DisplayAlertAsync("Mikortól érvényesüljön?",
                     "A még el nem kezdett mai sorokat is áttervezzük az új beállítások szerint, vagy csak holnaptól alkalmazzuk őket? A már elkezdett és teljesített sorok nem változnak.",
                     "Már ma", "Csak holnaptól");
             if(monthlyRelevant)
-                refreshMonth=await DisplayAlert("Havi kihívások módosítása?",
+                refreshMonth=await DisplayAlertAsync("Havi kihívások módosítása?",
                     "Az új beállításokhoz igazítsuk a folyamatban lévő havi kihívásokat is? A korábbi teljesítések és a megszerzett jelvények megmaradnak.",
                     "Igen, új célokat", "Nem, maradjanak");
             await _state.UpdatePreferencesAsync(_draft,planningChanged ? applyToday : null,refreshMonth);
@@ -189,20 +189,20 @@ public sealed class ProfileEditPage : ContentPage
                     var permission=await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<
                         Mozdulj.Maui.Platforms.Android.StreakNotificationPermission>();
                     if(permission!=Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
-                        await DisplayAlert("Értesítések kikapcsolva",
+                        await DisplayAlertAsync("Értesítések kikapcsolva",
                             "A rendszer nem engedélyezte az értesítéseket. Később a telefon beállításaiban engedélyezheted.","Rendben");
                 }
                 Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(_state.Preferences);
             }
             catch(Exception notificationError)
             {
-                await DisplayAlert("Beállítások elmentve",
+                await DisplayAlertAsync("Beállítások elmentve",
                     "Az emlékeztetőt nem sikerült beállítani: "+notificationError.Message,"Rendben");
             }
 #endif
             await Navigation.PopModalAsync();
         }
-        catch(Exception ex) { await DisplayAlert("A mentés nem sikerült",ex.Message,"Rendben"); }
+        catch(Exception ex) { await DisplayAlertAsync("A mentés nem sikerült",ex.Message,"Rendben"); }
         finally { _saving=false;_save.IsEnabled=true; }
     }
     private static void AddChoices(VerticalStackLayout body,string title,IEnumerable<string> options,List<string> selection)

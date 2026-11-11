@@ -67,13 +67,23 @@ public static class StreakReminderScheduler
             ctx.CheckSelfPermission(Manifest.Permission.PostNotifications)!=Permission.Granted)return;
         var manager=ctx.GetSystemService(Context.NotificationService) as NotificationManager;
         if(manager is null)return;
-        if(Build.VERSION.SdkInt>=BuildVersionCodes.O)
+        // Android 7 needs the pre-channel Notification.Builder overload.
+        // Android 8+ must create and use a notification channel.
+        Notification.Builder builder;
+        if(OperatingSystem.IsAndroidVersionAtLeast(26))
+        {
             manager.CreateNotificationChannel(new NotificationChannel(ChannelId,"Mozdulj! emlékeztető",
                 NotificationImportance.Default){Description="Emlékeztető az elmaradt napi mozgásról"});
+            builder=new Notification.Builder(ctx,ChannelId);
+        }
+        else
+        {
+            builder=new Notification.Builder(ctx);
+        }
         var launch=ctx.PackageManager?.GetLaunchIntentForPackage(ctx.PackageName!);
         PendingIntent? opening=launch is null ? null : PendingIntent.GetActivity(ctx,0,launch,
             PendingIntentFlags.Immutable|PendingIntentFlags.UpdateCurrent);
-        var notification=new Notification.Builder(ctx,ChannelId)
+        var notification=builder
             .SetSmallIcon(global::Android.Resource.Drawable.IcDialogInfo)
             .SetContentTitle("Egy kis mozgás ma is beleférhet 🌿")
             .SetContentText("Ma még nem volt gyakorlás vagy regeneráló relaxáció.")
