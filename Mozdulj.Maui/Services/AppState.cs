@@ -179,6 +179,7 @@ public sealed class AppState
             RelaxationPlaylist=chosen.RelaxationPlaylist?.Select(t=>new RelaxationTrack
                 {FileName=t.FileName, DisplayName=t.DisplayName}).ToList() ?? [],
             RelaxationMusicSource=chosen.RelaxationMusicSource,
+            RelaxationYouTubeMusicPremiumConfirmed=chosen.RelaxationYouTubeMusicPremiumConfirmed,
             RelaxationYouTubeMusicPlaylistUrl=chosen.RelaxationYouTubeMusicPlaylistUrl,
             FocusRegions = chosen.FocusRegions.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
             PreferredCategories = chosen.PreferredCategories.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
@@ -362,6 +363,7 @@ public sealed class AppState
             RelaxationPlaylist=p.RelaxationPlaylist?.Select(t=>new RelaxationTrack
                 {FileName=t.FileName,DisplayName=t.DisplayName}).ToList() ?? [],
             RelaxationMusicSource=p.RelaxationMusicSource,
+            RelaxationYouTubeMusicPremiumConfirmed=p.RelaxationYouTubeMusicPremiumConfirmed,
             RelaxationYouTubeMusicPlaylistUrl=p.RelaxationYouTubeMusicPlaylistUrl
         };
     }
