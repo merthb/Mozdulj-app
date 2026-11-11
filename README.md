@@ -1,106 +1,334 @@
-# Mozdulj! v0.25.4.1 – Folytatható állapot a három alap gyakorlatsornál
+# Mozdulj! 💜
 
-A v0.25.4 teljes forrása, a három alap gyakorlatsornál visszaállított „Folytatható” jelzéssel. A regenerációnál továbbra sincs felesleges külön címke. Részletek: `VALTOZASOK_v025_4_1.txt`.
+**Személyre szabható, magyar nyelvű, offline használható napi tornaalkalmazás Androidra.**
+
+A Mozdulj! célja, hogy a rendszeres mozgás könnyen beilleszthető legyen a hétköznapokba. Rövid, az egyéni igényekhez igazodó gyakorlatsorokat állít össze, végigvezet a feladatokon, segít követni a fejlődést, és a pihenőnapokat is a fenntartható mozgásrutin részének tekinti.
+
+Az alkalmazás nem egyetlen, mindenkinek azonos edzéstervet kínál: figyelembe veszi a rendelkezésre álló időt, a kívánt nehézséget, a fókuszba helyezett testtájakat, a kedvelt mozgásformákat és az otthon elérhető eszközöket. A felhasználó a gyakorlatokat megismerheti, személyre szabhatja és saját gyakorlatokkal bővítheti.
+
+> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Alkalmazásverzió:** 0.26.0 · **Felület nyelve:** magyar
+
+## Mire használható?
+
+- **Napi átmozgatásra:** néhány perces, otthon is elvégezhető mozgásprogramokhoz.
+- **Személyre szabott edzéshez:** kiválasztott testtájak, célok, mozgástípusok és nehézség szerint.
+- **Mobilizálásra, nyújtásra és erősítésre:** bemelegítéssel, fő gyakorlati résszel és levezetéssel.
+- **Gyakorlatok megismerésére:** részletes szöveges útmutatóval, gyakori hibákkal, biztonsági megjegyzésekkel és 3D szemléltetéssel.
+- **Rutinépítésre:** heti célokkal, teljesítési naplóval, pontokkal, szintekkel, jelvényekkel és mozgássorozatokkal.
+- **Tudatos regenerációra:** vezetett, tízperces relaxációval, amely a pihenőnapokon is segíthet megőrizni a mozgássorozatot.
+
+A Mozdulj! elsősorban az önálló, otthoni gyakorlást támogatja. A gyakorlatok és 3D ábrák tájékoztató jellegűek; nem helyettesítik az orvosi, gyógytornászi vagy edzői útmutatást.
+
+## Az alkalmazás fő részei
+
+Az alsó navigáció öt területre osztja a funkciókat:
+
+| Menüpont | Feladata |
+| --- | --- |
+| **Ma** | A napi három gyakorlatsor, a regenerációs lehetőség és az aktuális haladás áttekintése. |
+| **Tár** | A gyakorlatok keresése, szűrése, megtekintése, személyre szabása és szerkesztése. |
+| **Célok** | Heti célok, XP, szintek, mozgássorozat, havi kihívások és jelvények. |
+| **Napló** | Korábbi edzések és regenerációk, aktív napok, mozgásidő és havi összesítések. |
+| **Profil** | Edzésbeállítások, személyes preferenciák, eszközök, értesítések és adatmentés. |
+
+## 1. Első indítás és személyre szabás
+
+Az első használatkor az alkalmazás bekéri a mozgástervezéshez szükséges alapbeállításokat. A napi tervek és a havi célok ezek mentése után állnak össze. A beállítások később a Profilban módosíthatók.
+
+### Állítható paraméterek
+
+| Beállítás | Lehetőségek és szerep |
+| --- | --- |
+| **Gyakorlatsor időkerete** | 5, 10, 15, 20 vagy 30 perc. |
+| **Nehézségi szint** | Kezdő, középhaladó vagy haladó. A tervező ennek megfelelően válogat a gyakorlatokból. |
+| **Átvezetési idő** | 5–10 másodperc a gyakorlatok között. |
+| **Heti mozgáscél** | 1–7 aktív nap hetente. |
+| **Fókusztesttájak** | Azok a területek, amelyekre a felhasználó több figyelmet szeretne fordítani. |
+| **Kedvelt mozgástípusok** | Például mobilizálás, nyújtás, erősítés, egyensúly, átmozgatás vagy légzőgyakorlat. |
+| **Elérhető eszközök** | Az otthon ténylegesen rendelkezésre álló felszerelés. |
+| **Hangok** | Visszaszámlálási hangjelzések és relaxációs háttérzene be-/kikapcsolása. |
+| **Napi emlékeztető** | Bekapcsolható értesítés, szabadon beállított időponttal. |
+
+A többszörös választások **kompakt, kijelölhető gombokkal** működnek. Ugyanarra az elemre újra koppintva a kijelölés megszüntethető. A testtájak csoportosított választóban szerepelnek: **Felsőtest**, **Alsótest**, valamint önálló **Teljes test** lehetőség. A csoportokon belüli „Mind” vezérlővel egyszerre több elem is kijelölhető.
+
+A besorolás alapelve, hogy a derék, a has és a mellkas a felsőtesthez; a medence, a csípő, az ágyék és a lábak az alsótesthez tartoznak. A gyakorlatoknál egyedi testtáj is megadható, de az új testtájhoz kötelező csoportot rendelni.
+
+Ha egy profilbeállítás az edzéstervet is érinti, az alkalmazás felajánlja, hogy a még el nem kezdett napi tervekre rögtön, vagy csak a következő naptól legyen hatással. A már elkezdett vagy lezárt gyakorlatsorokat nem írja felül automatikusan. A folyamatban lévő havi kihívások újratervezéséről külön lehet dönteni.
+
+## 2. Napi gyakorlatsorok
+
+Minden edzésnaphoz **három különböző alap gyakorlatsor** tartozik:
+
+1. **Kímélő aktiválás** – átmozgatás, kontroll és könnyebb aktív feladatok.
+2. **Erő és stabilitás** – célzott izomaktiválás és stabilizáló gyakorlatok.
+3. **Egyensúly és testtudat** – változatos, tudatosan végzett mozdulatok.
+
+A tervek nem véletlenszerű gyakorlatlisták. A tervező figyelembe veszi többek között:
+
+- a választott időkeretet, nehézséget, fókusztesttájakat és mozgásformákat;
+- a gyakorlatokhoz szükséges eszközöket és azok elérhetőségét;
+- a mozgásfázisok egymásra épülését és a célzott testtájak kapcsolatát;
+- a korábban elvégzett feladatokat, hogy a gyakorlás változatos maradjon;
+- a kedvenceket és a kifejezetten kért gyakorlatokat;
+- a jobb és bal oldalra külön végzendő mozgások kiegyensúlyozását.
+
+### Bemelegítés, fő rész, levezetés
+
+A gyakorlatsorok **három blokkra** épülnek. A fő rész terheléséhez igazodó bemelegítés előkészíti a mozgást, a levezetés pedig az érintett területek fokozatos megnyugtatását szolgálja. A rendszer nem tölt fel mindenáron egy időkeretet oda nem illő feladatokkal: a mozgásanyag összhangja elsőbbséget élvez a névleges percszám pontos kitöltésével szemben.
+
+### A gyakorlatsor testreszabása indítás előtt
+
+Az előnézetben a felhasználó:
+
+- **megnyithatja a gyakorlat részleteit** a gyakorlat sorára koppintva;
+- **másik gyakorlatra cserélhet** egy feladatot a jobb oldalon található Csere gombbal;
+- **kötelező gyakorlatokat jelölhet ki**, amelyek köré a rendszer újraösszeállítja a még el nem kezdett tervet;
+- **húzással átrendezheti** a feladatokat azonos edzésblokkon belül;
+- a cserelehetőségeknél **kihagyhat egy-egy nem kívánt feladatot**, ha a terv összhangja ezt megengedi.
+
+A kihagyható gyakorlatok száma az időkerettől függ:
+
+| Gyakorlatsor hossza | Legfeljebb kihagyható feladat |
+| --- | ---: |
+| 5–10 perc | 1 |
+| 15–20 perc | 2 |
+| 30 perc | 3 |
+
+A jobb és bal oldalra külön végzendő gyakorlatok párként működnek: **közvetlenül egymás mellett maradnak**, és az eltávolításuk két feladatnak számít. Kötelező gyakorlat nem hagyható ki. A módosítás nem bonthatja meg a szükséges bemelegítést, fő részt vagy levezetést.
+
+A szerkesztés és átrendezés csak **az edzés elindítása előtt** érhető el. A már folyamatban lévő terv megőrződik, nem alakul át váratlanul.
+
+### Gyakorlatsor-állapotok
+
+- **Elérhető:** még nem kezdődött el.
+- **Folytatható:** megkezdett, félretett, de még nem lezárt gyakorlatsor.
+- **Részben teljesítve:** lezárt edzés, amelyből legalább egy feladat elkészült, de nem az összes.
+- **Teljesítve:** a gyakorlatsor valamennyi feladata elkészült.
+
+Az edzés megszakítható és később folytatható. A lezárás különösen fontos az aktivitási statisztikáknál: önmagában az, hogy egy gyakorlat már elkészült, **még nem teszi aktívvá a napot**, amíg a teljes gyakorlatsor folytatható állapotban van.
+
+## 3. Edzéslejátszó és segítség gyakorlás közben
+
+Az edzéslejátszó feladata, hogy a telefon folyamatos figyelése nélkül is követhető legyen a gyakorlás.
+
+- **Időzített és ismétlésszám-alapú gyakorlatokat** is kezel.
+- Az első gyakorlat előtt rövid felkészülési visszaszámlálást ad.
+- A visszaszámláló **3, 2 és 1 másodpercnél** hangjelzést ad, a **0. másodpercnél** eltérő záróhang szól.
+- A gyakorlatok közötti **átvezetési idő** a profilban állítható.
+- Átvezetéskor megjelenik a következő gyakorlat neve és **lépésenkénti útmutatója**.
+- Ha a következő feladathoz eszköz szükséges, a felület azt **kiemelten jelzi**.
+- Az edzés **szüneteltethető**, a félbehagyott állapot menthető és folytatható.
+- Az elvégzett feladatok, az aktívan eltöltött idő és a pontok bekerülnek a helyi előzményekbe.
+
+A gyakorlatsor egyes feladatainál és a részletes leírásban is látható, hogy az adott mozgáshoz milyen eszköz szükséges. Ha nincs szükség külön felszerelésre, ezt az alkalmazás külön jelzi.
+
+## 4. Gyakorlattár
+
+Az alkalmazás **294 gyakorlatból álló beépített katalógussal** rendelkezik. A gyűjtemény általános átmozgató, mobilizáló, nyújtó, erősítő, egyensúlyfejlesztő, légző és jógából ismert mozdulatokat is tartalmaz.
+
+### Keresés és szűrés
+
+A Tár nézetben lehetőség van:
+
+- név vagy testtáj szerinti keresésre;
+- mozgástípus és érintett testtáj szerinti szűrésre;
+- **összes**, **alap** és **saját** gyakorlat közötti gyors váltásra;
+- piszkozatok és kikapcsolt gyakorlatok megjelenítésére;
+- csak kedvencek, illetve a rendelkezésre álló eszközökkel végezhető gyakorlatok szűrésére.
+
+A lista fokozatosan tölti be a kártyákat, hogy hosszú katalógus esetén is kezelhető maradjon. A már megnyitott gyakorlattár és a szűrési adatok lehetőség szerint újrahasznosulnak. A kártyákon végzett műveletek után, illetve a részletoldalról visszalépve a rendszer törekszik a **görgetési pozíció megőrzésére**. A hosszú lista aljáról külön **„Tetejére”** gombbal lehet visszaugrani.
+
+### Gyakorlatok kezelése
+
+A gyakorlatoknál elérhető a:
+
+- **bekapcsolás és kikapcsolás**, egyértelmű feliratú kapcsológombokkal;
+- **kedvencnek jelölés** és a kedvencjelölés eltávolítása;
+- **részletes megtekintés**;
+- **szerkesztés** és saját gyakorlat létrehozása;
+- saját gyakorlatok **piszkozatként mentése, aktiválása és archiválása**.
+
+A kikapcsolt vagy még nem aktív gyakorlatok nem vesznek részt a szokásos automatikus edzéstervezésben. A korábbi teljesítések archiváláskor is megmaradnak.
+
+A beépített gyakorlatok szöveges és ábrás tartalma személyes korrekciókkal módosítható, miközben a tervezéshez szükséges alapvető besorolási adatok védettek. A saját gyakorlatoknál szélesebb körű szerkesztés lehetséges.
+
+### Mit tartalmaz egy gyakorlat adatlapja?
+
+- név, mozgástípus, érintett testtájak, nehézség;
+- bemelegítéshez, fő részhez vagy levezetéshez tartozó besorolás;
+- célzott időtartam vagy ismétlésszám;
+- szükséges felszerelés;
+- rövid összefoglaló és **kiinduló testhelyzet**;
+- **lépésenkénti végrehajtási leírás**;
+- **gyakori hibák** és biztonsági tudnivalók;
+- megtekinthető, adott esetben többfázisú **3D mozgásábra**.
+
+A részletoldalról akkor indítható gyakorlat- vagy 3D-ábraszerkesztés, ha a felhasználó **a gyakorlattárból** nyitotta meg. A napi gyakorlatsorból megnyitott adatlapokon az edzés közbeni véletlen módosítás elkerülése érdekében ezek a szerkesztőműveletek nem jelennek meg.
+
+### Saját gyakorlatok
+
+Új gyakorlat rögzítésekor többek között megadható a neve, típusa, testtájai, nehézsége, edzésfázisa, eszközigénye, idő- vagy ismétléscélja, leírása és biztonsági megjegyzése. Hiányos adatokkal **piszkozat** menthető, de automatikus tervezéshez csak a megfelelően kitöltött, aktív gyakorlatok használhatók.
+
+Új, korábban nem ismert testtáj megadásakor a **Felsőtest**, **Alsótest** vagy **Teljes test** besorolásról is rendelkezni kell.
+
+## 5. 3D mozgásábrák és pózszerkesztő
+
+A Mozdulj! egyik központi eleme a **forgatható, térbeli csontvázmodell**, amely a testhelyzeteket és a mozgásfázisokat szemlélteti. A megjelenítés az alkalmazással csomagolt, helyben működő **WebGL-alapú** nézetet használja; a 3D nézethez nincs szükség külön online szolgáltatásra.
+
+A katalógusban a legtöbb mozgásos gyakorlat **három szemléltető fázissal** jelenik meg:
+
+1. **Kiinduló helyzet** – az induló testtartás.
+2. **Mozdulat** – az elmozdulás vagy a gyakorlat hangsúlyos szakasza.
+3. **Visszatérés** – a kiinduló vagy nyugalmi helyzet felé történő mozgás.
+
+A tartott, statikus pózoknál egyetlen helyzet is elegendő lehet. A fázisok váltása segíti a mozgás megértését, de nem jelent minden esetben folyamatos, élethű animációt.
+
+### A 3D szerkesztő lehetőségei
+
+A 3D szerkesztőben külön állítható a fej, a törzs, a karok és a lábak helyzete, a kamera és az eszközök megjelenítése. A mozgásfázisok szerkeszthetők, új fázis adható hozzájuk, és a pózok menthetők. A szalagoknál külön kezelhetők a **két fogási pont**, valamint a szalag vezetéséhez vagy nyújtási irányához tartozó **harmadik pont**. A jógapánt, a gumiszalag és a miniband külön eszköztípusok.
+
+A modellekhez geometriai ellenőrzések tartoznak, ugyanakkor **a 3D ábrák szemléltető jellegűek, nem minden póz szakmailag hitelesített**. Egyes apró csukló-, kéz-, boka- vagy lábujjmozgások korlátozott pontossággal ábrázolhatók. A pontos kivitelezésnél mindig a szöveges leírás az elsődleges, és fájdalmat okozó mozdulatot nem szabad erőltetni.
+
+## 6. Relaxáció és regeneráló nap
+
+A három alap gyakorlatsor mellett minden nap elérhető egy **különálló, tízperces regeneráló program**.
+
+- Egyetlen, **megszakítás nélküli ellazulási szakaszból** áll.
+- Nem tartalmaz gyakorlatcserét, külön átvezetéseket vagy feladatkihagyást.
+- Rövid, természetes hangvételű útmutatást ad a test ellazításához és a figyelem visszatereléséhez.
+- A visszaszámlálás szüneteltethető, a félbehagyott relaxáció folytatható.
+- Igény szerint háttérzene szólhat alatta.
+
+A felhasználó választhat az alkalmazásban található alapértelmezett relaxációs hanganyag és **a saját készülékéről kiválasztott hangfájl** között. A kiválasztott fájl az alkalmazás saját tárhelyére kerül, így később offline is használható. A zene be- és kikapcsolható.
+
+A teljes tíz perc elvégzése **megvédheti az aktuális mozgássorozatot**, de a regeneráció **nem számít aktív edzésnapnak, és nem jár érte XP**. Ez tudatos különbség: a pihenés segíti a szokás fenntartását, de nem helyettesíti a lezárt alap gyakorlatsort az aktív napok statisztikájában.
+
+## 7. Aktív napok, mozgássorozat és napváltás
+
+### Mitől lesz aktív egy nap?
+
+**Aktív napot csak lezárt alap gyakorlatsor eredményez**, ha legalább egy gyakorlat valóban elkészült.
+
+| Gyakorlatsor állapota | Aktív napot ad? |
+| --- | --- |
+| Elérhető, még nem kezdődött el | Nem |
+| Folyamatban, folytatható | Nem |
+| Lezárt, részben teljesített | **Igen**, ha legalább egy gyakorlat elkészült |
+| Lezárt, teljesen teljesített | **Igen** |
+| Teljes tízperces regeneráció | Nem; külön a mozgássorozatot védi |
+
+A már elvégzett gyakorlatok után járó XP ettől függetlenül rögzülhet, de a napi aktivitás és a heti cél csak a gyakorlatsor lezárása után frissül.
+
+### Éjjeli baglyoknak is megfelelő napváltás
+
+Az alkalmazás egy edzésnapot **hajnali 02:00-tól a következő nap 01:59:59-ig** számít, a telefon helyi ideje szerint. Így egy éjfél után, de hajnali kettő előtt befejezett edzés még az előző edzésnaphoz tartozik. A szabály a napi programok, a mozgássorozat és az aktivitási összesítések számításában is szerepet kap.
+
+### Streak és regenerációs védelem
+
+A mozgássorozat (*streak*) a rendszeres aktivitást követi. Egy kihagyott nap bizonyos feltételek mellett **streak freeze** segítségével védhető meg. A fagyasztások külön gyűjthető erőforrások, készletük korlátozott, és a felhasználó által megszerzett összes XP-t nem csökkentik.
+
+A teljes regeneráció a sorozat megőrzésének másik lehetősége. **Sem a freeze, sem a regeneráció nem növeli a havi aktív napok számát.**
+
+## 8. Motiváció, kihívások és jutalmak
+
+A Mozdulj! többféle, egymást kiegészítő ösztönzőt kínál:
+
+- **XP (tapasztalati pont):** az elvégzett gyakorlatokért járó pont, amelyből hosszú távú fejlődés követhető.
+- **Szintek:** a megszerzett XP alapján emelkedő szintjelző és következő célérték.
+- **Streak:** egymáshoz kapcsolódó aktív vagy védett napok sorozata.
+- **Streak freeze:** korlátozottan gyűjthető védelem kimaradt napokra.
+- **Heti cél:** előre meghatározott számú aktív nap és annak teljesítési visszajelzése.
+- **Havi kihívások:** személyes beállításokhoz igazodó, három különböző cél; több elérhető jutalomszinttel.
+- **Jelvények:** tartós eredmények, például első gyakorlat, változatos mozgások, kitartás vagy rendszeres regeneráció után.
+
+A havi kihívások a hónap kezdetén rögzített célokat követik, így a közben változó gyakorlattár vagy szokások nem módosítják önkényesen a korábbi teljesítést. A már megszerzett jelvények megmaradnak. A rendszer azt is korlátozza, hogy ugyanazzal a gyakorlattal egyetlen napon belül korlátlan kihíváselőnyt lehessen szerezni.
+
+## 9. Mozgásnapló és statisztikák
+
+A **Napló** a korábban rögzített tevékenységeket hónaponként tekinthető át. A főbb adatok:
+
+- aktív napok és lezárt gyakorlatsorok száma;
+- teljesített gyakorlatok és megszerzett XP;
+- a mért mozgásidő, ha az adott edzésről rendelkezésre áll időadat;
+- részben teljesített programok és regenerációs alkalmak;
+- heti célok teljesülése;
+- dátumonkénti részletek és havi összesítések.
+
+A régebbi, időmérést nem tartalmazó eredményeknél a program nem állít be kitalált időtartamot, hanem jelzi, hogy a pontos mozgásidő nem ismert.
+
+## 10. Értesítések és hangbeállítások
+
+A napi emlékeztető **opcionális Android-értesítés**, amelynek időpontja a Profilban módosítható. Célja, hogy figyelmeztessen, ha az aktuális edzésnapon a mozgássorozatot még sem edzéssel, sem megfelelő regenerációval nem sikerült előrevinni vagy megvédeni.
+
+Az értesítéshez a telefon rendszerengedélye szükséges. A rendszer korlátozásai, az energiatakarékossági beállítások és az értesítési jogosultságok befolyásolhatják a kézbesítést.
+
+Az időzítő hangjelzései és a relaxációs zene egymástól függetlenül kapcsolhatók. A hangjelzések célja, hogy gyakorlás közben ne kelljen folyamatosan a képernyőt nézni.
+
+## 11. Helyi adatok, importálás és biztonsági mentés
+
+A Mozdulj! **offline szemléletű alkalmazás**: a gyakorlattár, az edzéstervek, a profilbeállítások és az előzmények helyben kezelhetők. A fő funkciókhoz nincs szükség felhasználói fiókra vagy állandó internetkapcsolatra.
+
+### Mit tárol az alkalmazás?
+
+- személyes edzésbeállítások és választott eszközök;
+- beépített gyakorlatokhoz tartozó személyes módosítások;
+- saját gyakorlatok, piszkozatok és aktiválási állapotok;
+- kedvencek és kikapcsolt gyakorlatok;
+- napi tervek és folyamatban lévő edzések állapota;
+- teljesítések, mozgásidők, XP, szintek, jelvények és kihívások;
+- a regenerációk és a mozgássorozat védelmének adatai;
+- a kiválasztott személyes relaxációs hangfájl helyi másolata.
+
+### Mentési és visszaállítási lehetőségek
+
+A Profil oldalon két külön műveletcsoport található:
+
+1. **Gyakorlattár importálása/exportálása (JSON):** a gyakorlatok és kapcsolódó állapotok átadása. Importáláskor választható az újak hozzáadása, az összefésülés vagy a saját lista cseréje.
+2. **Teljes adatmentés és visszaállítás (JSON):** profil, kedvencek, előzmények, eredmények, saját gyakorlatok és személyes javítások mentése.
+
+A teljes mentés haladási adatai **helyi kulccsal hitelesítettek**. Az exportált fájl utólagos módosítása érvénytelenné teheti a visszaállítást. A hitelesítő kulcs az adott alkalmazástelepítéshez kötődhet; **telefoncsere vagy alkalmazáseltávolítás előtt** érdemes a mentési és visszaállítási lehetőségeket gondosan ellenőrizni. A személyes hangfájl nem feltétlenül állítható vissza pusztán a JSON-adatmentésből, ezért azt külön is meg kell őrizni.
+
+A rendszer verziózott adatstruktúrát és migrációs lépéseket használ, és törekszik arra, hogy frissítéskor a meglévő személyes beállítások, korrekciók és edzéstörténet megmaradjanak. Az alkalmazás frissítéséhez ugyanaz az Android-alkalmazásazonosító és megfelelő aláírás szükséges.
+
+## 12. Technikai felépítés
+
+A Mozdulj! **.NET 10-re és .NET MAUI-ra épülő, elsősorban Androidra célzott natív alkalmazás**. A feladatokat három nagyobb komponens választja szét:
+
+| Komponens | Felelősség |
+| --- | --- |
+| **Mozdulj.Core** | Gyakorlatadatok, edzéstervezés, anatómiai és sorrendi szabályok, aktivitás, jutalmak, kihívások, adatellenőrzés és migráció. |
+| **Mozdulj.Maui** | Androidos felhasználói felület, képernyők, navigáció, helyi tárolás, hangok, értesítések és a beágyazott 3D nézet. |
+| **Mozdulj.Tests** | Az alapvető üzleti és adatkezelési szabályok forrásoldali ellenőrzései. |
+
+A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felületet használja, amelyet a MAUI-s **WebView** jelenít meg. A gyakorlatok és beállítások tárolásának alapja a **JSON**. A nagy gyakorlattár megjelenítését fokozatos listaépítés és a már betöltött adatok újrahasznosítása segíti.
+
+**Projektadatok:**
+
+| Tulajdonság | Érték |
+| --- | --- |
+| Alkalmazás neve | Mozdulj! |
+| Megjelenített verzió | 0.26.0 |
+| Android alkalmazásazonosító | `hu.mozdulj.preview` |
+| Célkeretrendszer | `net10.0-android` |
+| Minimum Android API | 24 (Android 7.0) |
+| Felhasználói felület | Magyar |
+| Elsődleges működés | Offline, helyi adattárolással |
+
+### Fejlesztés és futtatás
+
+A forrás Visual Studióban, telepített **.NET 10 SDK**, **.NET MAUI** és **Android workload** mellett nyitható meg és fordítható. Az Android-alkalmazáshoz megfelelő Android SDK, emulátor vagy csatlakoztatott készülék szükséges.
+
+A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A tényleges Android-fordítást, az eszközön történő működést, a hangot, az értesítéseket, a húzásos rendezést és a 3D megjelenítést készüléken is ellenőrizni kell.
+
+## 13. Fontos használati tudnivalók és korlátok
+
+- A program a **rendszeres, fokozatos mozgás** támogatására készült, nem orvosi diagnosztikai vagy rehabilitációs eszköz.
+- A gyakorlatok biztonságos végrehajtásához a szöveges útmutató és az egyéni terhelhetőség az elsődleges; a 3D nézet **szemléltetés**, nem szakmailag hitelesített mozgásrögzítés.
+- Szokatlan fájdalom, szédülés vagy bizonytalanság esetén a gyakorlatot abba kell hagyni, és szükség esetén szakember tanácsát kell kérni.
+- A választott nehézség, időkeret és eszközök miatt előfordulhat, hogy a rendszer nem tud megfelelően összeillő gyakorlatsort előállítani. Ilyenkor a profilbeállításokat érdemes módosítani.
+- A heti cél, az aktív napok és a streak **nem azonos fogalmak**: egy végigvitt regeneráció megvédheti a sorozatot, de nem helyettesíti az aktív edzésnapot.
+- A személyes adatok helyi tárolása miatt a készülék elvesztése vagy az alkalmazás eltávolítása adatvesztéssel járhat, ha nincs használható mentés.
 
 ---
 
-# Mozdulj! v0.25.4 – legújabb módosítások
-
-A v0.25.3.1 frissített teljes forráskódja, tisztább relaxációval, új hanganyaggal és lezáráshoz kötött aktív napokkal. Részletek: `VALTOZASOK_v025_4.txt`.
-
----
-
-# Mozdulj! v0.23 — gyakorlattár, 3D fázisok és felületjavítás
-
-Teljes Android / .NET MAUI **forrásprojekt**, nem telepíthető APK.
-
-## V0.23 újdonságai
-
-- **Gyakorlattár javítása:** a teljes képernyőt kitakaró szűrőréteg helyett csak a tényleges szűrősáv méretére korlátozott overlay. A 294 gyakorlat kártyái így ismét láthatók; a 12 elemes virtualizáció megmarad.
-- **3D szerkesztő:** összecsukható fej/törzs, kar, láb, eszköz/szalag és kamera blokkok. Új fázis beszúrása, átnevezése, törlése, összesen legfeljebb 6 fázis. Különálló, menthető pózok.
-- **Gyakorlatsorok:** kompakt, másodlagos megnyitó-, leírás- és cseregombok; a kötelező gyakorlatok funkciója külön magyarázatot kapott, a Csere mellől eltűnt a redundant leírás.
-- A **294 gyakorlat és a 3D modellek**, a 97-jelöltes jógaanyag, a korábbi mentések és összes v0.22-es funkció megmaradt.
-
-Részletek: `docs/VALTOZASOK_v23.md`.
-
-### Ellenőrzés
-
-```powershell
-python tools/check_v23_release.py
-python tools/test_v23_editor_ui.py
-node tools/test_v22_yoga_geometry.js
-node tools/test_v20_collision.js
-dotnet run --project Mozdulj.Tests
-dotnet build Mozdulj.Maui/Mozdulj.Maui.csproj -f net10.0-android
-```
-
-A Python és Node ellenőrzéseket futtatjuk, az Androidhoz szükséges natív .NET SDK nincs a környezetben. A v0.23 azonosítója továbbra is `hu.mozdulj.preview`, az Android verziókód **23**; a korábbi aláírókulcs szükséges a frissítéshez.
-
----
-
-# Mozdulj! v0.22 — teljes jóga-bővítés és felületfejlesztések
-
-Teljes Android/.NET MAUI **forrásprojekt**, nem telepíthető APK.
-
-## A katalógus most 294 gyakorlatot tartalmaz
-
-- A v0.21 eredeti 158 gyakorlat megmaradt.
-- A korábban készített v0.22-es 39 új jógagyakorlat megmaradt.
-- A két alkalommal feltöltött `Mozdulj_Joga_v022_jeloltcsomag` ZIP **mind a 97
-  jelöltje** bekerült, egyenként Rig3D megjelenítéssel; **212 új 3D mozgásfázis**.
-- A meglevő mozgástípusokat (nyújtás, erősítés, mobilizálás, egyensúly,
-  relaxáció, átmozgatás, légzőgyakorlat) használjuk, új jógakategória nélkül.
-- A csatolt csomag 26 régi gyakorlatra adott javaslata külön vizsgálati
-  anyagként megvan. Nem cseréltünk le pontatlan névegyezés alapján régi modellt.
-
-## 3D geometriai javítás
-
-Az importált 97 Rig3D modell 52 fázisában 87 elérhetetlen csukló-/bokacélpont
-volt. A geometriai IK-modellel egyező, ténylegesen elérhető végpontokra
-alakítottuk. A csontszegmensek hossza mind az 569 teljes katalógusbeli
-fázisban változatlan. Az új modellek 19 fázisánál ütközés gyanúja maradt:
-ezekről külön audit készül, nem tekinthetők szakmailag jóváhagyottnak.
-
-## A v0.22 egyéb újításai
-
-- Az első gyakorlat előtt 5 másodperc felkészülési visszaszámlálás.
-- 3–2–1: három rövid, erősebb hang; 0: eltérő záróhang.
-- A havi napló mutatja, hányszor teljesült az adott heti aktívnap-cél.
-- Felül elhelyezett Android-főmenü, alatta az aktuális oldal navigációja.
-- Gyakorlattár: kompakt **Ki-/bekapcsolás → Kedvenc → Módosítás** műveletek.
-  A kártya megérintése nyitja meg a részleteket, nincs „Megnyitás” gomb.
-- A Mind / Alap / Saját gombok a szűrőpanelbe költöztek. A panel lefelé
-  görgetve elbújik, felfelé görgetve visszajön, a kiválasztott szűrők megmaradnak.
-- Megmaradt az összes v0.21-es időzítőhang, relaxáció, streak-értesítő,
-  beállításmentési döntés, heti cél, XP és adatintegritás-védelem.
-
-## Fejlesztői ellenőrzés
-
-```powershell
-python tools/check_v22_full.py
-node tools/test_v22_yoga_geometry.js
-node tools/test_v20_collision.js
-dotnet run --project Mozdulj.Tests
-dotnet build Mozdulj.Maui/Mozdulj.Maui.csproj -f net10.0-android
-```
-
-A Python/Node ellenőrzések itt lefutottak. **.NET és Android SDK nincs
-telepítve** ebben a környezetben, ezért a natív build és eszközös
-megjelenítés nincs ellenőrizve. Az új 3D ábrák szemléltető jellegűek.
-
-## Verzió és frissítés
-
-- Android app: `0.22.0` (versionCode: `22`)
-- Változatlan alkalmazásazonosító: `hu.mozdulj.preview`
-- A katalógusverzió: `13`; régi gyakorlat-azonosítókat nem változtattunk.
-- APK-frissítésnél azonos aláírókulcs használata szükséges az adatmegőrzéshez.
-- Build: `build/Build-Samsung-A56-Release.ps1`.
-
-## Dokumentáció
-
-- `docs/JOGA_97_TELJES_ATVEZETES_v22.md`
-- `docs/JOGA_97_GYAKORLATJEGYZEK_v22.md`
-- `docs/JOGA_3D_GEOMETRIA_AUDIT_v22.json`
-- `docs/JOGA_97_INTEGRACIO_v22.json`
-- `docs/joga_jeloltforras/` — eredeti csatolt gyakorlattár és audit
-- `docs/JOGA_BOVITES_v22.md` — a korábbi 39 jelölt
+**Mozdulj! — néhány perc tudatos mozgás, a saját tempódban.**
