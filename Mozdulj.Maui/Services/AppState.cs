@@ -650,7 +650,7 @@ public sealed class AppState
     public async Task<byte[]> ExportUserBackupAsync() =>
         LocalBackupCodec.Export(Data,await GetBackupKeyAsync());
 
-    public async Task RestoreUserBackupAsync(Stream stream)
+    public async Task RestoreUserBackupAsync(Stream stream, bool recoveryAfterReinstall = false)
     {
         using var mem=new MemoryStream();
         var bytes=new byte[81920];int n;
@@ -660,9 +660,13 @@ public sealed class AppState
                 throw new InvalidDataException("A mentés túllépi a méretkorlátot.");
             await mem.WriteAsync(bytes.AsMemory(0,n));
         }
-        var restored=LocalBackupCodec.Import(System.Text.Encoding.UTF8.GetString(mem.ToArray()),
-            _baseCatalog,await GetBackupKeyAsync());
-        if (restored.Preferences.UserId != Data.Preferences.UserId)
+        var json = System.Text.Encoding.UTF8.GetString(mem.ToArray());
+        // Never silently skip the per-installation HMAC. A lost key after an
+        // uninstall requires explicit emergency recovery confirmation in the UI.
+        var restored = recoveryAfterReinstall
+            ? LocalBackupCodec.RecoverAfterReinstall(json, _baseCatalog)
+            : LocalBackupCodec.Import(json, _baseCatalog, await GetBackupKeyAsync());
+        if (!recoveryAfterReinstall && restored.Preferences.UserId != Data.Preferences.UserId)
             throw new InvalidDataException("Más profilhoz tartozó mentés nem írhatja felül a haladást.");
         // A signed older backup cannot undo progress or re-award milestones.
         // Keep all existing completion IDs and dates when merging the backup.
