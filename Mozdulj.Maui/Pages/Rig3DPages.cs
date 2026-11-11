@@ -83,32 +83,106 @@ public sealed class Rig3DEditorPage : ContentPage
 
 public sealed class Rig3DViewerPage : ContentPage
 {
-    public Rig3DViewerPage(MotionPose source,string? exerciseName=null)
+    private readonly MotionPose _initialPose;
+    private readonly Func<MotionPose>? _currentPose;
+    private readonly string? _exerciseName;
+    private readonly WebView _web;
+    private readonly Label _info;
+    private bool _webReady;
+
+    /// <param name="edit3d">
+    /// Only provided when navigated from the exercise library. All other entry
+    /// points are read-only, including workouts and workout previews.
+    /// </param>
+    /// <param name="currentPose">
+    /// Reloads the saved model after returning from the editor.
+    /// </param>
+    public Rig3DViewerPage(MotionPose source, string? exerciseName = null,
+        Func<Task>? edit3d = null, Func<MotionPose>? currentPose = null)
     {
-        UI.Setup(this,"3D mozgásábra");
-        var web=new WebView{Source="rig3d/index.html"};
-        web.Navigated+=async(_,e)=>
+        _initialPose = source;
+        _currentPose = currentPose;
+        _exerciseName = exerciseName;
+        UI.Setup(this, "3D mozgásábra");
+
+        _web = new WebView { Source = "rig3d/index.html" };
+        _web.Navigated += async (_, e) =>
         {
-            if(e.Result!=WebNavigationResult.Success)return;
-            if(source.Rig3D is not null)
+            if (e.Result != WebNavigationResult.Success)
             {
-                var b64=Convert.ToBase64String(Encoding.UTF8.GetBytes(
-                    JsonSerializer.Serialize(Rig3DMovement.ForDisplay(source.Rig3D),CatalogCodec.JsonOptions)));
-                await web.EvaluateJavaScriptAsync("window.loadRigBase64('"+b64+"')");
+                _info.Text = "A helyi 3D megjelenítő nem tölthető be.";
+                return;
+            }
+
+            _webReady = true;
+            await ReloadPoseAsync();
+        };
+
+        _info = UI.Label("", 12, color: UI.Muted);
+        var footer = new VerticalStackLayout
+        {
+            Spacing = 8,
+            Padding = new Thickness(13, 10),
+            BackgroundColor = Colors.White
+        };
+        footer.Children.Add(_info);
+
+        if (edit3d is not null)
+        {
+            var edit = UI.Button("✎ Szerkesztés", false);
+            edit.Clicked += async (_, _) => await edit3d();
+            footer.Children.Add(edit);
+        }
+
+        var layout = new Grid
+        {
+            RowDefinitions =
+            {
+                new RowDefinition { Height = GridLength.Star },
+                new RowDefinition { Height = GridLength.Auto }
+            }
+        };
+        layout.Add(_web, 0, 0);
+        layout.Add(footer, 0, 1);
+        Content = layout;
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        // The editor saves into AppState, not the original Pose object.
+        // Refresh after the editor closes so the viewer cannot show a stale pose.
+        if (_webReady && _currentPose is not null)
+            _ = ReloadPoseAsync();
+    }
+
+    private async Task ReloadPoseAsync()
+    {
+        if (!_webReady) return;
+        try
+        {
+            var pose = _currentPose?.Invoke() ?? _initialPose;
+            if (pose.Rig3D is not null)
+            {
+                var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                    JsonSerializer.Serialize(Rig3DMovement.ForDisplay(pose.Rig3D), CatalogCodec.JsonOptions)));
+                await _web.EvaluateJavaScriptAsync("window.loadRigBase64('" + b64 + "')");
             }
             else
             {
-                var preset=Rig3DPresetMapper.From(source.TemplateId,exerciseName);
-                await web.EvaluateJavaScriptAsync("(function(){const s=document.getElementById('preset');s.value='"+preset+"';s.dispatchEvent(new Event('change'))})()");
+                var preset = Rig3DPresetMapper.From(pose.TemplateId, _exerciseName);
+                await _web.EvaluateJavaScriptAsync("(function(){const s=document.getElementById('preset');s.value='"
+                    + preset + "';s.dispatchEvent(new Event('change'))})()");
             }
-            await web.EvaluateJavaScriptAsync("window.setReadOnlyMode()");
-        };
-        var info=UI.Label(source.Rig3D?.RequiresFineJoints == true
-            ? "A finom kéz- vagy lábmozdulatot a 3D modell még nem tudja pontosan megmutatni. A leírást kövesd."
-            : "A 3D mozgásábra szemléltető jellegű, szakmai ellenőrzést igényel.",12,color:UI.Muted);
-        Content=new Grid{RowDefinitions={new RowDefinition{Height=GridLength.Star},new RowDefinition{Height=GridLength.Auto}}};
-        ((Grid)Content).Add(web,0,0);
-        ((Grid)Content).Add(new Border{Padding=new Thickness(13,10),BackgroundColor=Colors.White,Content=info},0,1);
+            await _web.EvaluateJavaScriptAsync("window.setReadOnlyMode()");
+            _info.Text = pose.Rig3D?.RequiresFineJoints == true
+                ? "A finom kéz- vagy lábmozdulatot a 3D modell még nem tudja pontosan megmutatni. A leírást kövesd."
+                : "A 3D mozgásábra szemléltető jellegű, szakmai ellenőrzést igényel.";
+        }
+        catch (Exception ex)
+        {
+            _info.Text = "A 3D ábra frissítése sikertelen: " + ex.Message;
+        }
     }
 }
 
