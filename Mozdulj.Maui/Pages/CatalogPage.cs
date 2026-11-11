@@ -388,7 +388,7 @@ public sealed class CatalogPage : ContentPage
                     EnsureLibrarySnapshot();
                     RefreshMatches(resetScroll: false);
                 }
-                catch(Exception ex){await DisplayAlert("Nem sikerült",ex.Message,"Rendben");}
+                catch(Exception ex){await DisplayAlertAsync("Nem sikerült",ex.Message,"Rendben");}
             };
             actions.Children.Add(toggle);
         }
@@ -398,7 +398,7 @@ public sealed class CatalogPage : ContentPage
         favorite.Clicked+=async (_,_)=>
         {
             try{await _state.ToggleFavoriteAsync(exercise.Id);RefreshMatches(resetScroll: false);}
-            catch(Exception ex){await DisplayAlert("Nem sikerült",ex.Message,"Rendben");}
+            catch(Exception ex){await DisplayAlertAsync("Nem sikerült",ex.Message,"Rendben");}
         };
         actions.Children.Add(favorite);
         // 3. Edit, or built-in text/3D illustration correction.
@@ -420,10 +420,10 @@ public sealed class CatalogPage : ContentPage
             var archive=SmallAction("⋯","Saját gyakorlat archiválása");
             archive.Clicked+=async (_,_)=>
             {
-                if(!await DisplayAlert("Saját gyakorlat archiválása?", "A korábbi teljesítések megmaradnak.", "Archiválás", "Mégse"))return;
+                if(!await DisplayAlertAsync("Saját gyakorlat archiválása?", "A korábbi teljesítések megmaradnak.", "Archiválás", "Mégse"))return;
                 try {await _state.ArchiveCustomExerciseAsync(exercise.Id);
                     EnsureLibrarySnapshot();RefreshMatches(resetScroll: false);}
-                catch(Exception ex){await DisplayAlert("Nem sikerült",ex.Message,"Rendben");}
+                catch(Exception ex){await DisplayAlertAsync("Nem sikerült",ex.Message,"Rendben");}
             };
             actions.Children.Add(archive);
         }

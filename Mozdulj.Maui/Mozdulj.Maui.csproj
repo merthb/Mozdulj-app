@@ -16,6 +16,7 @@
     <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
     <ProjectReference Include="..\Mozdulj.Core\Mozdulj.Core.csproj" />
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" ForegroundScale="0.70" Color="#6B4EC8" />
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#F8F6FC" BaseSize="128,128" />

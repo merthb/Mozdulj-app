@@ -61,7 +61,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             {
                 var exercise = _state.FindExercise(it.ExerciseId);
                 if (exercise != null) await Navigation.PushAsync(new ExerciseDetailPage(_state, exercise));
-                else await DisplayAlert("Korábbi gyakorlat", "Ez a gyakorlat nincs az aktuális katalógusban.", "Rendben");
+                else await DisplayAlertAsync("Korábbi gyakorlat", "Ez a gyakorlat nincs az aktuális katalógusban.", "Rendben");
             }
             string phase;
             if (_workout.Kind == "recovery") phase = "recovery";
@@ -147,7 +147,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             {
                 if (_workout.Kind == "recovery" ? !RecoveryRoutine.IsValid(_workout) : !WorkoutCoherence.IsReadyToStart(_state.Catalog,_workout))
                 {
-                    await DisplayAlert("Nem megfelelő gyakorlatsor",
+                    await DisplayAlertAsync("Nem megfelelő gyakorlatsor",
                         "A gyakorlatsor ellenőrzése nem sikerült. A program nem indítható el.","Rendben");
                     return;
                 }
@@ -220,7 +220,7 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Nem rendezhető át", ex.Message, "Rendben");
+            await DisplayAlertAsync("Nem rendezhető át", ex.Message, "Rendben");
         }
         finally
         {

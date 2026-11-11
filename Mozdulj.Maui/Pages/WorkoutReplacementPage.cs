@@ -49,7 +49,7 @@ public sealed class WorkoutReplacementPage : ContentPage
             var choose = UI.Button("Erre cserélem");
             choose.Clicked += async (_, _) =>
             {
-                var confirm = await DisplayAlert("Gyakorlatcsere",
+                var confirm = await DisplayAlertAsync("Gyakorlatcsere",
                     $"A(z) {_item.Name} helyett a(z) {candidate.Name} gyakorlat kerül a programba. Folytatod?",
                     "Csere", "Mégse");
                 if (!confirm) return;
@@ -58,7 +58,7 @@ public sealed class WorkoutReplacementPage : ContentPage
                     await _state.ReplaceWorkoutItemAsync(_workout, _item, candidate.Id);
                     await Navigation.PopAsync();
                 }
-                catch (Exception ex) { await DisplayAlert("Nem sikerült a csere", ex.Message, "Rendben"); }
+                catch (Exception ex) { await DisplayAlertAsync("Nem sikerült a csere", ex.Message, "Rendben"); }
             };
             _content.Children.Add(UI.Card(
                 UI.Label(candidate.Name, 17, true),
@@ -75,11 +75,11 @@ public sealed class WorkoutReplacementPage : ContentPage
             omit.IsEnabled=remaining>0;
             omit.Clicked+=async (_,_)=>
             {
-                if(!await DisplayAlert("Gyakorlat kihagyása?",
+                if(!await DisplayAlertAsync("Gyakorlat kihagyása?",
                     "A kihagyás nem jár XP-vel; az oldalpárok együtt kerülnek ki, ha szükséges. A bemelegítés és levezetés összhangja megmarad.",
                     "Kihagyás","Mégse"))return;
                 try{await _state.RemoveWorkoutItemAsync(_workout,_item);await Navigation.PopAsync();}
-                catch(Exception ex){await DisplayAlert("Nem hagyható ki",ex.Message,"Rendben");}
+                catch(Exception ex){await DisplayAlertAsync("Nem hagyható ki",ex.Message,"Rendben");}
             };
             _content.Children.Add(omit);
         }

@@ -31,6 +31,9 @@ public sealed class WorkoutPlayerPage : ContentPage
     {
         _state=state;_workout=workout;
         UI.Setup(this,"Gyakorlás");
+        _timer=Dispatcher.CreateTimer();
+        _timer.Interval=TimeSpan.FromSeconds(1);
+        _timer.Tick+=async (_,_)=>await OnTickAsync();
         _index=Math.Clamp(workout.CurrentIndex,0,Math.Max(0,workout.Items.Count-1));
         if(workout.Status=="planned")
         {
@@ -69,7 +72,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         var stop=UI.Button("Kilépés és mentés",false);
         stop.Clicked+=async (_,_)=>
         {
-            if(await DisplayAlert("Leállítás","Megőrizzük az aktuális állapotot, később folytathatod.","Kilépés","Maradok"))
+            if(await DisplayAlertAsync("Leállítás","Megőrizzük az aktuális állapotot, később folytathatod.","Kilépés","Maradok"))
             {
                 _paused=true;_timer.Stop();_audio.Stop();await _state.SaveAsync();await Navigation.PopAsync();
             }
@@ -81,9 +84,6 @@ public sealed class WorkoutPlayerPage : ContentPage
         content.Children.Add(skip);
         content.Children.Add(stop);
         Content=new ScrollView { Content=content };
-        _timer=Dispatcher.CreateTimer();
-        _timer.Interval=TimeSpan.FromSeconds(1);
-        _timer.Tick+=async (_,_)=>await OnTickAsync();
         if(workout.Items.Count>0 && workout.RemainingSeconds<=0 && workout.PlaybackPhase=="exercise" && workout.Items[_index].Measure=="time")
             workout.RemainingSeconds=workout.Items[_index].TargetSeconds??30;
         Refresh();
@@ -99,7 +99,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             catch (Exception ex)
             {
                 _paused=true;
-                await DisplayAlert("Mentési hiba",ex.Message,"Rendben");
+                await DisplayAlertAsync("Mentési hiba",ex.Message,"Rendben");
                 return;
             }
             _paused=false;

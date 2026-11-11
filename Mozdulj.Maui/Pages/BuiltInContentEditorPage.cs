@@ -59,11 +59,11 @@ public sealed class BuiltInContentEditorPage : ContentPage
             var reset=UI.Button("Eredeti leírás és ábra visszaállítása",false);
             reset.Clicked+=async (_,_)=>
             {
-                if(!await DisplayAlert("Eredeti tartalom visszaállítása?",
+                if(!await DisplayAlertAsync("Eredeti tartalom visszaállítása?",
                     "A helyi korrektúra törlődik. A beépített gyakorlat eredeti szövege és ábrája visszaáll.",
                     "Visszaállítás","Mégse"))return;
                 try{await _state.ResetBuiltInContentAsync(exerciseId);await Navigation.PopModalAsync();}
-                catch(Exception ex){await DisplayAlert("Nem sikerült",ex.Message,"Rendben");}
+                catch(Exception ex){await DisplayAlertAsync("Nem sikerült",ex.Message,"Rendben");}
             };
             body.Children.Add(reset);
         }
@@ -112,7 +112,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
             await _state.SaveBuiltInContentAsync(_draft);
             await Navigation.PopModalAsync();
         }
-        catch(Exception ex){await DisplayAlert("Nem menthető",ex.Message,"Rendben");}
+        catch(Exception ex){await DisplayAlertAsync("Nem menthető",ex.Message,"Rendben");}
         finally{_save.IsEnabled=true;_saving=false;}
     }
 }

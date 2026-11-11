@@ -193,7 +193,7 @@ public sealed class ExerciseEditorPage : ContentPage
              group is not (RegionClassification.Upper or RegionClassification.Lower))).ToList();
         if (missingGroups.Count > 0)
         {
-            await DisplayAlert("Testtáj besorolása szükséges",
+            await DisplayAlertAsync("Testtáj besorolása szükséges",
                 "Az új testtájaknál válassz Felsőtest vagy Alsótest csoportot: " + string.Join(", ", missingGroups),
                 "Rendben");
             return;
@@ -202,13 +202,13 @@ public sealed class ExerciseEditorPage : ContentPage
         {
             var validation=ExerciseLibraryRules.ValidateForActivation(_draft);
             if(!validation.IsValid)
-            {await DisplayAlert("Még hiányoznak adatok",string.Join("\n",validation.Errors),"Rendben");return;}
+            {await DisplayAlertAsync("Még hiányoznak adatok",string.Join("\n",validation.Errors),"Rendben");return;}
         }
         try
         {
             await _state.SaveCustomExerciseAsync(_draft,status);
             await Navigation.PopModalAsync();
         }
-        catch(Exception ex){await DisplayAlert("Mentési hiba",ex.Message,"Rendben");}
+        catch(Exception ex){await DisplayAlertAsync("Mentési hiba",ex.Message,"Rendben");}
     }
 }

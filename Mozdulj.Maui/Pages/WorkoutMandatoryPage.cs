@@ -55,16 +55,16 @@ public sealed class WorkoutMandatoryPage : ContentPage
         {
             if(_workout.Status!="planned")
             {
-                await DisplayAlert("Zárolva","Csak a Kezdés előtt szerkeszthető a terv.","Rendben");
+                await DisplayAlertAsync("Zárolva","Csak a Kezdés előtt szerkeszthető a terv.","Rendben");
                 return;
             }
-            if(_selected.Count==0) {await DisplayAlert("Nincs kijelölés","Legalább egy kötelező gyakorlatot jelölj meg.","Rendben");return;}
+            if(_selected.Count==0) {await DisplayAlertAsync("Nincs kijelölés","Legalább egy kötelező gyakorlatot jelölj meg.","Rendben");return;}
             try
             {
                 await _state.RecomposeWorkoutWithRequiredAsync(_workout,_selected.ToList());
                 await Navigation.PopAsync();
             }
-            catch(Exception ex) {await DisplayAlert("Nem illeszthető össze",ex.Message,"Rendben");}
+            catch(Exception ex) {await DisplayAlertAsync("Nem illeszthető össze",ex.Message,"Rendben");}
         };
         _root.Children.Add(apply);
         DrawOptions();
@@ -89,7 +89,7 @@ public sealed class WorkoutMandatoryPage : ContentPage
                     if(_selected.Count>=_state.MaximumMandatoryExercisesFor(_workout))
                     {
                         _inCheck=true;box.IsChecked=false;_inCheck=false;
-                        await DisplayAlert("Elérted a korlátot",$"A választott {_state.PreferencesForWorkout(_workout).WorkoutMinutes} perchez legfeljebb {_state.MaximumMandatoryExercisesFor(_workout)} kötelező gyakorlat adható meg.","Rendben");
+                        await DisplayAlertAsync("Elérted a korlátot",$"A választott {_state.PreferencesForWorkout(_workout).WorkoutMinutes} perchez legfeljebb {_state.MaximumMandatoryExercisesFor(_workout)} kötelező gyakorlat adható meg.","Rendben");
                         return;
                     }
                     _selected.Add(exercise.Id);

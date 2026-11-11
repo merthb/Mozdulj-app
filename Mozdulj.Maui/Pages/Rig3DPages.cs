@@ -89,7 +89,7 @@ public sealed class Rig3DEditorPage : ContentPage
             await _onSavedAsync(_working);
             await Navigation.PopAsync();
         }
-        catch(Exception e){await DisplayAlert("Mentés sikertelen",e.Message,"Rendben");}
+        catch(Exception e){await DisplayAlertAsync("Mentés sikertelen",e.Message,"Rendben");}
         finally{_saving=false;_save.IsEnabled=_loaded;}
     }
 }
@@ -119,6 +119,7 @@ public sealed class Rig3DViewerPage : ContentPage
         UI.Setup(this, "3D mozgásábra");
 
         _web = new WebView { Source = "rig3d/index.html" };
+        _info = UI.Label("", 12, color: UI.Muted);
         _web.Navigated += async (_, e) =>
         {
             if (e.Result != WebNavigationResult.Success)
@@ -131,7 +132,6 @@ public sealed class Rig3DViewerPage : ContentPage
             await ReloadPoseAsync();
         };
 
-        _info = UI.Label("", 12, color: UI.Muted);
         var footer = new VerticalStackLayout
         {
             Spacing = 8,
