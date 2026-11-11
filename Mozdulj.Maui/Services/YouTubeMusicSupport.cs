@@ -1,4 +1,3 @@
-using Android.App;
 using Android.Content;
 
 namespace Mozdulj.Maui.Services;
@@ -16,7 +15,7 @@ public static class YouTubeMusicSupport
     {
         try
         {
-            return Application.Context.PackageManager?
+            return global::Android.App.Application.Context.PackageManager?
                 .GetLaunchIntentForPackage(PackageName) is not null;
         }
         catch
@@ -39,7 +38,7 @@ public static class YouTubeMusicSupport
         var intent = new Intent(Intent.ActionView, Android.Net.Uri.Parse(playlistUrl.AbsoluteUri));
         intent.SetPackage(PackageName);
         intent.AddFlags(ActivityFlags.NewTask);
-        Application.Context.StartActivity(intent);
+        global::Android.App.Application.Context.StartActivity(intent);
         return Task.CompletedTask;
     }
 }
