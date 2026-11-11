@@ -2,6 +2,7 @@ using Mozdulj.Core;
 using Mozdulj.Maui.Services;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Devices;
+using System.Diagnostics;
 
 namespace Mozdulj.Maui.Pages;
 
@@ -30,6 +31,7 @@ public sealed class WorkoutPlayerPage : ContentPage
     private bool _leaving;
     private Window? _lifecycleWindow;
     private bool _interruptedByBackground;
+    private long _recoveryStartTicks;
 
     public WorkoutPlayerPage(AppState state,Workout workout)
     {
@@ -120,6 +122,8 @@ public sealed class WorkoutPlayerPage : ContentPage
             _paused=false;
             _pause.Text="Szünet";
             DeviceDisplay.Current.KeepScreenOn=true;
+            if (_workout.Kind == "recovery")
+                _recoveryStartTicks = Stopwatch.GetTimestamp();
             _timer.Start();
             if(_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
                _state.Preferences.RelaxationMusicSource!="youtube_music")
@@ -140,6 +144,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         _paused=true;
         _timer.Stop();
         _audio.Stop();
+        _recoveryStartTicks = 0;
         DeviceDisplay.Current.KeepScreenOn=false;
         // Android back navigation or an unexpected page disappearance must not
         // leave an interrupted 10-minute recovery available for continuation.
@@ -158,6 +163,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         _paused = true;
         _timer.Stop();
         _audio.Stop();
+        _recoveryStartTicks = 0;
         DeviceDisplay.Current.KeepScreenOn = false;
         RecoveryRoutine.Restart(_workout);
         _ = _state.SaveAsync();
@@ -217,7 +223,12 @@ public sealed class WorkoutPlayerPage : ContentPage
         if(!preparing && _workout.PlaybackPhase != "transition") _workout.Items[_index].ActiveSeconds++;
         if(preparing || _workout.PlaybackPhase=="transition" || _workout.Items[_index].Measure=="time")
         {
-            _workout.RemainingSeconds=Math.Max(0,_workout.RemainingSeconds-1);
+            // The uninterrupted recovery runs for ten actual minutes, even if
+            // a UI timer callback arrives a little late.
+            _workout.RemainingSeconds = _workout.Kind == "recovery" && _recoveryStartTicks != 0
+                ? Math.Max(0, RecoveryRoutine.TotalSeconds -
+                    (int)Stopwatch.GetElapsedTime(_recoveryStartTicks).TotalSeconds)
+                : Math.Max(0, _workout.RemainingSeconds - 1);
             if(_state.Preferences.CountdownSoundsEnabled)
                 _audio.Countdown(_workout.RemainingSeconds);
             if(_workout.RemainingSeconds==0)
