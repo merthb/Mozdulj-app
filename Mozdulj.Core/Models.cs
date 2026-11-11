@@ -113,11 +113,22 @@ public sealed class UserPreferences
     public bool CountdownSoundsEnabled { get; set; } = true;
     public bool RelaxationMusicEnabled { get; set; } = true;
     /// <summary>App-private audio file chosen from Android document picker. Empty uses bundled music.</summary>
-    public string RelaxationAudioFileName { get; set; } = "";
+    public string RelaxationAudioFileName { get; set; } = ""; // Legacy single-file choice.
+    /// <summary>Ordered, device-local relaxation tracks. Repeats until the 10-minute timer ends.</summary>
+    public List<RelaxationTrack> RelaxationPlaylist { get; set; } = [];
+    /// <summary>local or youtube_music. YouTube Music runs in its own installed app.</summary>
+    public string RelaxationMusicSource { get; set; } = "local";
+    public string RelaxationYouTubeMusicPlaylistUrl { get; set; } = "";
     public List<string> FocusRegions { get; set; } = ["hát", "csípő", "törzs"];
     public List<string> PreferredCategories { get; set; } = ["mobilizálás", "nyújtás", "erősítés"];
     public List<string> AvailableEquipment { get; set; } = [];
     public List<string> ExcludedExercises { get; set; } = [];
+}
+
+public sealed class RelaxationTrack
+{
+    public string FileName { get; set; } = "";
+    public string DisplayName { get; set; } = "";
 }
 
 public sealed class LocalData
