@@ -7,6 +7,9 @@ public sealed class WorkoutPreviewPage : ContentPage
     private readonly AppState _state;
     private readonly Workout _workout;
     private readonly VerticalStackLayout _content = UI.Stack();
+    private readonly List<ReorderCard> _reorderCards = new();
+    private bool _reorderBusy;
+    private sealed record ReorderCard(string Id, string Phase, Border Card);
     public WorkoutPreviewPage(AppState state, Workout workout)
     {
         _state = state; _workout = workout;
@@ -16,6 +19,7 @@ public sealed class WorkoutPreviewPage : ContentPage
     protected override void OnAppearing() { base.OnAppearing(); Draw(); }
     private void Draw()
     {
+        _reorderCards.Clear();
         _content.Children.Clear();
         _content.Children.Add(UI.Label(_workout.Title, 25, true));
         _content.Children.Add(UI.Label(_workout.Kind == "recovery" ? "10 perc · folyamatos relaxáció" : $"{_workout.Items.Count} feladat · {(_workout.TargetMinutes>0?_workout.TargetMinutes:_state.Preferences.WorkoutMinutes)} perc cél · kb. {Math.Ceiling(_workout.EstimatedSeconds/60.0)} perc az átvezetésekkel", 14, color:UI.Muted));
@@ -34,7 +38,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             if(!string.IsNullOrWhiteSpace(_workout.PlanningNote))
                 _content.Children.Add(UI.Card(UI.Label(_workout.PlanningNote,13,color:UI.Muted)));
             _content.Children.Add(UI.Label(_workout.Status == "planned"
-                ? "A leíráshoz koppints a gyakorlat nevére. Átrendezéshez tartsd nyomva a bal oldali, háromvonalas fogantyút, majd húzd a gyakorlatot a kívánt helyre ugyanabban a blokkban."
+                ? "A leíráshoz koppints a gyakorlat nevére. Átrendezéshez fogd meg a bal oldali háromvonalas ikont, és húzd a gyakorlatot a kívánt helyre ugyanabban a blokkban."
                 : "A gyakorlat nevére koppintva megnyithatod a részleteket.",
                 13, color:UI.Muted));
             if (_workout.Status=="planned")
@@ -82,6 +86,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             var textColumn = canReorder ? 1 : 0;
             var actionColumn = textColumn + 1;
 
+            Border? dragHandle = null;
             if (canReorder)
             {
                 // Three real bars rather than a font glyph: consistent on Android.
@@ -117,10 +122,14 @@ public sealed class WorkoutPreviewPage : ContentPage
                     { CornerRadius = new CornerRadius(10) }
                 };
                 SemanticProperties.SetDescription(handle, $"{it.Name}: átrendezés");
-                SemanticProperties.SetHint(handle, "Tartsd nyomva és húzd egy másik gyakorlatra ugyanebben a blokkban.");
+                SemanticProperties.SetHint(handle, "Fogd meg, és húzd egy másik gyakorlatra ugyanebben a blokkban.");
+                dragHandle = handle;
+#if !ANDROID
+                // Other platforms can keep the standard MAUI drag-and-drop path.
                 var drag = new DragGestureRecognizer { CanDrag = true };
                 drag.DragStarting += (_, args) => args.Data.Text = it.Id;
                 handle.GestureRecognizers.Add(drag);
+#endif
                 Grid.SetColumn(handle, 0);
                 row.Children.Add(handle);
             }
@@ -150,8 +159,13 @@ public sealed class WorkoutPreviewPage : ContentPage
                 row.Children.Add(replace);
             }
             var card=UI.Card(row);
-            if(_workout.Status=="planned")
+            if (_workout.Status == "planned")
             {
+                _reorderCards.Add(new ReorderCard(it.Id, phase, card));
+#if ANDROID
+                if (dragHandle != null)
+                    InstallAndroidReorderHandle(dragHandle, card, it.Id, phase);
+#else
                 var drop=new DropGestureRecognizer();
                 drop.Drop+=async (_,args)=>
                 {
@@ -161,6 +175,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                     catch(Exception ex){await DisplayAlert("Nem rendezhető át",ex.Message,"Rendben");}
                 };
                 card.GestureRecognizers.Add(drop);
+#endif
             }
             _content.Children.Add(card);
         }
@@ -184,4 +199,145 @@ public sealed class WorkoutPreviewPage : ContentPage
             _content.Children.Add(start);
         }
     }
+
+#if ANDROID
+    // Android's ScrollView intercepts vertical drag gestures inside its content.
+    // On the dedicated grip we capture the touch BEFORE the parent can scroll,
+    // then move the card visually and resolve the drop against visible cards.
+    // The rest of the row remains a normal scroll/tap surface.
+    private void InstallAndroidReorderHandle(Border handle, Border sourceCard, string sourceId, string phase)
+    {
+        Android.Views.View? nativeHandle = null;
+        EventHandler<Android.Views.View.TouchEventArgs>? touchHandler = null;
+        handle.HandlerChanged += (_, _) =>
+        {
+            if (nativeHandle != null && touchHandler != null)
+                nativeHandle.Touch -= touchHandler;
+            nativeHandle = handle.Handler?.PlatformView as Android.Views.View;
+            if (nativeHandle is null) return;
+
+            var downY = 0f;
+            var pressed = false;
+            Border? target = null;
+            var originalStroke = sourceCard.Stroke;
+
+            void SetTarget(Border? next)
+            {
+                if (ReferenceEquals(target, next)) return;
+                if (target != null)
+                {
+                    target.Stroke = Color.FromArgb("#E7E2F1");
+                    target.StrokeThickness = 1;
+                }
+                target = next;
+                if (target != null)
+                {
+                    target.Stroke = UI.Purple;
+                    target.StrokeThickness = 3;
+                }
+            }
+
+            void Restore()
+            {
+                sourceCard.TranslationY = 0;
+                sourceCard.ZIndex = 0;
+                sourceCard.Opacity = 1;
+                sourceCard.Stroke = originalStroke;
+                SetTarget(null);
+                nativeHandle?.Parent?.RequestDisallowInterceptTouchEvent(false);
+                pressed = false;
+            }
+
+            Border? FindDestination(float rawY)
+            {
+                Border? result = null;
+                double distance = double.MaxValue;
+                var tolerance = 9 * Microsoft.Maui.Devices.DeviceDisplay.MainDisplayInfo.Density;
+                foreach (var row in _reorderCards)
+                {
+                    if (row.Id == sourceId || row.Phase != phase) continue;
+                    if (row.Card.Handler?.PlatformView is not Android.Views.View view) continue;
+                    var coords = new int[2];
+                    view.GetLocationOnScreen(coords);
+                    var top = coords[1];
+                    var bottom = top + view.Height;
+                    if (rawY < top - tolerance || rawY > bottom + tolerance) continue;
+                    var delta = Math.Abs(rawY - (top + bottom) / 2d);
+                    if (delta >= distance) continue;
+                    distance = delta;
+                    result = row.Card;
+                }
+                return result;
+            }
+
+            touchHandler = (_, args) =>
+            {
+                var ev = args.Event;
+                if (ev == null) return;
+                switch (ev.ActionMasked)
+                {
+                    case Android.Views.MotionEventActions.Down:
+                        if (_reorderBusy || _workout.Status != "planned") return;
+                        downY = ev.RawY;
+                        pressed = true;
+                        // This prevents the ScrollView from stealing subsequent MOVE events.
+                        nativeHandle?.Parent?.RequestDisallowInterceptTouchEvent(true);
+                        args.Handled = true;
+                        break;
+                    case Android.Views.MotionEventActions.Move:
+                        if (!pressed) return;
+                        args.Handled = true;
+                        var density = Microsoft.Maui.Devices.DeviceDisplay.MainDisplayInfo.Density;
+                        sourceCard.TranslationY = (ev.RawY - downY) / density;
+                        sourceCard.ZIndex = 10;
+                        sourceCard.Opacity = 0.82;
+                        SetTarget(FindDestination(ev.RawY));
+                        break;
+                    case Android.Views.MotionEventActions.Up:
+                        if (!pressed) return;
+                        args.Handled = true;
+                        var selected = _reorderCards.FirstOrDefault(x => ReferenceEquals(x.Card, target))?.Id;
+                        Restore();
+                        if (selected != null && selected != sourceId)
+                        {
+                            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(
+                                async () => await ApplyReorderAsync(sourceId, selected));
+                        }
+                        break;
+                    case Android.Views.MotionEventActions.Cancel:
+                        if (!pressed) return;
+                        args.Handled = true;
+                        Restore();
+                        break;
+                }
+            };
+            nativeHandle.Touch += touchHandler;
+        };
+        handle.HandlerChanging += (_, args) =>
+        {
+            if (nativeHandle != null && touchHandler != null)
+                nativeHandle.Touch -= touchHandler;
+            nativeHandle = null;
+        };
+    }
+
+    private async Task ApplyReorderAsync(string sourceId, string destinationId)
+    {
+        if (_reorderBusy || _workout.Status != "planned") return;
+        _reorderBusy = true;
+        try
+        {
+            await _state.MoveWorkoutItemAsync(_workout, sourceId, destinationId);
+            Draw();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Nem rendezhető át", ex.Message, "Rendben");
+        }
+        finally
+        {
+            _reorderBusy = false;
+        }
+    }
+#endif
 }
