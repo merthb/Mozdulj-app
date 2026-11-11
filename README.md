@@ -6,7 +6,7 @@ A Mozdulj! célja, hogy a rendszeres mozgás könnyen beilleszthető legyen a h�
 
 Az alkalmazás nem egyetlen, mindenkinek azonos edzéstervet kínál: figyelembe veszi a rendelkezésre álló időt, a kívánt nehézséget, a fókuszba helyezett testtájakat, a kedvelt mozgásformákat és az otthon elérhető eszközöket. A felhasználó a gyakorlatokat megismerheti, személyre szabhatja és saját gyakorlatokkal bővítheti.
 
-> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Kiadás:** Béta 1.0 · **APK-ban szereplő verzió:** 1.0.0-beta.1 · **Felület nyelve:** magyar
+> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Legutóbbi publikus kiadás:** 1.0.0-beta.1 · **Fejlesztői javítóverzió:** 1.0.0-beta.2 · **Felület nyelve:** magyar
 
 ## Béta verzió 1.0 – letöltés és telepítés
 
@@ -307,7 +307,11 @@ A Profil oldalon két külön műveletcsoport található:
 1. **Gyakorlattár importálása/exportálása (JSON):** a gyakorlatok és kapcsolódó állapotok átadása. Importáláskor választható az újak hozzáadása, az összefésülés vagy a saját lista cseréje.
 2. **Teljes adatmentés és visszaállítás (JSON):** profil, kedvencek, előzmények, eredmények, saját gyakorlatok és személyes javítások mentése.
 
-A teljes mentés haladási adatai **helyi kulccsal hitelesítettek**. Az exportált fájl utólagos módosítása érvénytelenné teheti a visszaállítást. A hitelesítő kulcs az adott alkalmazástelepítéshez kötődhet; **telefoncsere vagy alkalmazáseltávolítás előtt** érdemes a mentési és visszaállítási lehetőségeket gondosan ellenőrizni. A személyes hangfájl nem feltétlenül állítható vissza pusztán a JSON-adatmentésből, ezért azt külön is meg kell őrizni.
+A teljes mentés haladási adatai **helyi kulccsal hitelesítettek**. Normál visszaállításkor az alkalmazás ellenőrzi az eredeti telepítés kulcsával készített HMAC-aláírást; a mentés utólagos módosítása vagy más telepítés kulcsa ilyenkor hibát okoz.
+
+**Újratelepítés után a korábbi hitelesítő kulcs elveszhet.** A `1.0.0-beta.2` fejlesztői változattól külön **„Mentés visszaállítása újratelepítés után”** lehetőség érhető el a kezdő beállítások képernyőjén és a Profilban. A felhasználó kétlépcsős jóváhagyás után betöltheti a korábbi teljes JSON-mentést, anélkül hogy a megszűnt telepítés kulcsát ismerné. A fájl formátuma, aláírási mezőinek szerkezete, adatsémája és a gyakorlattár-integritás továbbra is ellenőrzésre kerül; **az eredeti HMAC-aláírás hitelessége azonban nem igazolható**, ezért csak saját, megbízható forrású fájllal használandó. A normál, hitelesített import változatlanul szigorú. A régi profilazonosító és haladási adatok helyreállnak, utána pedig érdemes az új telepítésből azonnal új, hitelesített teljes mentést exportálni.
+
+A személyes relaxációs hangfájlok **nem tárolódnak a teljes JSON-mentésben**; újratelepítés után a helyi zenei listák saját hangfájljait újra be kell importálni. A mentésfájlt eredeti formájában is őrizd meg.
 
 A rendszer verziózott adatstruktúrát és migrációs lépéseket használ, és törekszik arra, hogy frissítéskor a meglévő személyes beállítások, korrekciók és edzéstörténet megmaradjanak. Az alkalmazás frissítéséhez ugyanaz az Android-alkalmazásazonosító és megfelelő aláírás szükséges.
 
@@ -329,7 +333,8 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 | --- | --- |
 | Alkalmazás neve | Mozdulj! |
 | GitHub-kiadás | **Béta verzió 1.0** · `v1.0.0-beta.1` |
-| APK belső verziója | **1.0.0-beta.1** · Android-verziókód: **33** |
+| Legutóbbi publikus béta APK | **1.0.0-beta.1** · Android-verziókód: **33** |
+| Aktuális fejlesztői APK | **1.0.0-beta.2** · Android-verziókód: **34** (újratelepítés utáni mentés-helyreállítás) |
 | Android alkalmazásazonosító | `hu.mozdulj.preview` |
 | Célkeretrendszer | `net10.0-android` |
 | Minimum Android API | 24 (Android 7.0) |
