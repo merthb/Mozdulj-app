@@ -37,6 +37,16 @@ public sealed class WorkoutPlayerPage : ContentPage
     {
         _state=state;_workout=workout;
         UI.Setup(this,"Gyakorlás");
+        if (workout.Kind == "recovery")
+        {
+            // The default NavigationPage arrow can pop the page without calling
+            // OnBackButtonPressed on Android. Route every visible back action
+            // through the same explicit confirmation instead.
+            NavigationPage.SetHasBackButton(this, false);
+            var exitToolbar = new ToolbarItem { Text = "Kilépés", Order = ToolbarItemOrder.Primary };
+            exitToolbar.Clicked += async (_, _) => await LeaveAsync();
+            ToolbarItems.Add(exitToolbar);
+        }
         _timer=Dispatcher.CreateTimer();
         _timer.Interval=TimeSpan.FromSeconds(1);
         _timer.Tick+=async (_,_)=>await OnTickAsync();
@@ -197,10 +207,12 @@ public sealed class WorkoutPlayerPage : ContentPage
     {
         if(_leaving || _finished)return;
         var recovery=_workout.Kind=="recovery";
-        var confirmed=await DisplayAlertAsync(recovery ? "Relaxáció megszakítása?" : "Leállítás",
-            recovery ? "Ha most kilépsz, a tíz percet legközelebb elölről kell kezdened. Nem jár jóváírás."
+        var confirmed=await DisplayAlertAsync(
+            recovery ? "Biztosan kilépsz a relaxációból?" : "Leállítás",
+            recovery
+                ? "A relaxáció nem szüneteltethető. Ha most kilépsz, a következő alkalommal elölről kell kezdened a teljes 10 percet. A mostani alkalom nem számít teljesítésnek."
                 : "Megőrizzük az aktuális állapotot, később folytathatod.",
-            "Kilépés","Maradok");
+            recovery ? "Igen, kilépek" : "Kilépés", "Maradok");
         if(!confirmed)return;
         _leaving=true;
         try
