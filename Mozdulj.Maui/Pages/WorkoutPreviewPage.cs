@@ -1,5 +1,6 @@
 using Mozdulj.Core;
 using Mozdulj.Maui.Services;
+using Microsoft.Maui.ApplicationModel;
 namespace Mozdulj.Maui.Pages;
 
 public sealed class WorkoutPreviewPage : ContentPage
@@ -29,7 +30,27 @@ public sealed class WorkoutPreviewPage : ContentPage
             _content.Children.Add(UI.Card(
                 UI.Label("🌿 Ellazulás", 17, true),
                 UI.Label(RecoveryRoutine.Guidance, 14, color:UI.Muted),
-                UI.Label("10 perc után megőrzi a sorozatot · 0 XP", 12, color:UI.Muted)));
+                UI.Label("10 perc után megőrzi a sorozatot · 0 XP", 12, color:UI.Muted),
+                UI.Label("Nem szüneteltethető. Ha idő előtt kilépsz, elölről kell kezdened.", 13, color:UI.Purple)));
+            var preferences = _state.Preferences;
+            if (_workout.Status != "completed" &&
+                preferences.RelaxationMusicEnabled &&
+                preferences.RelaxationMusicSource == "youtube_music" &&
+                Uri.TryCreate(preferences.RelaxationYouTubeMusicPlaylistUrl, UriKind.Absolute, out var url) &&
+                url.Scheme == Uri.UriSchemeHttps)
+            {
+                var musicUrl = url;
+                var openMusic = UI.Button("♫ Lejátszási lista megnyitása YouTube Musicban", false);
+                openMusic.Clicked += async (_, _) =>
+                {
+                    try { await Launcher.Default.OpenAsync(musicUrl); }
+                    catch (Exception ex) { await DisplayAlertAsync("YouTube Music", ex.Message, "Rendben"); }
+                };
+                _content.Children.Add(openMusic);
+                _content.Children.Add(UI.Label(
+                    "Indítsd el a zenét a YouTube Musicban, majd térj vissza ide, és kezdd el a tízperces relaxációt. A háttérlejátszáshoz Premium előfizetés kell.",
+                    12, color:UI.Muted));
+            }
         }
         else
         {
@@ -142,7 +163,8 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         else
         {
-            var start=UI.Button(_workout.Status=="in_progress"?"▶ Folytatás":"▶ Kezdés");
+            var start=UI.Button(_workout.Kind=="recovery" ? "▶ Relaxáció indítása" :
+                _workout.Status=="in_progress" ? "▶ Folytatás" : "▶ Kezdés");
             start.Clicked+=async (_,_) =>
             {
                 if (_workout.Kind == "recovery" ? !RecoveryRoutine.IsValid(_workout) : !WorkoutCoherence.IsReadyToStart(_state.Catalog,_workout))
