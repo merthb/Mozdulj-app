@@ -10,7 +10,7 @@ namespace Mozdulj.Maui.Platforms.Android;
 /// </summary>
 [Service(
     Name = "hu.mozdulj.preview.MozduljMusicNotificationListener",
-    Label = "Mozdulj! – kísérleti zenevezérlés",
+    Label = "Mozdulj! – YouTube Music vezérlés",
     Exported = true,
     Permission = "android.permission.BIND_NOTIFICATION_LISTENER_SERVICE")]
 [IntentFilter(new[] { "android.service.notification.NotificationListenerService" })]
