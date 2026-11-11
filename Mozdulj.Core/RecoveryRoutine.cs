@@ -25,7 +25,7 @@ public static class RecoveryRoutine
             Description = "Tíz perc nyugalom, egyetlen megszakítás nélküli szakaszban.",
             TargetMinutes = 10,
             TransitionSeconds = 0,
-            PlanningNote = "Szüneteltetéskor az időzítő is megáll.",
+            PlanningNote = "A relaxáció nem szüneteltethető. Idő előtti kilépéskor elölről indul.",
             Items =
             [
                 new WorkoutItem
@@ -44,6 +44,24 @@ public static class RecoveryRoutine
         };
         if (!IsValid(workout)) throw new InvalidOperationException("Érvénytelen regeneráló program.");
         return workout;
+    }
+
+    /// <summary>Never carry interrupted recovery progress over to the next attempt.</summary>
+    public static void Restart(Workout workout)
+    {
+        if (workout.Kind != "recovery" || workout.Status == "completed") return;
+        workout.Status = "planned";
+        workout.CurrentIndex = 0;
+        workout.RemainingSeconds = TotalSeconds;
+        workout.PlaybackPhase = "exercise";
+        workout.ActiveSeconds = 0;
+        workout.StartedLocalDate = "";
+        workout.FinishedLocalDate = "";
+        foreach (var item in workout.Items)
+        {
+            item.Status = "pending";
+            item.ActiveSeconds = 0;
+        }
     }
 
     public static bool IsValid(Workout? workout)
@@ -77,17 +95,8 @@ public static class RecoveryRoutine
             return replacement;
         }
         if (old.Status == "planned") return replacement;
-        // A már teljesített korábbi részidők, illetve az aktuális rész fennmaradó
-        // ideje alapján számoljuk az összes még hátralevő másodpercet.
-        var cursor = Math.Clamp(old.CurrentIndex, 0, old.Items.Count - 1);
-        var elapsed = old.Items.Take(cursor).Sum(x => x.EstimatedSeconds + x.TransitionAfterSeconds);
-        var current = old.Items[cursor];
-        elapsed += old.PlaybackPhase == "transition"
-            ? current.EstimatedSeconds + Math.Max(0, current.TransitionAfterSeconds - old.RemainingSeconds)
-            : Math.Max(0, current.EstimatedSeconds - old.RemainingSeconds);
-        replacement.RemainingSeconds = Math.Clamp(TotalSeconds - elapsed, 1, TotalSeconds);
-        replacement.Status = "in_progress";
-        replacement.PlaybackPhase = "exercise";
+        // Under the uninterrupted rule an old, unfinished session also restarts.
+        Restart(replacement);
         return replacement;
     }
 }
