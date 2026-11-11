@@ -1,0 +1,85 @@
+name: Publish tested Beta 1.0 patch 2
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    name: Publish tested signed APK as beta.2
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out release sources
+        uses: actions/checkout@v4
+
+      - name: Check version and release status
+        id: check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          grep -Fq '<ApplicationDisplayVersion>1.0.0-beta.2</ApplicationDisplayVersion>' Mozdulj.Maui/Mozdulj.Maui.csproj
+          grep -Fq '<ApplicationVersion>34</ApplicationVersion>' Mozdulj.Maui/Mozdulj.Maui.csproj
+          if gh release view "v1.0.0-beta.2" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Beta.2 release already exists. Leaving it unchanged."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download exact on-device-tested signed APK
+        if: steps.check.outputs.exists == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh run download 43058755734 --repo "$GITHUB_REPOSITORY" \
+            --name "Mozdulj-signed-apk-44" --dir dist
+          test -s dist/Mozdulj-44-ed3bac0.apk
+          echo "e3c2a1c6e6fdea6baf60372823ace760e969c43a56ed239310a912fe7a0ed1f4  dist/Mozdulj-44-ed3bac0.apk" | sha256sum -c -
+          cp dist/Mozdulj-44-ed3bac0.apk dist/Mozdulj-v1.0.0-beta.2.apk
+
+      - name: Publish beta.2 pre-release
+        if: steps.check.outputs.exists == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/release-notes.md" <<'EOF'
+          ## Mozdulj! – Béta verzió 1.0 – 2. javítás
+
+          **A kipróbált és sikeresen telepített javított APK.**
+          Android-verzió: `1.0.0-beta.2`, verziókód: `34`.
+
+          ### Javítások
+          - A korábbi Mozdulj! verziókból származó teljes JSON-adatmentés a meglévő **Teljes adatmentés visszaállítása** gombbal is betölthető.
+          - Ha újratelepítés során elveszett a korábbi titkos hitelesítő kulcs, az alkalmazás világos figyelmeztetést követően, kifejezett jóváhagyással lehetővé teszi a régi mentés visszatöltését.
+          - Az első beállítások képernyőjéről is megnyitható a megszokott visszaállítás, így nem kell új profilt létrehozni.
+          - A normál hitelesített mentésellenőrzés megmarad. Elveszett kulcs esetén a fájl hitelessége kriptográfiailag nem bizonyítható, ezért csak saját, megbízható forrású mentést használj.
+
+          ### Telepítés
+          1. Töltsd le a csatolt `Mozdulj-v1.0.0-beta.2.apk` fájlt.
+          2. Nyisd meg Androidon, és lehetőleg **a meglévő telepítés frissítéseként** telepítsd, ne töröld az alkalmazást.
+          3. Ha korábbi mentést kell helyreállítani, a Profil oldalon vagy az első indításnál válaszd a **Teljes adatmentés visszaállítása** gombot.
+          4. Sikeres helyreállítás után készíts új teljes mentést.
+
+          **Ellenőrzött csomag:** ez a Release **pontosan a készüléken már kipróbált**, a GitHub Actions #44-es aláírt APK-ját tartalmazza. Nem egy új, másik kulccsal fordított változat.
+
+          Készüléken ellenőrzött forrás: [GitHub Actions build #44](https://github.com/merthb/Mozdulj-app/actions/runs/43058755734).
+          EOF
+          gh release create "v1.0.0-beta.2" dist/Mozdulj-v1.0.0-beta.2.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Béta verzió 1.0 – 2. javítás" \
+            --prerelease \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
