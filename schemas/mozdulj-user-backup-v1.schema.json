@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/mozdulj/schemas/user-backup-v1",
+  "title": "Mozdulj! – teljes offline adatmentés",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "backupVersion",
+    "data"
+  ],
+  "properties": {
+    "format": {
+      "const": "mozdulj.user-backup.v1"
+    },
+    "backupVersion": {
+      "const": 1
+    },
+    "createdAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "preferences",
+        "plans",
+        "completions",
+        "rewardProgress"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "builtInContentOverrides": {
+          "type": "array"
+        },
+        "disabledBuiltInIds": {
+          "type": "array"
+        },
+        "userExercises": {
+          "type": "array"
+        },
+        "preferences": {
+          "type": "object"
+        },
+        "plans": {
+          "type": "array"
+        },
+        "completions": {
+          "type": "array"
+        },
+        "rewardProgress": {
+          "type": "object"
+        },
+        "monthlyChallenges": {
+          "type": "array"
+        },
+        "monthlyGoalAwards": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}

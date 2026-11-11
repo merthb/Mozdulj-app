@@ -1,0 +1,59 @@
+/* Mozdulj! – consistent 3D toolbar and editor surfaces, v0.16 */
+:root{--purple:#684bbf;--purple-dark:#4d378a;--teal:#4d998e;--surface:#fff;--bg:#f8f6fc;--outline:#e5dff1}
+html{color-scheme:light}body{background:var(--bg);color:#29233c;letter-spacing:-.006em}
+.shell{border:1px solid var(--outline);border-radius:20px;box-shadow:0 10px 35px rgba(43,31,93,.055)}
+.header{background:linear-gradient(120deg,#fff 30%,#f5f0fc);padding:15px 18px}.header strong{font-size:17px;letter-spacing:-.02em}.header .hint{margin-top:3px}.header h1{font-size:18px;letter-spacing:-.02em}
+.pill{background:#eee7fb;color:var(--purple-dark);font-size:11px;font-weight:750;padding:7px 12px}
+.view-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:14px;background:#fff}
+.view-controls button,.panel button,.buttons button{appearance:none;min-height:43px;border-radius:13px;border:1px solid #ded6ef;background:#f7f4fd;color:#54408a;font:600 13px/1.3 system-ui,-apple-system,Segoe UI,sans-serif;padding:9px 11px;box-shadow:none;cursor:pointer;transition:background .12s,border-color .12s,transform .12s}
+.view-controls button.active,.panel button.active,.buttons button.active{background:var(--purple)!important;border-color:var(--purple)!important;color:#fff!important}
+.view-controls button:active,.panel button:active{transform:scale(.98)}
+.view-controls button:focus-visible,.panel button:focus-visible{outline:3px solid #bca5f4;outline-offset:2px}
+.view-controls button:disabled,.panel button:disabled{opacity:.45;cursor:not-allowed}
+.panel{padding:17px;gap:16px}.line label{font-size:13px;font-weight:700;color:#403358}
+.line select{min-height:45px;border:1px solid #ded6ef;background:#faf8fe;color:#36274d;border-radius:13px;padding:10px 12px}
+.line input[type=range]{accent-color:var(--purple);cursor:pointer;min-height:24px}
+.buttons{display:flex;gap:8px}.buttons button{flex:1;min-width:0}
+.panel button.primary,.view-controls button.primary{background:var(--purple)!important;color:#fff!important;border-color:var(--purple)!important}
+.note{background:#f4f7f6;border-color:#d7e6e0;color:#486259;border-radius:14px;padding:12px;line-height:1.5}
+.status{background:#f5f1fb;color:#634f82;border-radius:10px;padding:8px 11px;line-height:1.35}
+.stage{background:radial-gradient(ellipse at 50% 20%,#fff 10%,#f2ecfa 100%)}
+.floating{border-radius:12px;border-color:#e7def2;box-shadow:0 2px 15px #2d23420d}
+#frameButtons{display:flex;flex-wrap:wrap}#frameButtons button{flex:1 1 100px}
+@media(max-width:760px){main{padding:8px}.shell{border-radius:18px}.stage{height:52vh;min-height:310px}.view-controls{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:8px}.view-controls button{min-height:43px}.panel{padding:14px}.floating{font-size:11px}.float-l{top:9px;left:9px;max-width:60%;font-size:10px}.float-b{bottom:9px;left:9px;right:9px}.header{padding:12px 14px}}
+
+/* v0.17: independent camera and phase navigation, no redundant rotation button. */
+.view-controls{grid-template-columns:repeat(2,minmax(0,1fr));border-bottom:1px solid var(--outline);padding-bottom:12px}
+.phase-controls{display:grid;grid-template-columns:58px minmax(0,1fr) 58px;align-items:center;gap:12px;padding:13px 16px 16px;background:#fff}
+.phase-controls button{appearance:none;width:58px;height:51px;display:grid;place-items:center;border:1px solid #d5c9ea;border-radius:15px;background:#f1eafa;color:#6544ae;font:700 36px/1 system-ui,-apple-system,Segoe UI,sans-serif;cursor:pointer}
+.phase-controls button:not(:disabled):active{transform:scale(.97);background:#e3d8f8}
+.phase-controls button:focus-visible{outline:3px solid #a996e6;outline-offset:2px}
+.phase-controls button:disabled{color:#a39ab7;background:#f8f6fb;opacity:.48;cursor:default}
+.phase-current{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;text-align:center}
+#phaseLabel{font-size:15px;line-height:1.3;font-weight:750;color:var(--purple-dark);overflow-wrap:anywhere}
+#phaseProgress{font-size:12px;color:#7e7193;font-weight:650}
+.edit-tools{display:flex;gap:8px;padding:10px 14px 13px;background:#fff;border-top:1px solid var(--outline)}
+.edit-tools button{appearance:none;flex:1;min-height:44px;border:1px solid #d9ceec;background:#f8f5fc;color:#54408a;padding:8px 9px;border-radius:12px;font:650 12px/1.3 system-ui,-apple-system,Segoe UI,sans-serif;cursor:pointer}
+.edit-tools button.active{background:var(--purple)!important;color:white!important;border-color:var(--purple)!important}
+.edit-tools button:focus-visible{outline:3px solid #bca5f4}
+.view-only .edit-tools{display:none}
+@media(max-width:760px){.phase-controls{grid-template-columns:54px minmax(0,1fr) 54px;gap:8px;padding:11px 12px 14px}.phase-controls button{width:54px;height:48px}.view-controls{gap:8px;padding:11px 12px}.view-controls button{min-height:45px}}
+
+/* V0.20 joint and equipment grouping */
+.edit-group { padding:12px; background:#faf8fe; border:1px solid #e7ddf0; border-radius:14px; }
+.edit-group>summary { display:list-item; padding:5px 0 10px; color:#533b80; font-size:15px; font-weight:750; }
+.edit-group .line { margin-top:6px; gap:9px; }
+.edit-group label { color:#534a65; }
+.edit-group .hint { line-height:1.5; }
+.edit-group .buttons button { min-height:43px; }
+
+/* v0.23: compact parameter sections and editable movement phases. */
+.phase-editor{background:#f4f0fc;border:1px solid #dfd5f0;border-radius:14px;padding:13px;display:grid;gap:9px}
+.phase-editor>label{font-size:13px;font-weight:750;color:#523a85}
+.phase-editor input{background:white;border:1px solid #d7caec;border-radius:10px;min-height:42px;padding:9px 11px;font:inherit;color:#33264d;width:100%}
+.phase-editor .hint{color:#706583}
+.edit-group{overflow:hidden}
+.edit-group:not([open])>summary{padding-bottom:5px}
+.edit-group>summary{cursor:pointer;list-style-position:inside;user-select:none}
+.edit-group>summary:focus-visible{outline:3px solid #bca5f4;outline-offset:3px}
+.phase-editor button:disabled{opacity:.4;cursor:not-allowed}

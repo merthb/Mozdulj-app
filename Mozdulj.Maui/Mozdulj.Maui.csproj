@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Mozdulj.Maui</RootNamespace>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationTitle>Mozdulj!</ApplicationTitle>
+    <ApplicationId>hu.mozdulj.preview</ApplicationId>
+    <ApplicationDisplayVersion>0.26.0</ApplicationDisplayVersion>
+    <ApplicationVersion>32</ApplicationVersion>
+    <!-- On-device sideload requires a SIGNED APK; Google Play uses AAB. -->
+    <AndroidPackageFormats Condition="'$(Configuration)'=='Release'">apk</AndroidPackageFormats>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mozdulj.Core\Mozdulj.Core.csproj" />
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" ForegroundScale="0.70" Color="#6B4EC8" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#F8F6FC" BaseSize="128,128" />
+    <!-- Real image assets: no dependency on Android's Unicode symbol font. -->
+    <MauiImage Include="Resources\Images\exercise_toggle_on.svg" BaseSize="20,20" />
+    <MauiImage Include="Resources\Images\exercise_toggle_off.svg" BaseSize="20,20" />
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
