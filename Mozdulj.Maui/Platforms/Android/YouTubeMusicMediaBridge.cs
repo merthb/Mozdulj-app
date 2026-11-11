@@ -140,9 +140,28 @@ public static class YouTubeMusicMediaBridge
         var activity = Platform.CurrentActivity
             ?? throw new InvalidOperationException("Nincs aktív Android-ablak.");
 
-        var intent = new Intent(Intent.ActionView, global::Android.Net.Uri.Parse(playlistUrl.AbsoluteUri));
+        // Convert a normal YouTube playlist share link to Music's own host,
+        // and keep only the playlist id. The target can still decide to ignore it.
+        var playlistId = playlistUrl.Query.TrimStart('?').Split('&')
+            .Select(part => part.Split('=', 2))
+            .Where(parts => parts.Length == 2 && parts[0] == "list")
+            .Select(parts => Uri.UnescapeDataString(parts[1]))
+            .FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(playlistId) ||
+            playlistId.Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '_' or '-')))
+            throw new InvalidDataException("Hiányzó vagy érvénytelen YouTube Music-listaazonosító.");
+        var canonicalUrl = "https://music.youtube.com/playlist?list=" +
+            Uri.EscapeDataString(playlistId);
+
+        var intent = new Intent(Intent.ActionView, global::Android.Net.Uri.Parse(canonicalUrl));
         intent.SetPackage(YouTubeMusicSupport.PackageName);
-        intent.AddFlags(ActivityFlags.NewTask | ActivityFlags.LaunchAdjacent);
+        intent.AddCategory(Intent.CategoryBrowsable);
+        // NEW_TASK alone restores the already-running Music task at its last
+        // screen (often the currently playing track). A dedicated document task
+        // asks Android to pass the playlist URL to a fresh Music activity.
+        // The Music app may still ignore this, depending on its launch mode.
+        intent.AddFlags(ActivityFlags.NewDocument | ActivityFlags.MultipleTask |
+            ActivityFlags.LaunchAdjacent);
 
         var freeform = activity.PackageManager?.HasSystemFeature(
             PackageManager.FeatureFreeformWindowManagement) == true;
