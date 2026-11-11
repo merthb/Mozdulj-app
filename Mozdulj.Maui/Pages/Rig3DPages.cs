@@ -12,17 +12,28 @@ namespace Mozdulj.Maui.Pages;
 public sealed class Rig3DEditorPage : ContentPage
 {
     private readonly MotionPose _working;
-    private readonly Action<MotionPose> _onSaved;
+    private readonly Func<MotionPose, Task> _onSavedAsync;
     private readonly WebView _browser;
     private readonly Button _save = UI.Button("3D ábra mentése");
     private readonly Label _note = UI.Label("A forgatható 3D nézet betöltése…",12,color:UI.Muted);
     private bool _loaded;
     private bool _saving;
 
+    // Retain the draft-only workflow for 3D editors opened from a full
+    // exercise editor. The caller owns final persistence in that case.
     public Rig3DEditorPage(MotionPose source, Action<MotionPose> onSaved, string? exerciseName=null)
+        : this(source, (Func<MotionPose, Task>)(pose =>
+        {
+            onSaved(pose);
+            return Task.CompletedTask;
+        }), exerciseName) { }
+
+    // The viewer uses this callback for immediate persistence, without opening
+    // a full exercise-editing form or changing the exercise description.
+    public Rig3DEditorPage(MotionPose source, Func<MotionPose, Task> onSavedAsync, string? exerciseName=null)
     {
         _working=BuiltInContentRules.ClonePose(source);
-        _onSaved=onSaved;
+        _onSavedAsync=onSavedAsync;
         UI.Setup(this,"3D ábra szerkesztése");
         _browser = new WebView {Source="rig3d/index.html",HorizontalOptions=LayoutOptions.Fill,
             VerticalOptions=LayoutOptions.Fill};
@@ -73,7 +84,9 @@ public sealed class Rig3DEditorPage : ContentPage
             Rig3DValidator.Validate(rig);
             _working.Rig3D=rig;
             _working.ReviewStatus="illustrative";
-            _onSaved(_working);
+            // Stay in the editor if saving fails. On success return exactly
+            // one page: the viewer OR the invoking full exercise editor.
+            await _onSavedAsync(_working);
             await Navigation.PopAsync();
         }
         catch(Exception e){await DisplayAlert("Mentés sikertelen",e.Message,"Rendben");}
