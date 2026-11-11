@@ -34,7 +34,7 @@ public static class YouTubeMusicMediaBridge
         try
         {
             var component = ListenerComponent;
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.OMr1)
+            if (OperatingSystem.IsAndroidVersionAtLeast(27))
             {
                 var notifications = AppContext.GetSystemService(global::Android.Content.Context.NotificationService)
                     as NotificationManager;
