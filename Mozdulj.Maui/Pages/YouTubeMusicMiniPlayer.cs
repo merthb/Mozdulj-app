@@ -38,7 +38,7 @@ public sealed class YouTubeMusicMiniPlayer : ContentView
         }
 
         Content = UI.Card(
-            UI.Label("♫ YouTube Music – kísérleti vezérlés", 16, true, UI.Purple),
+            UI.Label("♫ YouTube Music", 16, true, UI.Purple),
             _track, _artist, _controls, _access, _status);
         Refresh();
     }
