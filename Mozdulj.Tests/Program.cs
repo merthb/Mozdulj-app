@@ -446,10 +446,10 @@ Assert(forged!=System.Text.Encoding.UTF8.GetString(completeBackup),
     "A teszt szándékosan módosított pontszámot tartalmaz");
 try { LocalBackupCodec.Import(forged,catalog,signingKey);
     throw new Exception("TEST FAIL: hamisított mentést elfogadott"); }
-catch(InvalidDataException) {Console.WriteLine("PASS szerkesztett backup elutasítva");}
+catch(BackupSignatureMismatchException) {Console.WriteLine("PASS szerkesztett backup elutasítva");}
 try { LocalBackupCodec.Import(System.Text.Encoding.UTF8.GetString(completeBackup),catalog,changedKey);
     throw new Exception("TEST FAIL: másik telepítés kulcsát elfogadta"); }
-catch(InvalidDataException) {Console.WriteLine("PASS idegen kulcs elutasítva");}
+catch(BackupSignatureMismatchException) {Console.WriteLine("PASS idegen kulcs elutasítva");}
 var unsigned=System.Text.Json.JsonSerializer.Serialize(new FullBackup{Data=legacyData},CatalogCodec.JsonOptions);
 try { LocalBackupCodec.Import(unsigned,catalog,signingKey);
     throw new Exception("TEST FAIL: aláíratlan backup haladást növelt"); }
