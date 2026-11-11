@@ -398,6 +398,36 @@ var unsigned=System.Text.Json.JsonSerializer.Serialize(new FullBackup{Data=legac
 try { LocalBackupCodec.Import(unsigned,catalog,signingKey);
     throw new Exception("TEST FAIL: aláíratlan backup haladást növelt"); }
 catch(InvalidDataException) {Console.WriteLine("PASS aláíratlan haladás elutasítva");}
+// Disaster-recovery path is explicit: the old secure key is irrecoverable
+// after uninstall, but a well-formed signed-envelope backup can be recovered.
+var reinstalled=LocalBackupCodec.RecoverAfterReinstall(
+    System.Text.Encoding.UTF8.GetString(completeBackup),catalog);
+Assert(reinstalled.Preferences.UserId==legacyData.Preferences.UserId &&
+       reinstalled.Completions.Single().ItemId=="keep" &&
+       reinstalled.RewardProgress.LifetimeXp==1000 &&
+       reinstalled.FavoriteIds.SequenceEqual(legacyData.FavoriteIds) &&
+       reinstalled.BuiltInContentOverrides.Count==1,
+    "Újratelepítés után a régi mentés adatainak helyreállítása megőrzi a profilt és a haladást");
+var newlySigned=LocalBackupCodec.Export(reinstalled,changedKey);
+var newlyVerified=LocalBackupCodec.Import(
+    System.Text.Encoding.UTF8.GetString(newlySigned),catalog,changedKey);
+Assert(newlyVerified.Preferences.UserId==reinstalled.Preferences.UserId &&
+       newlyVerified.RewardProgress.LifetimeXp==1000,
+    "A helyreállított adatok az új telepítés kulcsával újra hitelesíthetők");
+try { LocalBackupCodec.RecoverAfterReinstall(unsigned,catalog);
+    throw new Exception("TEST FAIL: aláíratlan backupot helyreállított"); }
+catch(InvalidDataException) {Console.WriteLine("PASS aláíratlan mentés vészhelyzetben is elutasítva");}
+var invalidEnvelope=new FullBackup {
+    Data=new LocalData {SchemaVersion=99},
+    IntegrityAlgorithm=BackupIntegrity.Algorithm,
+    Integrity=Convert.ToBase64String(new byte[32])
+};
+try {
+    LocalBackupCodec.RecoverAfterReinstall(
+        System.Text.Json.JsonSerializer.Serialize(invalidEnvelope,CatalogCodec.JsonOptions),catalog);
+    throw new Exception("TEST FAIL: nem támogatott adatmodellt elfogadott"); }
+catch(InvalidDataException) {Console.WriteLine("PASS ismeretlen adatséma elutasítva");}
+
 Assert(catalog.Exercises.Count(x=>x.Id is "achilles-vadli-nyujtott" or "achilles-soleus-hajlitott")==2,
     "A két Achilles-környéki vádlinyújtás szerepel a katalógusban");
 var legPose=catalog.Exercises.First(x=>x.Id=="ananda-balasana").Pose.Rig3D!;
