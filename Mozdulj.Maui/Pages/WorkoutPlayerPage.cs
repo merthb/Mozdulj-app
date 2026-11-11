@@ -1,6 +1,7 @@
 using Mozdulj.Core;
 using Mozdulj.Maui.Services;
 using Microsoft.Maui.Dispatching;
+using Microsoft.Maui.Devices;
 
 namespace Mozdulj.Maui.Pages;
 
@@ -26,6 +27,7 @@ public sealed class WorkoutPlayerPage : ContentPage
     private bool _paused;
     private bool _finished;
     private bool _busy;
+    private bool _leaving;
 
     public WorkoutPlayerPage(AppState state,Workout workout)
     {
@@ -34,6 +36,8 @@ public sealed class WorkoutPlayerPage : ContentPage
         _timer=Dispatcher.CreateTimer();
         _timer.Interval=TimeSpan.FromSeconds(1);
         _timer.Tick+=async (_,_)=>await OnTickAsync();
+        if (workout.Kind == "recovery" && workout.Status == "in_progress")
+            RecoveryRoutine.Restart(workout);
         _index=Math.Clamp(workout.CurrentIndex,0,Math.Max(0,workout.Items.Count-1));
         if(workout.Status=="planned")
         {
@@ -69,15 +73,10 @@ public sealed class WorkoutPlayerPage : ContentPage
             _audio.SetPaused(_paused);await _state.SaveAsync();};
         var skip=UI.Button("Kihagyás",false);
         skip.Clicked+=async (_,_)=>await FinishCurrentAsync(true);
-        var stop=UI.Button("Kilépés és mentés",false);
-        stop.Clicked+=async (_,_)=>
-        {
-            if(await DisplayAlertAsync("Leállítás","Megőrizzük az aktuális állapotot, később folytathatod.","Kilépés","Maradok"))
-            {
-                _paused=true;_timer.Stop();_audio.Stop();await _state.SaveAsync();await Navigation.PopAsync();
-            }
-        };
+        var stop=UI.Button(workout.Kind=="recovery" ? "Relaxáció megszakítása" : "Kilépés és mentés",false);
+        stop.Clicked+=async (_,_)=>await LeaveAsync();
         content.Children.Add(_action);
+        _pause.IsVisible=workout.Kind!="recovery";
         content.Children.Add(_pause);
         _skip=skip;
         skip.IsVisible = workout.Kind != "recovery";
@@ -104,9 +103,13 @@ public sealed class WorkoutPlayerPage : ContentPage
             }
             _paused=false;
             _pause.Text="Szünet";
+            DeviceDisplay.Current.KeepScreenOn=true;
             _timer.Start();
-            if(_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled)
-                await _audio.StartRelaxationAsync(_state.Preferences.RelaxationAudioFileName);
+            if(_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
+               _state.Preferences.RelaxationMusicSource!="youtube_music")
+                await _audio.StartRelaxationAsync(
+                    _state.Preferences.RelaxationPlaylist,
+                    _state.Preferences.RelaxationAudioFileName);
         }
     }
     protected override void OnDisappearing()
@@ -115,8 +118,45 @@ public sealed class WorkoutPlayerPage : ContentPage
         _paused=true;
         _timer.Stop();
         _audio.Stop();
+        DeviceDisplay.Current.KeepScreenOn=false;
+        // Android back navigation or an unexpected page disappearance must not
+        // leave an interrupted 10-minute recovery available for continuation.
+        if(!_finished && _workout.Kind=="recovery" && _workout.Status=="in_progress")
+            RecoveryRoutine.Restart(_workout);
         if(!_finished) _= _state.SaveAsync();
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if(_workout.Kind!="recovery") return base.OnBackButtonPressed();
+        _ = LeaveAsync();
+        return true;
+    }
+
+    private async Task LeaveAsync()
+    {
+        if(_leaving || _finished)return;
+        var recovery=_workout.Kind=="recovery";
+        var confirmed=await DisplayAlertAsync(recovery ? "Relaxáció megszakítása?" : "Leállítás",
+            recovery ? "Ha most kilépsz, a tíz percet legközelebb elölről kell kezdened. Nem jár jóváírás."
+                : "Megőrizzük az aktuális állapotot, később folytathatod.",
+            "Kilépés","Maradok");
+        if(!confirmed)return;
+        _leaving=true;
+        try
+        {
+            _paused=true;_timer.Stop();_audio.Stop();
+            if(recovery)RecoveryRoutine.Restart(_workout);
+            await _state.SaveAsync();
+            await Navigation.PopAsync();
+        }
+        catch(Exception ex)
+        {
+            _leaving=false;
+            await DisplayAlertAsync("Kilépési hiba",ex.Message,"Rendben");
+        }
+    }
+
     private async Task OnTickAsync()
     {
         if(_busy||_paused||_finished||_workout.Items.Count==0) return;
@@ -167,6 +207,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             if(_index+1 >= _workout.Items.Count)
             {
                 _timer.Stop(); _audio.Stop(); _finished=true;
+                DeviceDisplay.Current.KeepScreenOn=false;
                 _workout.CurrentIndex=_workout.Items.Count;
                 await _state.FinishWorkoutAsync(_workout);
                 // Dedicated full-screen result page: no completion pop-up and no workout editing.
