@@ -83,7 +83,7 @@ Az előnézetben a felhasználó:
 - **megnyithatja a gyakorlat részleteit** a gyakorlat sorára koppintva;
 - **másik gyakorlatra cserélhet** egy feladatot a jobb oldalon található Csere gombbal;
 - **kötelező gyakorlatokat jelölhet ki**, amelyek köré a rendszer újraösszeállítja a még el nem kezdett tervet;
-- **húzással átrendezheti** a feladatokat azonos edzésblokkon belül;
+- az egyes gyakorlatok melletti kompakt **↑ / ↓ gombokkal egy-egy pozícióval feljebb vagy lejjebb helyezheti** a feladatokat azonos edzésblokkon belül;
 - a cserelehetőségeknél **kihagyhat egy-egy nem kívánt feladatot**, ha a terv összhangja ezt megengedi.
 
 A kihagyható gyakorlatok száma az időkerettől függ:
@@ -94,7 +94,7 @@ A kihagyható gyakorlatok száma az időkerettől függ:
 | 15–20 perc | 2 |
 | 30 perc | 3 |
 
-A jobb és bal oldalra külön végzendő gyakorlatok párként működnek: **közvetlenül egymás mellett maradnak**, és az eltávolításuk két feladatnak számít. Kötelező gyakorlat nem hagyható ki. A módosítás nem bonthatja meg a szükséges bemelegítést, fő részt vagy levezetést.
+A jobb és bal oldalra külön végzendő gyakorlatok párként működnek: **közvetlenül egymás mellett maradnak, átrendezéskor együtt mozognak**, és az eltávolításuk két feladatnak számít. Az adott blokk legelső vagy legutolsó lehetséges helyén a megfelelő nyíl inaktív. Sorrendváltás után a lista igyekszik megőrizni a görgetési pozícióját. Kötelező gyakorlat nem hagyható ki. A módosítás nem bonthatja meg a szükséges bemelegítést, fő részt vagy levezetést.
 
 A szerkesztés és átrendezés csak **az edzés elindítása előtt** érhető el. A már folyamatban lévő terv megőrződik, nem alakul át váratlanul.
 
@@ -163,13 +163,13 @@ A beépített gyakorlatok szöveges és ábrás tartalma személyes korrekciókk
 - **gyakori hibák** és biztonsági tudnivalók;
 - megtekinthető, adott esetben többfázisú **3D mozgásábra**.
 
-A részletoldalról akkor indítható gyakorlat- vagy 3D-ábraszerkesztés, ha a felhasználó **a gyakorlattárból** nyitotta meg. A napi gyakorlatsorból megnyitott adatlapokon az edzés közbeni véletlen módosítás elkerülése érdekében ezek a szerkesztőműveletek nem jelennek meg.
+A **gyakorlat általános szerkesztése** az adatlapról indítható, ha a felhasználó **a gyakorlattárból** nyitotta meg. A **3D ábra szerkesztése** közvetlenül a **3D megtekintő „✎ Szerkesztés” gombjával** érhető el, ugyancsak csak a gyakorlattárból indított nézetnél. Gyakorlatsorból és edzés közben megnyitva a leírás és a 3D ábra kizárólag megtekinthető.
 
 ### Saját gyakorlatok
 
 Új gyakorlat rögzítésekor többek között megadható a neve, típusa, testtájai, nehézsége, edzésfázisa, eszközigénye, idő- vagy ismétléscélja, leírása és biztonsági megjegyzése. Hiányos adatokkal **piszkozat** menthető, de automatikus tervezéshez csak a megfelelően kitöltött, aktív gyakorlatok használhatók.
 
-Új, korábban nem ismert testtáj megadásakor a **Felsőtest**, **Alsótest** vagy **Teljes test** besorolásról is rendelkezni kell.
+Új, korábban nem ismert testtáj megadásakor kötelező kiválasztani a **Felsőtest** vagy **Alsótest** csoportot. A **Teljes test** önálló fókuszválasztó, nem harmadik besorolási kategória új testtájakhoz.
 
 ## 5. 3D mozgásábrák és pózszerkesztő
 
@@ -186,6 +186,8 @@ A tartott, statikus pózoknál egyetlen helyzet is elegendő lehet. A fázisok v
 ### A 3D szerkesztő lehetőségei
 
 A 3D szerkesztőben külön állítható a fej, a törzs, a karok és a lábak helyzete, a kamera és az eszközök megjelenítése. A mozgásfázisok szerkeszthetők, új fázis adható hozzájuk, és a pózok menthetők. A szalagoknál külön kezelhetők a **két fogási pont**, valamint a szalag vezetéséhez vagy nyújtási irányához tartozó **harmadik pont**. A jógapánt, a gumiszalag és a miniband külön eszköztípusok.
+
+A 3D szerkesztőből **mindig oda lehet visszatérni, ahonnan megnyitották**. A gyakorlattárból megnyitott 3D megtekintő „✎ Szerkesztés” gombja közvetlenül a 3D szerkesztőt nyitja meg. Mentés után a módosított modell azonnal rögzül, a leírás változatlan marad, és a megtekintő frissített ábrája jelenik meg. A **Mentés** és a **Mégse** is a 3D megtekintőre visz vissza. Ha viszont a 3D szerkesztő a **teljes gyakorlatszerkesztőből** nyílt, oda tér vissza, és a 3D módosítása a teljes gyakorlat mentésével véglegesíthető.
 
 A modellekhez geometriai ellenőrzések tartoznak, ugyanakkor **a 3D ábrák szemléltető jellegűek, nem minden póz szakmailag hitelesített**. Egyes apró csukló-, kéz-, boka- vagy lábujjmozgások korlátozott pontossággal ábrázolhatók. A pontos kivitelezésnél mindig a szöveges leírás az elsődleges, és fájdalmat okozó mozdulatot nem szabad erőltetni.
 
@@ -318,7 +320,7 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 
 A forrás Visual Studióban, telepített **.NET 10 SDK**, **.NET MAUI** és **Android workload** mellett nyitható meg és fordítható. Az Android-alkalmazáshoz megfelelő Android SDK, emulátor vagy csatlakoztatott készülék szükséges.
 
-A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A tényleges Android-fordítást, az eszközön történő működést, a hangot, az értesítéseket, a húzásos rendezést és a 3D megjelenítést készüléken is ellenőrizni kell.
+A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A tényleges Android-fordítást, az eszközön történő működést, a hangot, az értesítéseket, a gombos sorrendváltást, valamint a 3D megjelenítést és szerkesztői navigációt készüléken is ellenőrizni kell.
 
 ## 13. Fontos használati tudnivalók és korlátok
 
