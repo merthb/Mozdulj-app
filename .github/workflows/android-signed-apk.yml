@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-android:
@@ -110,3 +110,50 @@ jobs:
         if: always()
         shell: bash
         run: rm -f "$RUNNER_TEMP/mozdulj-signing.keystore"
+      
+      # Bootstrap the public beta release once. Subsequent builds leave the tag intact.
+      - name: Publish Beta 1.0 GitHub pre-release
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="v1.0.0-beta.1"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Beta 1.0 release already exists; leaving it unchanged."
+            exit 0
+          fi
+          grep -Fq '<ApplicationDisplayVersion>1.0.0-beta.1</ApplicationDisplayVersion>' Mozdulj.Maui/Mozdulj.Maui.csproj
+          grep -Fq '<ApplicationVersion>33</ApplicationVersion>' Mozdulj.Maui/Mozdulj.Maui.csproj
+          source_apk="$(find dist -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$source_apk"
+          test -s "$source_apk"
+          release_apk="dist/Mozdulj-v1.0.0-beta.1.apk"
+          cp "$source_apk" "$release_apk"
+          cat > "$RUNNER_TEMP/mozdulj-beta-release.md" <<EOF
+          ## Mozdulj! – Béta verzió 1.0
+
+          A Mozdulj! magyar nyelvű Android napi tornaalkalmazás béta kiadása.
+
+          - Személyre szabott gyakorlatsorok, gyakorlattár és 3D mozgásábrák
+          - Emlékeztetők, heti célok, kihívások, jelvények és mozgássorozat
+          - Folyamatos, 10 perces regeneráció; megszakítás esetén újrakezdéssel
+          - Helyi relaxációs zenei listák és YouTube Music mini-lejátszó
+          - Kilépéskor a YouTube Music szüneteltetése, ha engedélyezett a média-hozzáférés
+
+          Telepítés: töltsd le a csatolt Mozdulj-v1.0.0-beta.1.apk fájlt, majd nyisd meg Androidon.
+          Alkalmazásverzió: 1.0.0-beta.1; Android-verziókód: 33.
+          Frissítés előtt érdemes adatmentést készíteni. Ne töröld a meglévő alkalmazást.
+
+          A YouTube Music online szolgáltatás, és az alkalmazáson belüli vezérléshez
+          külön, széles Android-értesítés-hozzáférési engedély szükséges. Ez opcionális.
+
+          Build: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          EOF
+          gh release create "$tag" "$release_apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Béta verzió 1.0" \
+            --prerelease \
+            --notes-file "$RUNNER_TEMP/mozdulj-beta-release.md"

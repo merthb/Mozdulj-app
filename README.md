@@ -6,15 +6,15 @@ A Mozdulj! célja, hogy a rendszeres mozgás könnyen beilleszthető legyen a h�
 
 Az alkalmazás nem egyetlen, mindenkinek azonos edzéstervet kínál: figyelembe veszi a rendelkezésre álló időt, a kívánt nehézséget, a fókuszba helyezett testtájakat, a kedvelt mozgásformákat és az otthon elérhető eszközöket. A felhasználó a gyakorlatokat megismerheti, személyre szabhatja és saját gyakorlatokkal bővítheti.
 
-> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Kiadás:** Béta 1.0 · **APK-ban szereplő verzió:** 0.26.0 · **Felület nyelve:** magyar
+> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Kiadás:** Béta 1.0 · **APK-ban szereplő verzió:** 1.0.0-beta.1 · **Felület nyelve:** magyar
 
 ## Béta verzió 1.0 – letöltés és telepítés
 
 A **Béta verzió 1.0** a GitHub Releases oldalon érhető el: **[Mozdulj! – Béta verzió 1.0](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.1)**.
 
-- A kiadás telepíthető, **aláírt Android APK**-t tartalmaz, amely a `master` `fd6de917` commitján készült sikeres GitHub Actions buildből származik. Az APK telepítéséhez a telefonon szükség lehet az adott fájlkezelő vagy böngésző számára az **ismeretlen alkalmazások telepítésének engedélyezésére**.
+- A kiadás telepíthető, **aláírt Android APK**-t tartalmaz, amelyet a **béta verzióra frissített `master` commitból** fordít és ellenőriz a GitHub Actions. Az APK telepítéséhez a telefonon szükség lehet az adott fájlkezelő vagy böngésző számára az **ismeretlen alkalmazások telepítésének engedélyezésére**.
 - Korábban telepített Mozdulj! fölé a frissítés azonos alkalmazásazonosító és aláírókulcs mellett végezhető el. **Az alkalmazás törlése helyett lehetőleg frissíts**, és előtte készíts adatmentést a Profilban.
-- A GitHub-kiadás neve **Béta 1.0**, a címkéje `v1.0.0-beta.1`. Mivel az **előzőleg elkészített és tesztelt APK-t** tesszük közzé változtatás nélkül, az Android az alkalmazás belső verziójaként továbbra is `0.26.0`-t mutathat. Ez a GitHub-kiadás megnevezése és az APK belső verziója közötti tudatos különbség; későbbi buildben összehangolható.
+- A GitHub-kiadás neve **Béta verzió 1.0**, a címkéje `v1.0.0-beta.1`. Az Androidon látható alkalmazásverzió is **`1.0.0-beta.1`**; a frissítéshez használt belső Android-verziókód **33** (az előző 32 után).
 - A fő funkciók internet nélkül is működnek; **a YouTube Music online szolgáltatás**, amelyhez telepített YouTube Music alkalmazás és a szükséges előfizetés kell.
 
 A béta még **visszajelzésekre és készülékes tesztelésre szánt változat**. A mozgásadatok mentése fontos; telepítés, frissítés vagy adatvisszaállítás előtt célszerű biztonsági mentést készíteni.
@@ -329,7 +329,7 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 | --- | --- |
 | Alkalmazás neve | Mozdulj! |
 | GitHub-kiadás | **Béta verzió 1.0** · `v1.0.0-beta.1` |
-| APK belső verziója | **0.26.0** (a kiadott, meglévő aláírt build) |
+| APK belső verziója | **1.0.0-beta.1** · Android-verziókód: **33** |
 | Android alkalmazásazonosító | `hu.mozdulj.preview` |
 | Célkeretrendszer | `net10.0-android` |
 | Minimum Android API | 24 (Android 7.0) |
