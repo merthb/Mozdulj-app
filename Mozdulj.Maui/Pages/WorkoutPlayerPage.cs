@@ -1,5 +1,6 @@
 using Mozdulj.Core;
 using Mozdulj.Maui.Services;
+using Mozdulj.Maui.Platforms.Android;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Devices;
 using System.Diagnostics;
@@ -16,6 +17,7 @@ public sealed class WorkoutPlayerPage : ContentPage
     private readonly Label _meta=UI.Label("",14,color:UI.Muted);
     private readonly Label _guidance=UI.Label("",15,color:UI.Muted);
     private readonly WorkoutAudio _audio=new();
+    private YouTubeMusicMiniPlayer? _musicPanel;
     private readonly Border _nextGuideBlock = new() { IsVisible=false, BackgroundColor=UI.Lavender,
         StrokeThickness=0, Padding=new Thickness(12), StrokeShape=new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius=new CornerRadius(12) } };
     private readonly Label _nextGuideTitle=UI.Label("",14,true,UI.Purple);
@@ -32,6 +34,16 @@ public sealed class WorkoutPlayerPage : ContentPage
     private Window? _lifecycleWindow;
     private bool _interruptedByBackground;
     private long _recoveryStartTicks;
+
+    // Ends local audio and pauses the YouTube Music session (if selected).
+    // Pausing is idempotent: it never starts an already paused track.
+    private void StopSessionAudio()
+    {
+        _audio.Stop();
+        _musicPanel?.Stop();
+        if (_workout.Kind == "recovery" && _musicPanel is not null)
+            YouTubeMusicMediaBridge.TryPauseIfPlaying();
+    }
 
     public WorkoutPlayerPage(AppState state,Workout workout)
     {
@@ -75,6 +87,14 @@ public sealed class WorkoutPlayerPage : ContentPage
         content.Children.Add(_value);
         content.Children.Add(_guidance);
         content.Children.Add(_equipmentCue);
+        if (_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
+            _state.Preferences.RelaxationMusicSource=="youtube_music" &&
+            _state.Preferences.RelaxationYouTubeMusicPremiumConfirmed &&
+            YouTubeMusicSupport.IsInstalled())
+        {
+            _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
+            content.Children.Add(_musicPanel);
+        }
         // Compact, internally scrollable step-by-step preview in the transition.
         _nextGuideBlock.Content=new VerticalStackLayout{Spacing=5,Children={
             _nextGuideTitle,
@@ -135,6 +155,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             if (_workout.Kind == "recovery")
                 _recoveryStartTicks = Stopwatch.GetTimestamp();
             _timer.Start();
+            _musicPanel?.Start();
             if(_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
                !(_state.Preferences.RelaxationMusicSource=="youtube_music" &&
                  _state.Preferences.RelaxationYouTubeMusicPremiumConfirmed &&
@@ -155,7 +176,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         }
         _paused=true;
         _timer.Stop();
-        _audio.Stop();
+        StopSessionAudio();
         _recoveryStartTicks = 0;
         DeviceDisplay.Current.KeepScreenOn=false;
         // Android back navigation or an unexpected page disappearance must not
@@ -174,7 +195,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         _interruptedByBackground = true;
         _paused = true;
         _timer.Stop();
-        _audio.Stop();
+        StopSessionAudio();
         _recoveryStartTicks = 0;
         DeviceDisplay.Current.KeepScreenOn = false;
         RecoveryRoutine.Restart(_workout);
@@ -217,7 +238,9 @@ public sealed class WorkoutPlayerPage : ContentPage
         _leaving=true;
         try
         {
-            _paused=true;_timer.Stop();_audio.Stop();
+            _paused=true;
+            _timer.Stop();
+            StopSessionAudio();
             if(recovery)RecoveryRoutine.Restart(_workout);
             await _state.SaveAsync();
             await Navigation.PopAsync();
@@ -283,7 +306,9 @@ public sealed class WorkoutPlayerPage : ContentPage
             else await _state.CompleteItemAsync(_workout,item);
             if(_index+1 >= _workout.Items.Count)
             {
-                _timer.Stop(); _audio.Stop(); _finished=true;
+                _timer.Stop();
+                StopSessionAudio();
+                _finished=true;
                 DeviceDisplay.Current.KeepScreenOn=false;
                 _workout.CurrentIndex=_workout.Items.Count;
                 await _state.FinishWorkoutAsync(_workout);

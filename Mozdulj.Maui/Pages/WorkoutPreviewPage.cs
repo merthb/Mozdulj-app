@@ -10,6 +10,7 @@ public sealed class WorkoutPreviewPage : ContentPage
     private readonly VerticalStackLayout _content = UI.Stack();
     private readonly ScrollView _scrollView = new();
     private bool _reordering;
+    private YouTubeMusicMiniPlayer? _musicPanel;
     public WorkoutPreviewPage(AppState state, Workout workout)
     {
         _state = state; _workout = workout;
@@ -17,9 +18,23 @@ public sealed class WorkoutPreviewPage : ContentPage
         _scrollView.Content = _content;
         Content = _scrollView;
     }
-    protected override void OnAppearing() { base.OnAppearing(); Draw(); }
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        Draw();
+        _musicPanel?.Start();
+    }
+
+    protected override void OnDisappearing()
+    {
+        _musicPanel?.Stop();
+        base.OnDisappearing();
+    }
+
     private void Draw()
     {
+        _musicPanel?.Stop();
+        _musicPanel = null;
         _content.Children.Clear();
         _content.Children.Add(UI.Label(_workout.Title, 25, true));
         _content.Children.Add(UI.Label(_workout.Kind == "recovery" ? "10 perc · folyamatos relaxáció" : $"{_workout.Items.Count} feladat · {(_workout.TargetMinutes>0?_workout.TargetMinutes:_state.Preferences.WorkoutMinutes)} perc cél · kb. {Math.Ceiling(_workout.EstimatedSeconds/60.0)} perc az átvezetésekkel", 14, color:UI.Muted));
@@ -42,16 +57,27 @@ public sealed class WorkoutPreviewPage : ContentPage
                 url.Scheme == Uri.UriSchemeHttps)
             {
                 var musicUrl = url;
-                var openMusic = UI.Button("♫ Lejátszási lista megnyitása YouTube Musicban", false);
+                var openMusic = UI.Button("YouTube Music megnyitása", false);
                 openMusic.Clicked += async (_, _) =>
                 {
-                    try { await YouTubeMusicSupport.OpenPlaylistAsync(musicUrl); }
-                    catch (Exception ex) { await DisplayAlertAsync("YouTube Music", ex.Message, "Rendben"); }
+                    try
+                    {
+                        Mozdulj.Maui.Platforms.Android.YouTubeMusicMediaBridge
+                            .OpenPlaylistInYouTubeMusic(musicUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlertAsync("YouTube Music", ex.Message, "Rendben");
+                    }
                 };
                 _content.Children.Add(openMusic);
                 _content.Children.Add(UI.Label(
-                    "Indítsd el a zenét a YouTube Musicban, majd térj vissza ide, és kezdd el a tízperces relaxációt. A háttérlejátszáshoz Premium előfizetés kell.",
+                    "A mentett lejátszási lista a YouTube Musicban nyílik meg. " +
+                    "Indítsd el a zenét, majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
                     12, color:UI.Muted));
+                _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
+                _content.Children.Add(_musicPanel);
+                _musicPanel.Start();
             }
         }
         else
