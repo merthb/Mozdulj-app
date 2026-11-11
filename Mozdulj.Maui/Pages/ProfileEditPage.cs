@@ -25,6 +25,7 @@ public sealed class ProfileEditPage : ContentPage
     private readonly Switch _countdownSounds = new() { OnColor=UI.Teal };
     private readonly Switch _relaxationMusic = new() { OnColor=UI.Teal };
     private readonly Picker _relaxationSource = new() { Title = "Relaxációs zene forrása" };
+    private readonly Switch _youtubePremium = new() { OnColor = UI.Teal };
     private readonly Entry _youtubePlaylistUrl = new()
         { Placeholder = "https://music.youtube.com/playlist?list=...", Keyboard = Keyboard.Url };
     private readonly Button _save=UI.Button("Beállítások mentése");
@@ -36,6 +37,7 @@ public sealed class ProfileEditPage : ContentPage
         _state=state;
         UI.Setup(this,"Profil szerkesztése");
         var p=state.Preferences;
+        var youtubeInstalled = YouTubeMusicSupport.IsInstalled();
         _initialMinutes=p.WorkoutMinutes;_initialDifficulty=p.MaximumDifficulty;_initialTransition=p.TransitionSeconds;
         _draft=new UserPreferences
         {
@@ -50,6 +52,7 @@ public sealed class ProfileEditPage : ContentPage
             RelaxationPlaylist=p.RelaxationPlaylist?.Select(t=>new RelaxationTrack
                 {FileName=t.FileName,DisplayName=t.DisplayName}).ToList() ?? [],
             RelaxationMusicSource=p.RelaxationMusicSource,
+            RelaxationYouTubeMusicPremiumConfirmed=p.RelaxationYouTubeMusicPremiumConfirmed,
             RelaxationYouTubeMusicPlaylistUrl=p.RelaxationYouTubeMusicPlaylistUrl,
             FocusRegions=p.FocusRegions.ToList(), PreferredCategories=p.PreferredCategories.ToList(),
             AvailableEquipment=p.AvailableEquipment.ToList(),ExcludedExercises=p.ExcludedExercises.ToList()
@@ -85,9 +88,11 @@ public sealed class ProfileEditPage : ContentPage
                 DisplayName = "Korábbi saját hangfájl"
             });
 
+        _youtubePremium.IsToggled = youtubeInstalled && p.RelaxationYouTubeMusicPremiumConfirmed;
         _relaxationSource.Items.Add("Saját zenék / alapzene");
-        _relaxationSource.Items.Add("YouTube Music");
-        _relaxationSource.SelectedIndex =
+        if (youtubeInstalled && _youtubePremium.IsToggled)
+            _relaxationSource.Items.Add("YouTube Music");
+        _relaxationSource.SelectedIndex = youtubeInstalled && _youtubePremium.IsToggled &&
             _draft.RelaxationMusicSource == "youtube_music" ? 1 : 0;
         _youtubePlaylistUrl.Text = _draft.RelaxationYouTubeMusicPlaylistUrl;
 
@@ -233,12 +238,36 @@ public sealed class ProfileEditPage : ContentPage
             youtubeMusicPanel.IsVisible = _relaxationSource.SelectedIndex == 1;
         }
         _relaxationSource.SelectedIndexChanged += (_, _) => UpdateMusicPanel();
+        var premiumPanel = new VerticalStackLayout { Spacing = 4, IsVisible = youtubeInstalled };
+        premiumPanel.Children.Add(UI.Label(
+            "YouTube Music Premium vagy YouTube Premium előfizetéssel rendelkezem", 13, true));
+        premiumPanel.Children.Add(_youtubePremium);
+        premiumPanel.Children.Add(UI.Label(
+            "A Mozdulj! csak a telepített alkalmazást tudja ellenőrizni. Az előfizetést neked kell megerősítened; a zene és a háttérlejátszás a YouTube Musicban működik.",
+            12, color: UI.Muted));
+        _youtubePremium.Toggled += (_, _) =>
+        {
+            if (youtubeInstalled && _youtubePremium.IsToggled)
+            {
+                if (_relaxationSource.Items.Count == 1)
+                    _relaxationSource.Items.Add("YouTube Music");
+            }
+            else
+            {
+                if (_relaxationSource.SelectedIndex == 1)
+                    _relaxationSource.SelectedIndex = 0;
+                if (_relaxationSource.Items.Count > 1)
+                    _relaxationSource.Items.RemoveAt(1);
+            }
+            UpdateMusicPanel();
+        };
         UpdateMusicPanel();
 
         body.Children.Add(UI.Card(
             UI.Label("Hangok és emlékeztető",19,true),
             UI.Label("Visszaszámlálás: jelzés az utolsó három másodpercben",14),_countdownSounds,
             UI.Label("Nyugtató zene a regeneráló relaxációhoz",14),_relaxationMusic,
+            premiumPanel,
             UI.Label("Relaxációs zene forrása", 14, true), _relaxationSource,
             localMusicPanel, youtubeMusicPanel,
             UI.Label("Napi streak-emlékeztető",14),_reminderEnabled,
@@ -282,7 +311,10 @@ public sealed class ProfileEditPage : ContentPage
             _draft.DailyReminderMinute=chosenTime.Minutes;
             _draft.CountdownSoundsEnabled=_countdownSounds.IsToggled;
             _draft.RelaxationMusicEnabled=_relaxationMusic.IsToggled;
+            _draft.RelaxationYouTubeMusicPremiumConfirmed =
+                YouTubeMusicSupport.IsInstalled() && _youtubePremium.IsToggled;
             _draft.RelaxationMusicSource =
+                _draft.RelaxationYouTubeMusicPremiumConfirmed &&
                 _relaxationSource.SelectedIndex == 1 ? "youtube_music" : "local";
             _draft.RelaxationYouTubeMusicPlaylistUrl = (_youtubePlaylistUrl.Text ?? "").Trim();
             if (_draft.RelaxationMusicEnabled && _draft.RelaxationMusicSource == "youtube_music")
