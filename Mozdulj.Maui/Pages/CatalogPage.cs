@@ -54,7 +54,8 @@ public sealed class CatalogPage : ContentPage
             SelectionMode = SelectionMode.None,
             ItemsSource = _visible,
             ItemsLayout = new LinearItemsLayout(ItemsLayoutOrientation.Vertical) { ItemSpacing = 12 },
-            ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem,
+            // Each item must be measured: a multi-line name or extra action changes row height.
+            ItemSizingStrategy = ItemSizingStrategy.MeasureAllItems,
             ItemsUpdatingScrollMode = ItemsUpdatingScrollMode.KeepScrollOffset,
             RemainingItemsThreshold = 4,
             ItemTemplate = new DataTemplate(() =>
@@ -340,11 +341,19 @@ public sealed class CatalogPage : ContentPage
         layout.Children.Add(description);
         // Tap anywhere on the card surface to open details. Secondary icon actions
         // are separate native controls and must not navigate to details.
-        var actions = new HorizontalStackLayout { Spacing=8 };
+        // Wrapping controls allows narrow screens and large Android text settings
+        // without clipping the last buttons or overflowing the card bounds.
+        var actions = new FlexLayout
+        {
+            Direction = FlexDirection.Row, Wrap = FlexWrap.Wrap,
+            AlignItems = FlexAlign.Center, JustifyContent = FlexJustify.Start
+        };
         static Button SmallAction(string glyph,string hint)
         {
-            var button = new Button {Text=glyph,FontSize=18,WidthRequest=39,HeightRequest=36,
-                Padding=new Thickness(0),CornerRadius=12,BackgroundColor=UI.Lavender,
+            var button = new Button {Text=glyph,FontSize=18,WidthRequest=44,
+                MinimumHeightRequest=44, FontAutoScalingEnabled=true,
+                Margin=new Thickness(0,0,8,8), Padding=new Thickness(0),
+                CornerRadius=12,BackgroundColor=UI.Lavender,
                 TextColor=UI.Purple,BorderWidth=0};
             SemanticProperties.SetDescription(button,hint);
             return button;
@@ -367,14 +376,16 @@ public sealed class CatalogPage : ContentPage
                     Button.ButtonContentLayout.ImagePosition.Left, 4),
                 FontSize = 11.5,
                 FontAttributes = FontAttributes.Bold,
-                WidthRequest = 115,
-                HeightRequest = 36,
-                Padding = new Thickness(5, 0),
+                MinimumWidthRequest = 115,
+                MinimumHeightRequest = 44,
+                FontAutoScalingEnabled = true,
+                Margin = new Thickness(0, 0, 8, 8),
+                Padding = new Thickness(8, 6),
                 CornerRadius = 12,
                 BackgroundColor = isActive ? UI.Lavender : UI.SuccessBackground,
                 TextColor = isActive ? UI.Purple : UI.Teal,
                 BorderWidth = 0,
-                LineBreakMode = LineBreakMode.NoWrap
+                LineBreakMode = LineBreakMode.WordWrap
             };
             SemanticProperties.SetDescription(toggle, isActive
                 ? "Aktív gyakorlat. Megnyomva kikapcsolható."
