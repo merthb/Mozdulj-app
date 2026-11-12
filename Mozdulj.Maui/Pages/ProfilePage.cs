@@ -44,12 +44,16 @@ public sealed class ProfilePage : ContentPage
             // collide with the Picker event and cause the app to close.
             // Native theme is applied next startup; in-app palette updates now.
             // Resolve all palette colors again. No workout/profile data is touched.
-            if (Window is not null)
+            // Post the view rebuild until the Picker/Switch handler has returned.
+            // Disposing its native view synchronously inside the value-change
+            // callback can also be unsafe on Android.
+            Dispatcher.Dispatch(() =>
             {
+                if (Window is null) return;
                 var tabs = new RootTabs(_state);
                 tabs.CurrentPage = tabs.Children[4];
                 Window.Page = tabs;
-            }
+            });
         }
         themePicker.SelectedIndexChanged += (_, _) => RefreshAppearance();
         contrastSwitch.Toggled += (_, _) => RefreshAppearance();
