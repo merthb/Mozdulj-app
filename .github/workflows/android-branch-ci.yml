@@ -43,7 +43,7 @@ jobs:
       - name: Install .NET MAUI Android workload
         run: dotnet workload install maui-android
 
-      # The .NET Android CLI Build target creates a runnable APK by default.
+      # In IDE build mode the referenced Core project may resolve its Debug ref assembly.\n      # Prebuild that reference explicitly to avoid CS0006 on Linux CI.\n      - name: Prepare Core project reference for IDE-mode Android build\n        run: dotnet build Mozdulj.Core/Mozdulj.Core.csproj --configuration Debug\n\n      # The .NET Android CLI Build target creates a runnable APK by default.
       # BuildingInsideVisualStudio=true makes Build compile without packaging,
       # just as a normal IDE compilation. Never sign or publish on branches.
       - name: Compile Android application without APK/AAB packaging
