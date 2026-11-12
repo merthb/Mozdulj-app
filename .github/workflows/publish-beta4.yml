@@ -1,0 +1,74 @@
+name: Publish Mozdulj beta.4 Release
+
+on:
+  workflow_run:
+    workflows: ["Build signed Android APK"]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    # Only a trusted, successful master APK build can publish this release.
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the exact signed-build commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Verify release version
+        run: |
+          grep -q '<ApplicationDisplayVersion>1.0.0-beta.4</ApplicationDisplayVersion>' Mozdulj.Maui/Mozdulj.Maui.csproj
+          grep -q '<ApplicationVersion>36</ApplicationVersion>' Mozdulj.Maui/Mozdulj.Maui.csproj
+
+      - name: Download signed APK from the successful build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ github.event.workflow_run.id }}
+          SOURCE_NUMBER: ${{ github.event.workflow_run.run_number }}
+        run: |
+          mkdir -p dist
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name "Mozdulj-signed-apk-$SOURCE_NUMBER" --dir dist
+          apk="$(find dist -type f -name '*.apk' -print -quit)"
+          if [[ -z "$apk" || ! -s "$apk" ]]; then
+            echo "::error::The signed APK from the verified build was not found"
+            exit 1
+          fi
+          mv "$apk" dist/Mozdulj-v1.0.0-beta.4.apk
+
+      - name: Publish GitHub pre-release once
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if gh release view v1.0.0-beta.4 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release already exists; will not replace its signed APK."
+            exit 0
+          fi
+          cat > release-notes.md <<'NOTES'
+          ## Mozdulj! – Béta verzió 1.0 – 4. javítás
+
+          Android: `1.0.0-beta.4` · verziókód: **36**.
+
+          ### Újdonságok és javítások
+          - Világos és grafitszürke sötét téma, mindkettőhöz magas kontrasztú nézet.
+          - A témaváltás nem zárja be az alkalmazást; az új megjelenés azonnal érvényesül.
+          - Az Android betűméretéhez igazodó kezelőfelület és dinamikusan méretezett gyakorlattári kártyák.
+          - Visszaállítás után a hiányzó saját relaxációs zenefájlok kiszűrése és egyértelmű visszajelzés.
+          - A zenei források különválasztása, értesítési engedély újraellenőrzése.
+
+          ### Telepítés
+          Töltsd le a `Mozdulj-v1.0.0-beta.4.apk` fájlt, és **a meglévő telepítés frissítéseként** nyisd meg a telefonodon. Ne töröld az alkalmazást! Frissítés előtt ajánlott teljes adatmentést készíteni.
+
+          Az APK a GitHub Actions által aláírt, ellenőrzött master-buildből származik. Az emlékeztetők az Android energiatakarékos időzítése miatt néhány percet késhetnek.
+          NOTES
+          gh release create v1.0.0-beta.4 dist/Mozdulj-v1.0.0-beta.4.apk \
+            --repo "$GITHUB_REPOSITORY" --target "$SIGNED_SHA" \
+            --title "Béta verzió 1.0 – 4. javítás" --prerelease \
+            --notes-file release-notes.md

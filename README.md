@@ -6,18 +6,23 @@ A Mozdulj! célja, hogy a rendszeres mozgás könnyen beilleszthető legyen a h�
 
 Az alkalmazás nem egyetlen, mindenkinek azonos edzéstervet kínál: figyelembe veszi a rendelkezésre álló időt, a kívánt nehézséget, a fókuszba helyezett testtájakat, a kedvelt mozgásformákat és az otthon elérhető eszközöket. A felhasználó a gyakorlatokat megismerheti, személyre szabhatja és saját gyakorlatokkal bővítheti.
 
-> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Legfrissebb béta:** 1.0.0-beta.2 · **Felület nyelve:** magyar
+> **Platform:** Android · **Technológia:** .NET 10 / .NET MAUI · **Legfrissebb béta:** 1.0.0-beta.4 · **Felület nyelve:** magyar
 
-## Béta verzió 1.0 – 2. javítás: letöltés és telepítés
+## Aktuális kiadás: Mozdulj! 1.0.0-beta.4
 
-A legújabb, készüléken sikeresen telepített és adatmentéssel ellenőrzött változat a **[Béta verzió 1.0 – 2. javítás (`v1.0.0-beta.2`)](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.2)**. A korábbi **[Béta 1.0 (`v1.0.0-beta.1`)](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.1)** továbbra is elérhető, de az új verziót javasoljuk.
+**[Legfrissebb Android APK – v1.0.0-beta.4](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.4)**
 
-- A kiadás telepíthető, **aláírt Android APK**-t tartalmaz, amelyet a **béta verzióra frissített `master` commitból** fordít és ellenőriz a GitHub Actions. Az APK telepítéséhez a telefonon szükség lehet az adott fájlkezelő vagy böngésző számára az **ismeretlen alkalmazások telepítésének engedélyezésére**.
-- Korábban telepített Mozdulj! fölé a frissítés azonos alkalmazásazonosító és aláírókulcs mellett végezhető el. **Az alkalmazás törlése helyett lehetőleg frissíts**, és előtte készíts adatmentést a Profilban.
-- A javítókiadás címkéje **`v1.0.0-beta.2`**, az Androidon látható alkalmazásverzió **`1.0.0-beta.2`**, a belső Android-verziókód **34**. Az APK a kipróbált, sikeresen telepített és aláírt javítóbuildből származik; nem helyettesítjük egy másik kulccsal aláírt telepítővel.
-- A fő funkciók internet nélkül is működnek; **a YouTube Music online szolgáltatás**, amelyhez telepített YouTube Music alkalmazás és a szükséges előfizetés kell.
+A legfrissebb béta telepíthető, **aláírt APK**-t tartalmaz. Az Androidon megjelenő verzió `1.0.0-beta.4`, a belső verziókód **36**; a kiadás a sikeres [#51-es GitHub Actions build](https://github.com/merthb/Mozdulj-app/actions/runs/43289438234) alapjaira épül. A témaváltási hibát és az értesítések működését készüléken is ellenőriztük.
 
-A béta még **visszajelzésekre és készülékes tesztelésre szánt változat**. A mozgásadatok mentése fontos; telepítés, frissítés vagy adatvisszaállítás előtt célszerű biztonsági mentést készíteni.
+**A jelenlegi változat főbb újdonságai:**
+- Világos és grafitszürke sötét téma, **külön kapcsolható magas kontraszttal**; a témaváltás nem zárja be az alkalmazást.
+- A felület követi az Android rendszerbetűméretét; a gyakorlattár kártyái a hosszú nevekkel és a gombokkal együtt méreteződnek.
+- A teljes mentés visszaállításakor a személyes relaxációs listában csak az **elérhető, olvasható saját zenék** maradnak meg; a beépített, saját és YouTube Music-forrás külön választható.
+- Az értesítési engedélyt a profil mentésekor az alkalmazás ellenőrzi/kéri; a napi emlékeztető az Android energiatakarékos, **nem percre pontos** időzítésével érkezik.
+
+**Frissítés:** töltsd le a Release oldalán a `Mozdulj-v1.0.0-beta.4.apk` fájlt, és telepítsd a meglévő alkalmazásra. **Ne távolítsd el előtte:** azonos alkalmazásazonosító és aláírás mellett az adatok megmaradhatnak. Frissítés előtt készíts teljes adatmentést a Profilban. A telefon kérheti az ismeretlen alkalmazások telepítésének engedélyezését.
+
+A béta továbbra is tesztváltozat; az alkalmazás fő funkciói offline működnek, a YouTube Music használata viszont külső online szolgáltatástól függ.
 
 ## Mire használható?
 
@@ -45,6 +50,10 @@ Az alsó navigáció öt területre osztja a funkciókat:
 ## 1. Első indítás és személyre szabás
 
 Az első használatkor az alkalmazás bekéri a mozgástervezéshez szükséges alapbeállításokat. A napi tervek és a havi célok ezek mentése után állnak össze. A beállítások később a Profilban módosíthatók.
+
+### Megjelenés és akadálymentesség
+
+A **Profil → Megjelenés** részen világos vagy grafitszürke sötét téma választható, és mindkettőhöz külön **magas kontraszt** kapcsolható. A választás az alkalmazás újraindításakor is megmarad. A natív felületek követik a készülék betűméret-beállítását; nagy betűknél a legtöbb központi vezérlő automatikusan több helyet kaphat.
 
 ### Állítható paraméterek
 
@@ -147,7 +156,7 @@ A Tár nézetben lehetőség van:
 - piszkozatok és kikapcsolt gyakorlatok megjelenítésére;
 - csak kedvencek, illetve a rendelkezésre álló eszközökkel végezhető gyakorlatok szűrésére.
 
-A lista fokozatosan tölti be a kártyákat, hogy hosszú katalógus esetén is kezelhető maradjon. A már megnyitott gyakorlattár és a szűrési adatok lehetőség szerint újrahasznosulnak. A kártyákon végzett műveletek után, illetve a részletoldalról visszalépve a rendszer törekszik a **görgetési pozíció megőrzésére**. A hosszú lista aljáról külön **„Tetejére”** gombbal lehet visszaugrani.
+A lista fokozatosan tölti be a kártyákat, hogy hosszú katalógus esetén is kezelhető maradjon. **A kártyák magassága a több sorba törő címekhez és a műveletgombokhoz igazodik**, a gombok keskeny képernyőn új sorba rendeződhetnek. A már megnyitott gyakorlattár és a szűrési adatok lehetőség szerint újrahasznosulnak. A kártyákon végzett műveletek után, illetve a részletoldalról visszalépve a rendszer törekszik a **görgetési pozíció megőrzésére**. A hosszú lista aljáról külön **„Tetejére”** gombbal lehet visszaugrani.
 
 ### Gyakorlatok kezelése
 
@@ -212,7 +221,7 @@ A három alap gyakorlatsor mellett minden nap elérhető egy **különálló, t�
 - A relaxáció **nem szüneteltethető**. A képernyőn lévő és a felső navigációs **Kilépés** gomb, valamint az Android visszalépésének használatakor megerősítés kéri, hogy a felhasználó valóban megszakítja-e a pihenést; az üzenet jelzi, hogy akkor **teljes tíz percet elölről kell kezdenie**. Ha a rendszer háttérbe kerül vagy más módon megszakad a folyamat, az alkalom jóváírás nélkül újrakezdődik.
 - Igény szerint háttérzene szólhat alatta.
 
-A zene be- és kikapcsolható. A helyi zenei módhoz a felhasználó az alapértelmezett relaxációs hanganyagot használhatja, vagy **több saját hangfájlból rendezett lejátszási listát** állíthat össze. A listában a számok feljebb és lejjebb mozgathatók, illetve eltávolíthatók. A fájlok az alkalmazás saját tárhelyére másolódnak, offline is használhatók, a lista a tíz perc alatt sorrendben szól, majd szükség esetén újraindul.
+A zene be- és kikapcsolható. A **beépített zene** és a **saját zenék** külön választhatók; saját zene esetén **több hangfájlból rendezett lejátszási lista** állítható össze. A listában a számok feljebb és lejjebb mozgathatók, illetve eltávolíthatók. A fájlok az alkalmazás saját tárhelyére másolódnak, offline is használhatók, a lista a tíz perc alatt sorrendben szól, majd szükség esetén újraindul.
 
 Alternatívaként elmenthető egy **YouTube Music-lejátszási lista hivatkozása**, de a zeneforrás csak akkor jelenik meg, ha a telefonon telepítve van a YouTube Music alkalmazás és a felhasználó megerősítette, hogy rendelkezik **YouTube Music Premium vagy YouTube Premium** előfizetéssel. A telepítést az alkalmazás ellenőrzi; az előfizetést nem tudja automatikusan ellenőrizni.
 
@@ -281,7 +290,7 @@ A régebbi, időmérést nem tartalmazó eredményeknél a program nem állít b
 
 A napi emlékeztető **opcionális Android-értesítés**, amelynek időpontja a Profilban módosítható. Célja, hogy figyelmeztessen, ha az aktuális edzésnapon a mozgássorozatot még sem edzéssel, sem megfelelő regenerációval nem sikerült előrevinni vagy megvédeni.
 
-Az értesítéshez a telefon rendszerengedélye szükséges. A rendszer korlátozásai, az energiatakarékossági beállítások és az értesítési jogosultságok befolyásolhatják a kézbesítést.
+Az értesítéshez a telefon rendszerengedélye szükséges; ennek meglétét a bekapcsolt emlékeztető beállításainak mentésekor az alkalmazás ellenőrzi, szükség esetén engedélyt kér. A kézbesítés **nem percre pontos**: az Android energiatakarékossági és értesítési beállításai késést okozhatnak.
 
 Az időzítő hangjelzései és a relaxációs zene egymástól függetlenül kapcsolhatók. A hangjelzések célja, hogy gyakorlás közben ne kelljen folyamatosan a képernyőt nézni.
 
@@ -309,9 +318,9 @@ A Profil oldalon két külön műveletcsoport található:
 
 A teljes mentés haladási adatai **helyi kulccsal hitelesítettek**. Normál visszaállításkor az alkalmazás ellenőrzi az eredeti telepítés kulcsával készített HMAC-aláírást; a mentés utólagos módosítása vagy más telepítés kulcsa ilyenkor hibát okoz.
 
-**Régebbi mentések visszaállítása:** a `1.0.0-beta.2` kiadástól **ugyanaz a „Teljes adatmentés visszaállítása (.json)” gomb** kezeli a korábbi verziókból származó mentéseket is, mind a Profil oldalon, mind az első beállítások előtt. Normál esetben a fájl HMAC-hitelesítésével tölti vissza a mentést, további lépés nélkül. **Újratelepítés után a korábbi hitelesítő kulcs elveszhet.** Ha a mentés aláírása nem egyezik az új telepítés kulcsával, az alkalmazás figyelmeztet: a korábbi kulcs nélkül nem igazolható, hogy a fájl sértetlen-e. Csak **kifejezett jóváhagyással** engedélyezhető a helyreállítás. A fájl formátuma, aláírási mezőinek szerkezete, adatsémája és a gyakorlatadatok továbbra is ellenőrzésre kerülnek. **Ez a jóváhagyott útvonal nem biztosít kriptográfiai eredet- vagy sértetlenség-ellenőrzést**, ezért kizárólag saját, megbízható mentéssel használandó. Utána az új telepítésből érdemes ismét teljes mentést készíteni.
+**Régebbi mentések visszaállítása:** **ugyanaz a „Teljes adatmentés visszaállítása (.json)” gomb** kezeli a korábbi verziókból származó mentéseket is, mind a Profil oldalon, mind az első beállítások előtt. Normál esetben a fájl HMAC-hitelesítésével tölti vissza a mentést, további lépés nélkül. **Újratelepítés után a korábbi hitelesítő kulcs elveszhet.** Ha a mentés aláírása nem egyezik az új telepítés kulcsával, az alkalmazás figyelmeztet: a korábbi kulcs nélkül nem igazolható, hogy a fájl sértetlen-e. Csak **kifejezett jóváhagyással** engedélyezhető a helyreállítás. A fájl formátuma, aláírási mezőinek szerkezete, adatsémája és a gyakorlatadatok továbbra is ellenőrzésre kerülnek. **Ez a jóváhagyott útvonal nem biztosít kriptográfiai eredet- vagy sértetlenség-ellenőrzést**, ezért kizárólag saját, megbízható mentéssel használandó. Utána az új telepítésből érdemes ismét teljes mentést készíteni.
 
-A személyes relaxációs hangfájlok **nem tárolódnak a teljes JSON-mentésben**; újratelepítés után a helyi zenei listák saját hangfájljait újra be kell importálni. A mentésfájlt eredeti formájában is őrizd meg.
+A személyes relaxációs hangfájlok **nem tárolódnak a teljes JSON-mentésben**, csak a fájlhivatkozásaik. Visszaállításkor a program ellenőrzi, hogy ezek léteznek és olvashatók-e; a hiányzó fájlok **nem kerülnek vissza a lejátszási listába**, és erről visszajelzést ad. Újratelepítés után a hiányzó saját hangfájlokat ismét ki kell választani. A mentésfájlt eredeti formájában is őrizd meg.
 
 A rendszer verziózott adatstruktúrát és migrációs lépéseket használ, és törekszik arra, hogy frissítéskor a meglévő személyes beállítások, korrekciók és edzéstörténet megmaradjanak. Az alkalmazás frissítéséhez ugyanaz az Android-alkalmazásazonosító és megfelelő aláírás szükséges.
 
@@ -332,9 +341,8 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 | Tulajdonság | Érték |
 | --- | --- |
 | Alkalmazás neve | Mozdulj! |
-| GitHub-kiadás | **Béta verzió 1.0 – 2. javítás** · `v1.0.0-beta.2` |
-| Legutóbbi béta APK | **1.0.0-beta.2** · Android-verziókód: **34** |
-| Előző kiadás | **1.0.0-beta.1** · Android-verziókód: **33** |
+| GitHub-kiadás | **1.0.0-beta.4** · [`v1.0.0-beta.4`](https://github.com/merthb/Mozdulj-app/releases/tag/v1.0.0-beta.4) |
+| Android APK | **1.0.0-beta.4** · verziókód: **36** |
 | Android alkalmazásazonosító | `hu.mozdulj.preview` |
 | Célkeretrendszer | `net10.0-android` |
 | Minimum Android API | 24 (Android 7.0) |
@@ -345,7 +353,7 @@ A 3D megjelenítő az alkalmazásba csomagolt **HTML/JavaScript/WebGL** felület
 
 A forrás Visual Studióban, telepített **.NET 10 SDK**, **.NET MAUI** és **Android workload** mellett nyitható meg és fordítható. Az Android-alkalmazáshoz megfelelő Android SDK, emulátor vagy csatlakoztatott készülék szükséges.
 
-A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A `master` ágra érkező commitok után a **GitHub Actions automatikusan épít és ellenőrzi az aláírt Android APK-t**, amely a sikeres futás `Artifacts` részében található. A **Béta 1.0 – 2. javítás** kipróbált APK-ja a kapcsolódó **GitHub Release** oldalról is letölthető, a workflow-artifact lejáratától függetlenül.
+A projekt forráscsomagja **nem azonos egy kész, aláírt és telepíthető APK-val**. A `master` ágra érkező commitok után a **GitHub Actions automatikusan épít és ellenőrzi az aláírt Android APK-t**, amely a sikeres futás `Artifacts` részében található. Az aktuális **1.0.0-beta.4** APK-ja a **GitHub Release** oldalról is letölthető, a workflow-artifact lejáratától függetlenül.
 
 A sikeres CI-fordítás nem helyettesíti az eszközön történő tesztelést: a zene, a relaxáció megszakítás utáni újrakezdése, a kijelző ébren tartása, az értesítések, a gombos sorrendváltás, a 3D nézet és a különböző Android-verziók továbbra is készülékes ellenőrzést igényelnek.
 
