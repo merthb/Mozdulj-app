@@ -3,6 +3,7 @@ using Mozdulj.Maui.Services;
 using Mozdulj.Maui.Platforms.Android;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Devices;
+using Microsoft.Maui.Storage;
 using System.Diagnostics;
 
 namespace Mozdulj.Maui.Pages;
@@ -156,13 +157,30 @@ public sealed class WorkoutPlayerPage : ContentPage
                 _recoveryStartTicks = Stopwatch.GetTimestamp();
             _timer.Start();
             _musicPanel?.Start();
-            if(_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
-               !(_state.Preferences.RelaxationMusicSource=="youtube_music" &&
-                 _state.Preferences.RelaxationYouTubeMusicPremiumConfirmed &&
-                 YouTubeMusicSupport.IsInstalled()))
-                await _audio.StartRelaxationAsync(
-                    _state.Preferences.RelaxationPlaylist,
-                    _state.Preferences.RelaxationAudioFileName);
+            if (_workout.Kind == "recovery" && _state.Preferences.RelaxationMusicEnabled)
+            {
+                var preferences = _state.Preferences;
+                var source = RelaxationAudioReferences.EffectiveSource(preferences);
+                if (source == RelaxationAudioReferences.BuiltIn)
+                    await _audio.StartRelaxationAsync(useBuiltIn: true);
+                else if (source == RelaxationAudioReferences.Custom)
+                {
+                    if ((preferences.RelaxationPlaylist?.Any(track =>
+                        RelaxationAudioReferences.IsAvailable(FileSystem.Current.AppDataDirectory, track.FileName)) ?? false) ||
+                        RelaxationAudioReferences.IsAvailable(FileSystem.Current.AppDataDirectory,
+                            preferences.RelaxationAudioFileName))
+                        await _audio.StartRelaxationAsync(preferences.RelaxationPlaylist,
+                            preferences.RelaxationAudioFileName);
+                    else
+                        await DisplayAlertAsync("Hiányzó saját zenék",
+                            "A mentett saját hangfájlok már nem érhetők el. A Profil szerkesztése oldalon válassz új zenéket vagy állítsd át a forrást beépített zenére.",
+                            "Rendben");
+                }
+                else if (!preferences.RelaxationYouTubeMusicPremiumConfirmed || !YouTubeMusicSupport.IsInstalled())
+                    await DisplayAlertAsync("YouTube Music nem érhető el",
+                        "Ellenőrizd a YouTube Music telepítését és a Premium-beállítást a Profil oldalon.",
+                        "Rendben");
+            }
         }
     }
     protected override void OnDisappearing()

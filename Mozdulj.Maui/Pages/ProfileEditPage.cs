@@ -79,6 +79,8 @@ public sealed class ProfileEditPage : ContentPage
         _reminderTime.Time=new TimeSpan(p.DailyReminderHour,p.DailyReminderMinute,0);
         _countdownSounds.IsToggled=p.CountdownSoundsEnabled;
         _relaxationMusic.IsToggled=p.RelaxationMusicEnabled;
+        // A stale path must not look usable in the editor after a reinstall.
+        RelaxationAudioReferences.Reconcile(_draft, FileSystem.Current.AppDataDirectory);
         // Upgrade a previous single-file selection to a one-track playlist.
         if (_draft.RelaxationPlaylist.Count == 0 &&
             !string.IsNullOrWhiteSpace(_draft.RelaxationAudioFileName))
@@ -89,11 +91,13 @@ public sealed class ProfileEditPage : ContentPage
             });
 
         _youtubePremium.IsToggled = youtubeInstalled && p.RelaxationYouTubeMusicPremiumConfirmed;
-        _relaxationSource.Items.Add("Saját zenék / alapzene");
+        _relaxationSource.Items.Add("Beépített zene");
+        _relaxationSource.Items.Add("Saját zenék");
         if (youtubeInstalled && _youtubePremium.IsToggled)
             _relaxationSource.Items.Add("YouTube Music");
         _relaxationSource.SelectedIndex = youtubeInstalled && _youtubePremium.IsToggled &&
-            _draft.RelaxationMusicSource == "youtube_music" ? 1 : 0;
+            _draft.RelaxationMusicSource == RelaxationAudioReferences.YouTubeMusic ? 2
+            : RelaxationAudioReferences.EffectiveSource(_draft) == RelaxationAudioReferences.Custom ? 1 : 0;
         _youtubePlaylistUrl.Text = _draft.RelaxationYouTubeMusicPlaylistUrl;
 
         var playlistContainer = new VerticalStackLayout { Spacing = 7 };
@@ -107,7 +111,7 @@ public sealed class ProfileEditPage : ContentPage
             var list = _draft.RelaxationPlaylist;
             if (list.Count == 0)
                 playlistContainer.Children.Add(UI.Label(
-                    "A beépített relaxációs zene szól. Saját fájlok hozzáadásával lejátszási listát állíthatsz össze.",
+                    "Nincs kiválasztott saját zenefájl. A saját lejátszáshoz adj hozzá legalább egy elérhető fájlt.",
                     13, color: UI.Muted));
             for (var index = 0; index < list.Count; index++)
             {
@@ -155,7 +159,7 @@ public sealed class ProfileEditPage : ContentPage
                 playlistContainer.Children.Add(row);
             }
             playlistHint.Text = list.Count == 0
-                ? "Alapzene"
+                ? "Nincs saját zeneszám"
                 : $"{list.Count} zeneszám · sorrendben lejátszva, szükség esetén ismételve a teljes 10 perc alatt";
         }
         RebuildPlaylist();
@@ -206,6 +210,7 @@ public sealed class ProfileEditPage : ContentPage
                         { FileName = fileName, DisplayName = result.FileName });
                 }
                 _draft.RelaxationAudioFileName = "";
+                if (_draft.RelaxationPlaylist.Count > 0) _relaxationSource.SelectedIndex = 1;
                 RebuildPlaylist();
             }
             catch (Exception ex)
@@ -220,6 +225,7 @@ public sealed class ProfileEditPage : ContentPage
         {
             _draft.RelaxationPlaylist.Clear();
             _draft.RelaxationAudioFileName = "";
+            _relaxationSource.SelectedIndex = 0;
             RebuildPlaylist();
         };
         localMusicPanel.Children.Add(playlistHint);
@@ -234,8 +240,8 @@ public sealed class ProfileEditPage : ContentPage
 
         void UpdateMusicPanel()
         {
-            localMusicPanel.IsVisible = _relaxationSource.SelectedIndex != 1;
-            youtubeMusicPanel.IsVisible = _relaxationSource.SelectedIndex == 1;
+            localMusicPanel.IsVisible = _relaxationSource.SelectedIndex == 1;
+            youtubeMusicPanel.IsVisible = _relaxationSource.SelectedIndex == 2;
         }
         _relaxationSource.SelectedIndexChanged += (_, _) => UpdateMusicPanel();
         var premiumPanel = new VerticalStackLayout { Spacing = 4, IsVisible = youtubeInstalled };
@@ -249,15 +255,15 @@ public sealed class ProfileEditPage : ContentPage
         {
             if (youtubeInstalled && _youtubePremium.IsToggled)
             {
-                if (_relaxationSource.Items.Count == 1)
+                if (_relaxationSource.Items.Count == 2)
                     _relaxationSource.Items.Add("YouTube Music");
             }
             else
             {
-                if (_relaxationSource.SelectedIndex == 1)
+                if (_relaxationSource.SelectedIndex == 2)
                     _relaxationSource.SelectedIndex = 0;
-                if (_relaxationSource.Items.Count > 1)
-                    _relaxationSource.Items.RemoveAt(1);
+                if (_relaxationSource.Items.Count > 2)
+                    _relaxationSource.Items.RemoveAt(2);
             }
             UpdateMusicPanel();
         };
@@ -315,7 +321,14 @@ public sealed class ProfileEditPage : ContentPage
                 YouTubeMusicSupport.IsInstalled() && _youtubePremium.IsToggled;
             _draft.RelaxationMusicSource =
                 _draft.RelaxationYouTubeMusicPremiumConfirmed &&
-                _relaxationSource.SelectedIndex == 1 ? "youtube_music" : "local";
+                _relaxationSource.SelectedIndex == 2 ? RelaxationAudioReferences.YouTubeMusic
+                : _relaxationSource.SelectedIndex == 1 ? RelaxationAudioReferences.Custom
+                : RelaxationAudioReferences.BuiltIn;
+            if (_draft.RelaxationMusicEnabled &&
+                _draft.RelaxationMusicSource == RelaxationAudioReferences.Custom &&
+                !_draft.RelaxationPlaylist.Any(track =>
+                    RelaxationAudioReferences.IsAvailable(FileSystem.Current.AppDataDirectory, track.FileName)))
+                throw new InvalidDataException("A saját zenék nem érhetők el. Válassz működő hangfájlt, vagy állítsd be a beépített zenét.");
             _draft.RelaxationYouTubeMusicPlaylistUrl = (_youtubePlaylistUrl.Text ?? "").Trim();
             if (_draft.RelaxationMusicEnabled && _draft.RelaxationMusicSource == "youtube_music")
             {

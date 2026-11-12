@@ -33,26 +33,30 @@ public sealed class WorkoutAudio : IDisposable
     /// <summary>Play the selected on-device files in order, repeating as needed
     /// until the relaxation timer finishes. Never copies or streams YouTube music.</summary>
     public async Task StartRelaxationAsync(
-        IEnumerable<RelaxationTrack>? tracks = null, string? legacyFileName = null)
+        IEnumerable<RelaxationTrack>? tracks = null, string? legacyFileName = null, bool useBuiltIn = false)
     {
 #if ANDROID
         Stop();
         try
         {
             _musicFiles.Clear();
-            foreach (var track in tracks ?? [])
+            if (!useBuiltIn)
             {
-                var fullPath = ResolveCustomAudio(track.FileName);
-                if (fullPath is not null) _musicFiles.Add(fullPath);
+                foreach (var track in tracks ?? [])
+                {
+                    var fullPath = ResolveCustomAudio(track.FileName);
+                    if (fullPath is not null) _musicFiles.Add(fullPath);
+                }
             }
 
             // Existing installs retain their former one-file selection.
-            if (_musicFiles.Count == 0)
+            if (!useBuiltIn && _musicFiles.Count == 0)
             {
                 var oldFile = ResolveCustomAudio(legacyFileName);
                 if (oldFile is not null) _musicFiles.Add(oldFile);
             }
-            if (_musicFiles.Count == 0)
+            // Never silently replace a missing custom playlist with bundled audio.
+            if (useBuiltIn)
             {
                 var file = Path.Combine(FileSystem.Current.CacheDirectory, "relax-ambient-v254.wav");
                 if (!File.Exists(file))
@@ -64,6 +68,7 @@ public sealed class WorkoutAudio : IDisposable
                 _musicFiles.Add(file);
             }
 
+            if (_musicFiles.Count == 0) return;
             _musicRunning = true;
             _musicIndex = 0;
             PlayNextTrack();
@@ -77,12 +82,9 @@ public sealed class WorkoutAudio : IDisposable
 #if ANDROID
     private static string? ResolveCustomAudio(string? fileName)
     {
-        if (string.IsNullOrWhiteSpace(fileName) ||
-            Path.GetFileName(fileName) != fileName ||
-            !fileName.StartsWith("relax-user-", StringComparison.Ordinal))
-            return null;
-        var path = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
-        return File.Exists(path) ? path : null;
+        return RelaxationAudioReferences.IsAvailable(FileSystem.Current.AppDataDirectory, fileName)
+            ? RelaxationAudioReferences.ResolvePath(FileSystem.Current.AppDataDirectory, fileName)
+            : null;
     }
 
     private void PlayNextTrack()

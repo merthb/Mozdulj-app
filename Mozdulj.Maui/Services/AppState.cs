@@ -650,6 +650,9 @@ public sealed class AppState
     public async Task<byte[]> ExportUserBackupAsync() =>
         LocalBackupCodec.Export(Data,await GetBackupKeyAsync());
 
+    // Transient import feedback, intentionally excluded from user-data and backup schemas.
+    public AudioRestoreCheck? LastAudioRestoreCheck { get; private set; }
+
     public async Task RestoreUserBackupAsync(Stream stream, bool recoveryAfterReinstall = false)
     {
         using var mem=new MemoryStream();
@@ -695,6 +698,10 @@ public sealed class AppState
         restored.RewardProgress.LifetimeXp=Math.Max(restored.RewardProgress.LifetimeXp,Data.RewardProgress.LifetimeXp);
         restored.RewardProgress.ProcessedFreezeMilestones=Math.Max(
             restored.RewardProgress.ProcessedFreezeMilestones,Data.RewardProgress.ProcessedFreezeMilestones);
+        // Signature and catalog validation must finish before interpreting filesystem references.
+        // Save the report only after a successful transaction.
+        var audioCheck = RelaxationAudioReferences.Reconcile(
+            restored.Preferences, FileSystem.Current.AppDataDirectory);
         var previous=Data;
         try
         {
@@ -705,6 +712,7 @@ public sealed class AppState
 #if ANDROID
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences);
 #endif
+            LastAudioRestoreCheck = audioCheck;
         }
         catch
         {

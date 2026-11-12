@@ -63,12 +63,48 @@ internal static class BackupRestoreFlow
             restoredWithoutKey = true;
         }
 
-        await page.DisplayAlertAsync("Sikeres visszaállítás",
-            restoredWithoutKey
-                ? "A régi profil és haladás betöltődött. Készíts most új teljes adatmentést " +
-                  "a Profil oldalon: az már az új telepítés kulcsával lesz hitelesítve."
-                : "A hitelesített mentésből a korábbi profil és haladás betöltődött.",
-            "Rendben");
+        var details = restoredWithoutKey
+            ? "A régi profil és haladás betöltődött. Készíts új teljes adatmentést a Profil oldalon: az már az új telepítés kulcsával lesz hitelesítve."
+            : "A hitelesített mentésből a korábbi profil és haladás betöltődött.";
+        var check = state.LastAudioRestoreCheck;
+        if (check is { RemovedCount: > 0 })
+            details += $"\n\n{check.RemovedCount} saját zenefájl nem található vagy nem olvasható, ezért nem került be a listába. " +
+                "A meglévő zenék megmaradtak. A hiányzó fájlokat a Profil szerkesztése oldalon választhatod ki újra.";
+#if ANDROID
+        if (state.Preferences.DailyReminderEnabled)
+        {
+            try
+            {
+                var permission = await Microsoft.Maui.ApplicationModel.Permissions.CheckStatusAsync<
+                    Mozdulj.Maui.Platforms.Android.StreakNotificationPermission>();
+                if (permission != Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
+                {
+                    details += "\n\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.";
+                    if (await page.DisplayAlertAsync("Emlékeztető engedélye",
+                        "A visszaállított napi emlékeztetőhöz engedélyezed az értesítéseket?", "Engedélyezés", "Most nem"))
+                    {
+                        permission = await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<
+                            Mozdulj.Maui.Platforms.Android.StreakNotificationPermission>();
+                        if (permission == Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
+                        {
+                            details = details.Replace(
+                                "\n\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.", "");
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                details += "\n\nAz emlékeztető engedélyét nem sikerült ellenőrizni. Ellenőrizd az alkalmazás értesítési engedélyét a telefon beállításaiban.";
+            }
+        }
+        if (state.Preferences.RelaxationMusicEnabled &&
+            state.Preferences.RelaxationMusicSource == RelaxationAudioReferences.YouTubeMusic &&
+            (!YouTubeMusicSupport.IsInstalled() ||
+             !state.Preferences.RelaxationYouTubeMusicPremiumConfirmed))
+            details += "\n\nA YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást és a Premium-beállítást a Profil oldalon.";
+#endif
+        await page.DisplayAlertAsync("Visszaállítás eredménye", details, "Rendben");
         return true;
     }
 }

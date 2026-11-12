@@ -8,6 +8,7 @@ if (args.Contains("--backup-recovery-only", StringComparer.Ordinal))
     var installedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
         "..", "..", "..", "..", "Mozdulj.Maui", "Resources", "Raw", "exercises.catalog.json"));
     var installed = CatalogCodec.Parse(File.ReadAllText(installedPath));
+    AudioRestoreRegression.Run(installed);
     var oldKey = Enumerable.Repeat((byte)7, 32).ToArray();
     var newKey = Enumerable.Repeat((byte)9, 32).ToArray();
     var sample = new LocalData
