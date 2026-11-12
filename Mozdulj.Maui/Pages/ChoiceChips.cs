@@ -26,11 +26,12 @@ internal static class ChoiceChips
                 FontSize = 12,
                 FontAttributes = FontAttributes.Bold,
                 CornerRadius = 15,
-                HeightRequest = 32,
-                MinimumHeightRequest = 32,
+                MinimumHeightRequest = 44,
+                FontAutoScalingEnabled = true,
+                LineBreakMode = LineBreakMode.WordWrap,
                 Padding = new Thickness(11, 3),
                 Margin = new Thickness(0, 0, 6, 6),
-                BorderWidth = 1,
+                BorderWidth = UI.HighContrast ? 2 : 1,
                 HorizontalOptions = LayoutOptions.Start,
             };
             void Refresh()
@@ -38,7 +39,7 @@ internal static class ChoiceChips
                 var active = selected.Contains(item, StringComparer.OrdinalIgnoreCase);
                 chip.BackgroundColor = active ? UI.PrimaryButton : UI.Lavender;
                 chip.TextColor = active ? Colors.White : UI.Ink;
-                chip.BorderColor = active ? UI.Purple : Color.FromArgb("#DAD2EC");
+                chip.BorderColor = UI.HighContrast ? UI.Outline : active ? UI.Purple : UI.Outline;
                 SemanticProperties.SetDescription(chip, item + (active ? ", kiválasztva" : ", nincs kiválasztva"));
             }
             chip.Clicked += (_, _) =>
