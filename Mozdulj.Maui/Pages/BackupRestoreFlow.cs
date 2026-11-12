@@ -79,7 +79,7 @@ internal static class BackupRestoreFlow
                     Mozdulj.Maui.Platforms.Android.StreakNotificationPermission>();
                 if (permission != Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
                 {
-                    details += "\\n\\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.";
+                    details += "\n\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.";
                     if (await page.DisplayAlertAsync("Emlékeztető engedélye",
                         "A visszaállított napi emlékeztetőhöz engedélyezed az értesítéseket?", "Engedélyezés", "Most nem"))
                     {
@@ -88,21 +88,21 @@ internal static class BackupRestoreFlow
                         if (permission == Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
                         {
                             details = details.Replace(
-                                "\\n\\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.", "");
+                                "\n\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.", "");
                         }
                     }
                 }
             }
             catch (Exception)
             {
-                details += "\\n\\nAz emlékeztető engedélyét nem sikerült ellenőrizni. Ellenőrizd az alkalmazás értesítési engedélyét a telefon beállításaiban.";
+                details += "\n\nAz emlékeztető engedélyét nem sikerült ellenőrizni. Ellenőrizd az alkalmazás értesítési engedélyét a telefon beállításaiban.";
             }
         }
         if (state.Preferences.RelaxationMusicEnabled &&
             state.Preferences.RelaxationMusicSource == RelaxationAudioReferences.YouTubeMusic &&
             (!YouTubeMusicSupport.IsInstalled() ||
              !state.Preferences.RelaxationYouTubeMusicPremiumConfirmed))
-            details += "\\n\\nA YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást és a Premium-beállítást a Profil oldalon.";
+            details += "\n\nA YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást és a Premium-beállítást a Profil oldalon.";
 #endif
         await page.DisplayAlertAsync("Visszaállítás eredménye", details, "Rendben");
         return true;
