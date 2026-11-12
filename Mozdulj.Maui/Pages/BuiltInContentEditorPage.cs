@@ -70,7 +70,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
         _save.Clicked+=async (_,_)=>await SaveAsync();
         var cancel=UI.Button("Mégse",false);
         cancel.Clicked+=async (_,_)=>await Navigation.PopModalAsync();
-        var footer=new Grid{BackgroundColor=Colors.White,Padding=new Thickness(16,10,16,14),ColumnSpacing=10,
+        var footer=new Grid{BackgroundColor=UI.CardColor,Padding=new Thickness(16,10,16,14),ColumnSpacing=10,
             ColumnDefinitions={new ColumnDefinition{Width=new GridLength(1,GridUnitType.Star)},
                 new ColumnDefinition{Width=new GridLength(2,GridUnitType.Star)}}};
         footer.Add(cancel,0,0);footer.Add(_save,1,0);

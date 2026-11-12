@@ -41,3 +41,15 @@ A vágólap tartalmát **közvetlenül a GitHub Secret értékmezőjébe** illes
 - GitHub egy push-eseményre egy futást indít: egy több commitot tartalmazó pushból egy APK készül, nem minden egyes commitból külön.
 
 Az első sikeres buildhez mind a négy Secret szükséges. A workflow akkor indul automatikusan, miután a PR-t a `master` branchbe merge-elted.
+
+## Feature branchek és pull requestek ellenőrzése
+
+A különálló `.github/workflows/android-branch-ci.yml` workflow minden `master`-től eltérő branch push eseményén, valamint a `master`-re célzó pull requesteknél fut. Manuálisan is indítható.
+
+- Lefuttatja a jelenleg használt célzott regressziós ellenőrzést.
+- `dotnet build` paranccsal Release módban lefordítja az Android-alkalmazást, `AndroidBuildApplicationPackage=false` beállítással.
+- Hibára fut, ha a buildben mégis `.apk` vagy `.aab` telepítőcsomag keletkezik.
+- **Nem** olvasja ki az aláírási secretjeidet, **nem** hívja a `dotnet publish` parancsot, és nem tölt fel APK artifactot.
+- A `master`-re kerülő commitokat továbbra is a fent ismertetett, külön aláírt APK-s workflow kezeli.
+
+A PR `Checks` fülén az **Android branch CI (no APK)** futás eredménye látható. A pull requesteknél és a branch pushoknál ugyanarra a frissítésre egyaránt történhet esemény; a párhuzamos futásokat a workflow concurrency szabálya kezeli.

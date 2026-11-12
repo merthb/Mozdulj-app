@@ -10,7 +10,7 @@ public sealed class RootTabs : TabbedPage
         Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.TabbedPage.SetToolbarPlacement(
             this, Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.ToolbarPlacement.Top);
 #endif
-        BarBackgroundColor = Colors.White;
+        BarBackgroundColor = UI.CardColor;
         BarTextColor = UI.Purple;
         SelectedTabColor = UI.Purple;
         UnselectedTabColor = UI.Muted;

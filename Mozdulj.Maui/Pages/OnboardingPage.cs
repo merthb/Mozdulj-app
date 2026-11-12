@@ -120,7 +120,7 @@ public sealed class OnboardingPage : ContentPage
         layout.Add(new ScrollView { Content = content }, 0, 0);
         layout.Add(new Border
         {
-            BackgroundColor = Colors.White,
+            BackgroundColor = UI.CardColor,
             Padding = new Thickness(16, 10, 16, 18),
             Content = _save
         }, 0, 1);

@@ -22,6 +22,29 @@ public sealed class ProfilePage : ContentPage
         var p=_state.Preferences;
         _content.Children.Add(UI.Label("Saját mozgásprofil",25,true));
 
+        // Appearance is a device preference, not part of the exported workout profile.
+        _content.Children.Add(UI.Label("Megjelenés", 19, true));
+        var themePicker = new Picker { Title = "Alkalmazás témája", TextColor = UI.Ink,
+            BackgroundColor = UI.CardColor, TitleColor = UI.Muted };
+        themePicker.Items.Add("Világos");
+        themePicker.Items.Add("Sötét (grafitszürke)");
+        themePicker.SelectedIndex = UI.IsDark ? 1 : 0;
+        themePicker.SelectedIndexChanged += (_, _) =>
+        {
+            if (themePicker.SelectedIndex < 0 || (themePicker.SelectedIndex == 1) == UI.IsDark) return;
+            var dark = themePicker.SelectedIndex == 1;
+            Microsoft.Maui.Storage.Preferences.Default.Set("appearance_dark", dark);
+            if (Application.Current is not null) Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
+            // Recreate view instances so every UI helper resolves the new palette.
+            if (Window is not null)
+            {
+                var tabs = new RootTabs(_state);
+                tabs.CurrentPage = tabs.Children[4];
+                Window.Page = tabs;
+            }
+        };
+        _content.Children.Add(UI.Card(themePicker));
+
         var edit=UI.Button("✎ Profil szerkesztése");
         edit.Clicked+=async (_,_)=> await Navigation.PushModalAsync(new NavigationPage(new ProfileEditPage(_state))
         {

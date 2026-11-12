@@ -99,7 +99,7 @@ public sealed class CatalogPage : ContentPage
             for(int i=0;i<3;i++)
             {
                 var active=_origin.SelectedIndex==i;
-                sourceButtons[i].BackgroundColor=active ? UI.Purple : UI.Lavender;
+                sourceButtons[i].BackgroundColor=active ? UI.PrimaryButton : UI.Lavender;
                 sourceButtons[i].TextColor=active ? Colors.White : UI.Purple;
             }
         }
@@ -371,7 +371,7 @@ public sealed class CatalogPage : ContentPage
                 HeightRequest = 36,
                 Padding = new Thickness(5, 0),
                 CornerRadius = 12,
-                BackgroundColor = isActive ? UI.Lavender : Color.FromArgb("#E7F5F1"),
+                BackgroundColor = isActive ? UI.Lavender : UI.SuccessBackground,
                 TextColor = isActive ? UI.Purple : UI.Teal,
                 BorderWidth = 0,
                 LineBreakMode = LineBreakMode.NoWrap

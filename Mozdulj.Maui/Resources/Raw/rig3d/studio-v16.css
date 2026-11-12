@@ -57,3 +57,22 @@ html{color-scheme:light}body{background:var(--bg);color:#29233c;letter-spacing:-
 .edit-group>summary{cursor:pointer;list-style-position:inside;user-select:none}
 .edit-group>summary:focus-visible{outline:3px solid #bca5f4;outline-offset:3px}
 .phase-editor button:disabled{opacity:.4;cursor:not-allowed}
+
+
+/* Native-app-controlled graphite theme; accent hues stay purple and teal. */
+html.dark {color-scheme:dark;--surface:#292d34;--bg:#202329;--outline:#454553;--purple-dark:#c5b2ff}
+html.dark body {background:var(--bg);color:#f3f0fa}
+html.dark .shell,html.dark .view-controls,html.dark .phase-controls,html.dark .edit-tools {background:#292d34;border-color:var(--outline)}
+html.dark .header {background:linear-gradient(120deg,#292d34,#333041);border-color:var(--outline)}
+html.dark .stage {background:radial-gradient(ellipse at 50% 20%,#383944 10%,#242832 100%)}
+html.dark .floating {background:#343942ed;color:#eee8f8;border-color:#565162}
+html.dark .pill,html.dark .status {background:#3a334d;color:#d4c5ff}
+html.dark .note {background:#263f3b;color:#c8ede5;border-color:#46665f}
+html.dark .line label {color:#e3dbf4}
+html.dark .line select,html.dark .line input,html.dark textarea,html.dark .coord-row input {background:#343942;color:#f3f0fa;border-color:#565162}
+html.dark .view-controls button,html.dark .panel button,html.dark .buttons button,html.dark .phase-controls button,html.dark .edit-tools button {background:#3a334d;color:#d4c5ff;border-color:#565162}
+html.dark .phase-controls button:disabled {background:#303039;color:#928b9c}
+html.dark #phaseLabel {color:#d4c5ff}
+html.dark #phaseProgress,html.dark .hint,html.dark .muted {color:#bdb8cc}
+html.dark .fixed-anchor,html.dark details {background:#303039;border-color:#565162;color:#f3f0fa}
+html.dark .no-webgl {background:#442e31;color:#ffd0cc}

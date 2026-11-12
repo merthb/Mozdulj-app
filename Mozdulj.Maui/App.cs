@@ -9,7 +9,9 @@ public sealed class App : Application
     public App(AppState state)
     {
         _state = state;
-        UserAppTheme = AppTheme.Light;
+        // Preserve the user's choice independently of backup/profile schema versions.
+        UserAppTheme = Microsoft.Maui.Storage.Preferences.Default.Get("appearance_dark", false)
+            ? AppTheme.Dark : AppTheme.Light;
     }
     protected override Window CreateWindow(IActivationState? activationState)
         => new(new StartupPage(_state));

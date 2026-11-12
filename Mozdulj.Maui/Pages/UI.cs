@@ -2,13 +2,18 @@ namespace Mozdulj.Maui.Pages;
 
 public static class UI
 {
-    public static readonly Color Purple = Color.FromArgb("#684BBF");
-    public static readonly Color Ink = Color.FromArgb("#25203E");
-    public static readonly Color Muted = Color.FromArgb("#69657B");
-    public static readonly Color Background = Color.FromArgb("#F8F6FC");
-    public static readonly Color CardColor = Colors.White;
-    public static readonly Color Lavender = Color.FromArgb("#EEE9FA");
-    public static readonly Color Teal = Color.FromArgb("#4D998E");
+    // Keep the existing purple/teal identity, with lighter foreground accents on graphite.
+    public static bool IsDark => Application.Current?.UserAppTheme == AppTheme.Dark;
+    public static Color Purple => Color.FromArgb(IsDark ? "#BBA5FF" : "#684BBF");
+    public static Color PrimaryButton => Color.FromArgb("#684BBF");
+    public static Color Ink => Color.FromArgb(IsDark ? "#F3F0FA" : "#25203E");
+    public static Color Muted => Color.FromArgb(IsDark ? "#BDB8CC" : "#69657B");
+    public static Color Background => Color.FromArgb(IsDark ? "#202329" : "#F8F6FC");
+    public static Color CardColor => Color.FromArgb(IsDark ? "#292D34" : "#FFFFFF");
+    public static Color Lavender => Color.FromArgb(IsDark ? "#3A334D" : "#EEE9FA");
+    public static Color Teal => Color.FromArgb(IsDark ? "#7DCBBF" : "#4D998E");
+    public static Color Outline => Color.FromArgb(IsDark ? "#454553" : "#E7E2F1");
+    public static Color SuccessBackground => Color.FromArgb(IsDark ? "#243F3B" : "#E7F5F1");
 
     public static Label Label(string text, double size=15, bool strong=false, Color? color=null) =>
         new() { Text = text, FontSize = size, TextColor = color ?? Ink,
@@ -18,7 +23,7 @@ public static class UI
     public static Button Button(string text, bool main=true) => new()
     {
         Text = text, TextColor = main ? Colors.White : Purple,
-        BackgroundColor = main ? Purple : Lavender,
+        BackgroundColor = main ? PrimaryButton : Lavender,
         CornerRadius = 13, FontSize = 15, HeightRequest = 48,
         FontAttributes = FontAttributes.Bold, Padding = new Thickness(14, 8)
     };
@@ -39,7 +44,7 @@ public static class UI
         foreach (var item in items) body.Children.Add(item);
         return new Border
         {
-            BackgroundColor = CardColor, Stroke = Color.FromArgb("#E7E2F1"),
+            BackgroundColor = CardColor, Stroke = Outline,
             StrokeThickness = 1, Padding = new Thickness(16),
             StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(18) },
             Content = body
