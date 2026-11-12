@@ -43,6 +43,7 @@ public sealed class Rig3DEditorPage : ContentPage
             { _note.Text="A helyi 3D megjelenítő nem tölthető be."; return; }
             try
             {
+                await _browser.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+")");
                 var result= _working.Rig3D is not null
                     ? await _browser.EvaluateJavaScriptAsync("window.loadRigBase64('"+
                           Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(_working.Rig3D,CatalogCodec.JsonOptions)))+"')")
@@ -62,7 +63,7 @@ public sealed class Rig3DEditorPage : ContentPage
         _save.Clicked+=async (_,_)=>await SaveAsync();
         var cancel=UI.Button("Mégse",false);
         cancel.Clicked+=async(_,_)=>await Navigation.PopAsync();
-        var footer=new VerticalStackLayout{Spacing=7,Padding=new Thickness(14,8,14,12),BackgroundColor=Colors.White,
+        var footer=new VerticalStackLayout{Spacing=7,Padding=new Thickness(14,8,14,12),BackgroundColor=UI.CardColor,
             Children={_note,_save,cancel}};
         var layout=new Grid{RowDefinitions={new RowDefinition{Height=GridLength.Star},
             new RowDefinition{Height=GridLength.Auto}}};
@@ -129,6 +130,7 @@ public sealed class Rig3DViewerPage : ContentPage
             }
 
             _webReady = true;
+            await _web.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+")");
             await ReloadPoseAsync();
         };
 
@@ -136,7 +138,7 @@ public sealed class Rig3DViewerPage : ContentPage
         {
             Spacing = 8,
             Padding = new Thickness(13, 10),
-            BackgroundColor = Colors.White
+            BackgroundColor = UI.CardColor
         };
         footer.Children.Add(_info);
 
