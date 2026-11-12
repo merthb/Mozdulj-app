@@ -9,8 +9,8 @@
     <Nullable>enable</Nullable>
     <ApplicationTitle>Mozdulj!</ApplicationTitle>
     <ApplicationId>hu.mozdulj.preview</ApplicationId>
-    <ApplicationDisplayVersion>1.0.0-beta.2</ApplicationDisplayVersion>
-    <ApplicationVersion>34</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0.0-beta.3</ApplicationDisplayVersion>
+    <ApplicationVersion>35</ApplicationVersion>
     <!-- On-device sideload requires a SIGNED APK; Google Play uses AAB. -->
     <AndroidPackageFormats Condition="'$(Configuration)'=='Release'">apk</AndroidPackageFormats>
     <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
