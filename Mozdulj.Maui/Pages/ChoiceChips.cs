@@ -36,7 +36,7 @@ internal static class ChoiceChips
             void Refresh()
             {
                 var active = selected.Contains(item, StringComparer.OrdinalIgnoreCase);
-                chip.BackgroundColor = active ? UI.Purple : UI.Lavender;
+                chip.BackgroundColor = active ? UI.PrimaryButton : UI.Lavender;
                 chip.TextColor = active ? Colors.White : UI.Ink;
                 chip.BorderColor = active ? UI.Purple : Color.FromArgb("#DAD2EC");
                 SemanticProperties.SetDescription(chip, item + (active ? ", kiválasztva" : ", nincs kiválasztva"));
