@@ -43,7 +43,7 @@ public sealed class Rig3DEditorPage : ContentPage
             { _note.Text="A helyi 3D megjelenítő nem tölthető be."; return; }
             try
             {
-                await _browser.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+")");
+                await _browser.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+");document.documentElement.classList.toggle('high-contrast', "+(UI.HighContrast ? "true" : "false")+")");
                 var result= _working.Rig3D is not null
                     ? await _browser.EvaluateJavaScriptAsync("window.loadRigBase64('"+
                           Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(_working.Rig3D,CatalogCodec.JsonOptions)))+"')")
@@ -130,7 +130,7 @@ public sealed class Rig3DViewerPage : ContentPage
             }
 
             _webReady = true;
-            await _web.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+")");
+            await _web.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+");document.documentElement.classList.toggle('high-contrast', "+(UI.HighContrast ? "true" : "false")+")");
             await ReloadPoseAsync();
         };
 
