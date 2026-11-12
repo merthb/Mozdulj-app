@@ -4,7 +4,11 @@ public static class UI
 {
     // Palette resolved when views are constructed; RootTabs rebuilds upon
     // changes to the local appearance settings, without changing user backups.
-    public static bool IsDark => Application.Current?.UserAppTheme == AppTheme.Dark;
+    // Read the persisted in-app palette. Changing Android UserAppTheme while a native
+    // Picker is open may recreate the Activity and terminate the active navigation.
+    // Only App startup sets UserAppTheme for native controls; runtime switching
+    // rebinds our palette without reconfiguring Android's activity.
+    public static bool IsDark => Microsoft.Maui.Storage.Preferences.Default.Get("appearance_dark", false);
     public static bool HighContrast =>
         Microsoft.Maui.Storage.Preferences.Default.Get("appearance_high_contrast", false);
 
