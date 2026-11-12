@@ -99,7 +99,7 @@ public sealed class CatalogPage : ContentPage
             for(int i=0;i<3;i++)
             {
                 var active=_origin.SelectedIndex==i;
-                sourceButtons[i].BackgroundColor=active ? UI.Purple : UI.Lavender;
+                sourceButtons[i].BackgroundColor=active ? UI.PrimaryButton : UI.Lavender;
                 sourceButtons[i].TextColor=active ? Colors.White : UI.Purple;
             }
         }
