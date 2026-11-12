@@ -29,21 +29,37 @@ public sealed class ProfilePage : ContentPage
         themePicker.Items.Add("Világos");
         themePicker.Items.Add("Sötét (grafitszürke)");
         themePicker.SelectedIndex = UI.IsDark ? 1 : 0;
-        themePicker.SelectedIndexChanged += (_, _) =>
+        var contrastSwitch = new Switch { IsToggled = UI.HighContrast, OnColor = UI.Teal };
+        void RefreshAppearance()
         {
-            if (themePicker.SelectedIndex < 0 || (themePicker.SelectedIndex == 1) == UI.IsDark) return;
-            var dark = themePicker.SelectedIndex == 1;
-            Microsoft.Maui.Storage.Preferences.Default.Set("appearance_dark", dark);
-            if (Application.Current is not null) Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
-            // Recreate view instances so every UI helper resolves the new palette.
+            var newTheme = themePicker.SelectedIndex == 1 ? AppTheme.Dark : AppTheme.Light;
+            var newContrast = contrastSwitch.IsToggled;
+            var themeChanged = Application.Current?.UserAppTheme != newTheme;
+            var contrastChanged = UI.HighContrast != newContrast;
+            if (!themeChanged && !contrastChanged) return;
+
+            Preferences.Default.Set("appearance_dark", newTheme == AppTheme.Dark);
+            Preferences.Default.Set("appearance_high_contrast", newContrast);
+            if (Application.Current is not null) Application.Current.UserAppTheme = newTheme;
+            // Resolve all palette colors again. No workout/profile data is touched.
             if (Window is not null)
             {
                 var tabs = new RootTabs(_state);
                 tabs.CurrentPage = tabs.Children[4];
                 Window.Page = tabs;
             }
-        };
-        _content.Children.Add(UI.Card(themePicker));
+        }
+        themePicker.SelectedIndexChanged += (_, _) => RefreshAppearance();
+        contrastSwitch.Toggled += (_, _) => RefreshAppearance();
+        _content.Children.Add(UI.Card(
+            UI.Label("Téma", 14, true), themePicker,
+            new HorizontalStackLayout
+            {
+                Spacing = 12,
+                Children = { contrastSwitch, UI.Label("Magas kontraszt", 15, true) }
+            },
+            UI.Label("A telefon betűméret-beállítását az alkalmazás automatikusan követi.",
+                12, color:UI.Muted)));
 
         var edit=UI.Button("✎ Profil szerkesztése");
         edit.Clicked+=async (_,_)=> await Navigation.PushModalAsync(new NavigationPage(new ProfileEditPage(_state))
