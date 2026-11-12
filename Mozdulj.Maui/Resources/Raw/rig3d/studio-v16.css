@@ -76,3 +76,83 @@ html.dark #phaseLabel {color:#d4c5ff}
 html.dark #phaseProgress,html.dark .hint,html.dark .muted {color:#bdb8cc}
 html.dark .fixed-anchor,html.dark details {background:#303039;border-color:#565162;color:#f3f0fa}
 html.dark .no-webgl {background:#442e31;color:#ffd0cc}
+
+
+/* Accessible, higher-contrast versions of both native appearance themes. */
+html { -webkit-text-size-adjust: auto; text-size-adjust: auto; }
+html.high-contrast:not(.dark) {
+  --bg:#fff; --surface:#fff; --outline:#625579; --purple:#5732a7; --purple-dark:#5732a7;
+  color-scheme:light;
+}
+html.high-contrast:not(.dark) body {background:#fff;color:#161324}
+html.high-contrast:not(.dark) .shell {border:2px solid #625579;box-shadow:none}
+html.high-contrast:not(.dark) .header,
+html.high-contrast:not(.dark) .view-controls,
+html.high-contrast:not(.dark) .phase-controls,
+html.high-contrast:not(.dark) .edit-tools {background:#fff;border-color:#625579;color:#161324}
+html.high-contrast:not(.dark) .stage {background:#f0e8ff}
+html.high-contrast:not(.dark) .floating,
+html.high-contrast:not(.dark) .status,
+html.high-contrast:not(.dark) .pill,
+html.high-contrast:not(.dark) .note,
+html.high-contrast:not(.dark) .fixed-anchor,
+html.high-contrast:not(.dark) .edit-group,
+html.high-contrast:not(.dark) .phase-editor {background:#f0e8ff;color:#28203b;border:1px solid #625579}
+html.high-contrast:not(.dark) .hint,
+html.high-contrast:not(.dark) .muted,
+html.high-contrast:not(.dark) .line label,
+html.high-contrast:not(.dark) .edit-group label {color:#383047}
+html.high-contrast:not(.dark) .line select,
+html.high-contrast:not(.dark) .line input,
+html.high-contrast:not(.dark) textarea,
+html.high-contrast:not(.dark) .phase-editor input,
+html.high-contrast:not(.dark) .coord-row input {background:#fff;color:#161324;border:2px solid #625579}
+html.high-contrast:not(.dark) button {border-width:2px!important}
+html.dark.high-contrast {
+  --bg:#171b20; --surface:#252a33; --outline:#beb1d1;
+  --purple:#d8c7ff; --purple-dark:#d8c7ff;color-scheme:dark;
+}
+html.dark.high-contrast body {background:#171b20;color:#fff}
+html.dark.high-contrast .shell {border:2px solid #beb1d1;box-shadow:none}
+html.dark.high-contrast .header,
+html.dark.high-contrast .view-controls,
+html.dark.high-contrast .phase-controls,
+html.dark.high-contrast .edit-tools {background:#252a33;border-color:#beb1d1;color:#fff}
+html.dark.high-contrast .stage {background:#252a33}
+html.dark.high-contrast .floating,
+html.dark.high-contrast .pill,
+html.dark.high-contrast .note,
+html.dark.high-contrast .status,
+html.dark.high-contrast .fixed-anchor,
+html.dark.high-contrast .edit-group,
+html.dark.high-contrast .phase-editor {background:#44375e;border:2px solid #beb1d1;color:#fff}
+html.dark.high-contrast .hint,
+html.dark.high-contrast .muted,
+html.dark.high-contrast .line label,
+html.dark.high-contrast .edit-group label {color:#ebe5f7}
+html.dark.high-contrast .line select,
+html.dark.high-contrast .line input,
+html.dark.high-contrast textarea,
+html.dark.high-contrast .phase-editor input,
+html.dark.high-contrast .coord-row input {background:#252a33;color:#fff;border:2px solid #beb1d1}
+html.dark.high-contrast .view-controls button,
+html.dark.high-contrast .panel button,
+html.dark.high-contrast .buttons button,
+html.dark.high-contrast .phase-controls button,
+html.dark.high-contrast .edit-tools button {background:#44375e;color:#fff;border:2px solid #beb1d1}
+html.high-contrast .panel button.primary,
+html.high-contrast .view-controls button.primary,
+html.high-contrast .edit-tools button.active {background:#5732a7!important;color:#fff!important}
+html.dark.high-contrast .panel button.primary,
+html.dark.high-contrast .view-controls button.primary,
+html.dark.high-contrast .edit-tools button.active {background:#684bbf!important;color:#fff!important}
+html.high-contrast .floating,
+html.high-contrast .hint,
+html.high-contrast .status,
+html.high-contrast .edit-tools button,
+html.high-contrast .view-controls button {overflow-wrap:anywhere}
+html.high-contrast button,
+html.high-contrast select,
+html.high-contrast input {min-height:44px}
+html.high-contrast :is(button,input,select,textarea,summary):focus-visible {outline:3px solid #15705f;outline-offset:2px}
+html.dark.high-contrast :is(button,input,select,textarea,summary):focus-visible {outline-color:#a6f1da}
