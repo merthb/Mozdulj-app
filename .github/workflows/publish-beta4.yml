@@ -48,7 +48,36 @@ jobs:
           SIGNED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           if gh release view v1.0.0-beta.4 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release already exists; will not replace its signed APK."
+            # One-time correction: beta.4 was originally tagged at an unsigned
+            # README/workflow commit. An unsigned commit cannot display GitHub's
+            # Verified badge, although its APK was signed correctly.
+            # Only reconcile that exact initial tag, using a verified GitHub
+            # merge commit produced after a successful master APK build.
+            initial_tag_sha="7d7d9f2141322eee4d15004b5f7af7a3a75f19c0"
+            current_tag_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.0.0-beta.4" --jq '.object.sha')"
+            if [[ "$current_tag_sha" != "$initial_tag_sha" ]]; then
+              echo "Release tag has already been updated; preserving its APK."
+              exit 0
+            fi
+            verified="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SIGNED_SHA" --jq '.commit.verification.verified')"
+            if [[ "$verified" != "true" ]]; then
+              echo "::error::Refusing to retarget beta.4 to an unsigned commit."
+              exit 1
+            fi
+            # Replace the APK with the signed, successfully checked package
+            # built from EXACTLY the same commit as the new verified tag.
+            gh release upload v1.0.0-beta.4 dist/Mozdulj-v1.0.0-beta.4.apk \
+              --repo "$GITHUB_REPOSITORY" --clobber
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.0.0-beta.4" \
+              -f sha="$SIGNED_SHA" -F force=true >/dev/null
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/443442642" \
+              -f target_commitish="$SIGNED_SHA" >/dev/null
+            resolved_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.0.0-beta.4" --jq '.object.sha')"
+            if [[ "$resolved_sha" != "$SIGNED_SHA" ]]; then
+              echo "::error::The release tag did not point to the verified build commit."
+              exit 1
+            fi
+            echo "Release updated to verified signed-build commit $SIGNED_SHA."
             exit 0
           fi
           cat > release-notes.md <<'NOTES'
