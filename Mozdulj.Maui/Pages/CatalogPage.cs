@@ -346,7 +346,7 @@ public sealed class CatalogPage : ContentPage
         var actions = new FlexLayout
         {
             Direction = FlexDirection.Row, Wrap = FlexWrap.Wrap,
-            AlignItems = FlexAlign.Center, JustifyContent = FlexJustify.Start
+            AlignItems = FlexAlignItems.Center, JustifyContent = FlexJustify.Start
         };
         static Button SmallAction(string glyph,string hint)
         {
