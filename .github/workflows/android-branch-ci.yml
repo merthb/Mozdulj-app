@@ -1,0 +1,64 @@
+name: Android branch CI (no APK)
+
+on:
+  push:
+    branches-ignore:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-branch-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-android:
+    name: Compile Android (no package) + regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run core regression tests
+        run: dotnet run --project Mozdulj.Tests/Mozdulj.Tests.csproj --configuration Release -- --backup-recovery-only
+
+      - name: Install .NET MAUI Android workload
+        run: dotnet workload install maui-android
+
+      # Build only. Do not run publish/SignAndroidPackage or use signing secrets.
+      # This intentionally leaves all installable APK/AAB artifacts to the
+      # master-only android-signed-apk.yml workflow.
+      - name: Compile Android application without APK/AAB packaging
+        run: |
+          dotnet build Mozdulj.Maui/Mozdulj.Maui.csproj \
+            --framework net10.0-android \
+            --configuration Release \
+            -p:AndroidBuildApplicationPackage=false \
+            -p:AcceptAndroidSDKLicenses=true
+
+      - name: Ensure no installable package was generated
+        shell: bash
+        run: |
+          if find Mozdulj.Maui/bin/Release -type f \( -iname '*.apk' -o -iname '*.aab' \) -print -quit | grep -q .; then
+            echo "::error::A branch CI must never produce APK/AAB packages."
+            exit 1
+          fi
+          echo "Android compilation successful; no APK/AAB was generated."
