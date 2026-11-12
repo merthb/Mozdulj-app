@@ -282,7 +282,7 @@ public sealed class ProfileEditPage : ContentPage
         var cancel=UI.Button("Mégse",false);
         cancel.Clicked+=async (_,_)=>await Navigation.PopModalAsync();
         _save.Clicked+=async (_,_)=>await SaveAsync();
-        var footer=new Grid{ColumnSpacing=10,Padding=new Thickness(16,10,16,14),BackgroundColor=Colors.White,
+        var footer=new Grid{ColumnSpacing=10,Padding=new Thickness(16,10,16,14),BackgroundColor=UI.CardColor,
             ColumnDefinitions={new ColumnDefinition{Width=new GridLength(1,GridUnitType.Star)},
                 new ColumnDefinition{Width=new GridLength(2,GridUnitType.Star)}}};
         Grid.SetColumn(cancel,0);Grid.SetColumn(_save,1);
