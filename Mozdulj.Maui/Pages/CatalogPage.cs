@@ -371,7 +371,7 @@ public sealed class CatalogPage : ContentPage
                 HeightRequest = 36,
                 Padding = new Thickness(5, 0),
                 CornerRadius = 12,
-                BackgroundColor = isActive ? UI.Lavender : Color.FromArgb("#E7F5F1"),
+                BackgroundColor = isActive ? UI.Lavender : UI.SuccessBackground,
                 TextColor = isActive ? UI.Purple : UI.Teal,
                 BorderWidth = 0,
                 LineBreakMode = LineBreakMode.NoWrap
