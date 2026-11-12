@@ -116,7 +116,7 @@ public sealed class UserPreferences
     public string RelaxationAudioFileName { get; set; } = ""; // Legacy single-file choice.
     /// <summary>Ordered, device-local relaxation tracks. Repeats until the 10-minute timer ends.</summary>
     public List<RelaxationTrack> RelaxationPlaylist { get; set; } = [];
-    /// <summary>local or youtube_music. YouTube Music runs in its own installed app.</summary>
+    /// <summary>built_in, local (own files), or youtube_music. Legacy local-with-empty-list means built_in.</summary>
     public string RelaxationMusicSource { get; set; } = "local";
     /// <summary>Self-confirmed Premium access, not verifiable through YouTube Music.</summary>
     public bool RelaxationYouTubeMusicPremiumConfirmed { get; set; }
