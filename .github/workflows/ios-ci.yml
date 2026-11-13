@@ -36,6 +36,30 @@ jobs:
             -p:RuntimeIdentifier=iossimulator-arm64 \
             -p:CodesignKey= \
             -p:CodesignProvision=
+      - name: Boot simulator and smoke-test app launch
+        shell: bash
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          device="$(xcrun simctl list -j devices available | python3 -c '
+          import json,sys
+          devices=json.load(sys.stdin)["devices"]
+          phones=[x for group in devices.values() for x in group if x.get("isAvailable") and x.get("name","").startswith("iPhone")]
+          if not phones: sys.exit("No available iPhone simulator on runner")
+          print(phones[0]["udid"])
+          ')"
+          echo "Selected iOS simulator: $device"
+          xcrun simctl boot "$device" || true
+          xcrun simctl bootstatus "$device" -b
+          app="$(find Mozdulj.Maui/bin/Debug/net10.0-ios/iossimulator-arm64 -type d -name '*.app' -print -quit)"
+          if [[ -z "$app" ]]; then
+            echo "::error::Simulator .app bundle missing"
+            exit 1
+          fi
+          xcrun simctl install "$device" "$app"
+          xcrun simctl launch "$device" hu.mozdulj.preview
+          echo "Simulator app installed and launch command returned successfully"
+          xcrun simctl shutdown "$device" || true
       - name: Upload simulator app
         uses: actions/upload-artifact@v4
         with:
