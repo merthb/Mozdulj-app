@@ -24,11 +24,10 @@ jobs:
       - name: Run core regression tests
         run: dotnet run --project Mozdulj.Tests/Mozdulj.Tests.csproj --configuration Release -- --backup-recovery-only
       - name: Install MAUI iOS workload
-        run: dotnet workload install maui-ios
+        run: dotnet workload install maui
       - name: Compile iOS simulator (no signing)
         run: |
           dotnet build Mozdulj.Maui/Mozdulj.Maui.csproj -f net10.0-ios -c Debug \
-            -p:TargetFrameworks=net10.0-ios \
             -p:RuntimeIdentifier=iossimulator-arm64 \
             -p:CodesignKey= \
             -p:CodesignProvision=
