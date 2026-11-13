@@ -1,6 +1,8 @@
 using Mozdulj.Core;
 using Mozdulj.Maui.Services;
+#if ANDROID
 using Mozdulj.Maui.Platforms.Android;
+#endif
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
@@ -42,8 +44,10 @@ public sealed class WorkoutPlayerPage : ContentPage
     {
         _audio.Stop();
         _musicPanel?.Stop();
+#if ANDROID
         if (_workout.Kind == "recovery" && _musicPanel is not null)
             YouTubeMusicMediaBridge.TryPauseIfPlaying();
+#endif
     }
 
     public WorkoutPlayerPage(AppState state,Workout workout)
@@ -93,8 +97,10 @@ public sealed class WorkoutPlayerPage : ContentPage
             _state.Preferences.RelaxationYouTubeMusicPremiumConfirmed &&
             YouTubeMusicSupport.IsInstalled())
         {
+#if ANDROID
             _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
             content.Children.Add(_musicPanel);
+#endif
         }
         // Compact, internally scrollable step-by-step preview in the transition.
         _nextGuideBlock.Content=new VerticalStackLayout{Spacing=5,Children={
