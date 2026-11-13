@@ -1,0 +1,40 @@
+name: iOS simulator CI (unsigned)
+
+on:
+  push:
+    branches:
+      - feature/18-ios-support
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-simulator:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Run core regression tests
+        run: dotnet run --project Mozdulj.Tests/Mozdulj.Tests.csproj --configuration Release -- --backup-recovery-only
+      - name: Install MAUI iOS workload
+        run: dotnet workload install maui-ios
+      - name: Compile iOS simulator (no signing)
+        run: |
+          dotnet build Mozdulj.Maui/Mozdulj.Maui.csproj -f net10.0-ios -c Debug \
+            -p:RuntimeIdentifier=iossimulator-arm64 \
+            -p:CodesignKey= \
+            -p:CodesignProvision=
+      - name: Ensure no distributable IPA was produced
+        shell: bash
+        run: |
+          if find Mozdulj.Maui/bin -name '*.ipa' -print | grep -q .; then
+            echo "::error::Simulator CI must not publish an IPA."
+            exit 1
+          fi
