@@ -381,6 +381,19 @@ public sealed class ProfileEditPage : ContentPage
                 await DisplayAlertAsync("Beállítások elmentve",
                     "Az emlékeztetőt nem sikerült beállítani: "+notificationError.Message,"Rendben");
             }
+#elif IOS
+            try
+            {
+                if (_draft.DailyReminderEnabled &&
+                    !await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.RequestPermissionAsync())
+                    await DisplayAlertAsync("Értesítések kikapcsolva",
+                        "Az iOS nem engedélyezte az emlékeztetőket. Később a Beállításokban engedélyezheted.", "Rendben");
+                await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(_state.Data);
+            }
+            catch (Exception error)
+            {
+                await DisplayAlertAsync("Beállítások elmentve", "Az értesítést nem sikerült beállítani: " + error.Message, "Rendben");
+            }
 #endif
             await Navigation.PopModalAsync();
         }
