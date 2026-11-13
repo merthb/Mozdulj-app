@@ -35,6 +35,13 @@ jobs:
             -p:RuntimeIdentifier=iossimulator-arm64 \
             -p:CodesignKey= \
             -p:CodesignProvision=
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mozdulj-ios-simulator
+          path: Mozdulj.Maui/bin/Debug/net10.0-ios/iossimulator-arm64/**/*.app
+          if-no-files-found: error
+          retention-days: 14
       - name: Ensure no distributable IPA was produced
         shell: bash
         run: |
