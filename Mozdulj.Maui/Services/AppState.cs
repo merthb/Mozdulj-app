@@ -133,6 +133,8 @@ public sealed class AppState
 #if ANDROID
         await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences));
+#elif IOS
+        await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(Data);
 #endif
     }
 
@@ -711,6 +713,8 @@ public sealed class AppState
             await SaveAsync();
 #if ANDROID
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences);
+#elif IOS
+            await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(Data);
 #endif
             LastAudioRestoreCheck = audioCheck;
         }
