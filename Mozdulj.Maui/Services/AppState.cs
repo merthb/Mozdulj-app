@@ -502,6 +502,10 @@ public sealed class AppState
         }
         Rewards.UnlockAchievements(Data, finishedOn);
         await SaveAsync();
+#if IOS
+        // Cancel today's pending alert as soon as a finished workout or full recovery credits the day.
+        await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(Data);
+#endif
     }
 
     /// <summary>Creates the day's recovery workout only when requested, then keeps its
