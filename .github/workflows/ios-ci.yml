@@ -1,9 +1,6 @@
 name: iOS simulator CI (unsigned)
 
 on:
-  push:
-    branches:
-      - feature/18-ios-support
   pull_request:
     branches:
       - master
