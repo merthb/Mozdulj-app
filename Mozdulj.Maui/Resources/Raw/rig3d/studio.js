@@ -115,7 +115,7 @@ function bodyPartLabel(id){
  return side?window.rigText(side==='left'?'Bal':'Jobb')+' '+label:label;
 }
 function syncLocks(){
- const active=current().pointLocks||{};
+ const active=MozduljRig.effectiveLocks(current());
  for(const input of document.querySelectorAll('[data-lock-point]'))input.checked=Object.hasOwn(active,input.dataset.lockPoint);
  syncContactSurfaces();
 }
@@ -437,7 +437,7 @@ function reviewPose(){
  for(const [i,frame] of pose.frames.entries()){
    const j=MozduljRig.joints(frame);
    for(const [id,depth] of MozduljRig.Collision.overlaps(frame))findings.push({phase:i,kind:'collision',id,depth});
-   for(const [id,depth] of MozduljRig.lockErrors(j,frame.pointLocks))if(depth>.005) findings.push({phase:i,kind:'lock',id,depth});
+   for(const [id,depth] of MozduljRig.lockErrors(j,MozduljRig.effectiveLocks(frame)))if(depth>.005) findings.push({phase:i,kind:'lock',id,depth});
    for(const id of j.clamped)findings.push({phase:i,kind:'reach',id});
    for(const index of studio.bandIssues(frame))findings.push({phase:i,kind:'band',id:String(index+1)});
    if(i+1<pose.frames.length){
@@ -643,7 +643,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  for(const input of document.querySelectorAll('[data-lock-point]'))input.onchange=()=>{
    closeGesture();tracked(()=>MozduljRig.setPointLock(current(),input.dataset.lockPoint,input.checked));sync();
  };
- $('clearPointLocks').onclick=()=>{closeGesture();tracked(()=>{delete current().pointLocks;});sync();};
+ $('clearPointLocks').onclick=()=>{closeGesture();tracked(()=>{delete current().pointLocks;delete current().equipmentPointLocks;});sync();};
  $('rootHeight').onchange=e=>{
    const value=e.target.valueAsNumber/100;
    if(!Number.isFinite(value)||value<0||value>3){sync();msg('Érvénytelen medencemagasság.');return;}
@@ -779,7 +779,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      if(!result.limited){syncProps(String(current().equipment.length-1));syncEquipmentSelection();msg(window.rigText('Eszköz hozzáadva: ')+$('equip').selectedOptions[0].textContent);}
    }else msg('Ez az eszköz már szerepel ebben a fázisban.');
  };
- $('clearEquipment').onclick=()=>{selectedEquipment=null;stopPreview();closeGesture();tracked(()=>{current().equipment=current().equipment.filter(p=>p.locked);});syncBands('new');syncProps('none');syncEquipmentSelection();show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
+ $('clearEquipment').onclick=()=>{selectedEquipment=null;stopPreview();closeGesture();tracked(()=>{const bound=new Set(Object.values(current().equipmentPointLocks||{}).map(b=>b.equipmentId));current().equipment=current().equipment.filter(p=>p.locked||bound.has(p.id));});syncBands('new');syncProps('none');syncEquipmentSelection();show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
  $('propSelect').onchange=()=>{fillProp();chooseEquipment('prop:'+$('propSelect').value);};
  function propLocations(){
    const i=Number($('propSelect').value);
@@ -792,7 +792,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  };
  $('deleteProp').onclick=()=>{
    stopPreview();closeGesture();const locations=propLocations();
-   if(locations.some(({frame,index})=>pose.frames[frame].equipment[index].locked)){msg('Előbb oldd fel az eszköz rögzítését.');return;}
+   if(locations.some(({frame,index})=>{const f=pose.frames[frame],prop=f.equipment[index];return prop.locked||Object.values(f.equipmentPointLocks||{}).some(b=>b.equipmentId===prop.id);})){msg('Előbb oldd fel az eszköz rögzítését.');return;}
    tracked(()=>{for(const {frame,index} of locations)pose.frames[frame].equipment.splice(index,1);});selectedEquipment=null;
    sync();msg('Kijelölt eszköz eltávolítva.');
  };
