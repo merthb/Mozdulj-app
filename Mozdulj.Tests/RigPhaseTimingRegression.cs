@@ -13,6 +13,10 @@ internal static class RigPhaseTimingRegression
         Rig3DValidator.Validate(pose);
         var restored=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
         Check(restored.Frames[0].HoldSeconds==5 && restored.Frames[0].PhaseType=="hold","round trip");
+        var pair=new Rig3DPose{Frames=[new Rig3DFrame(),new Rig3DFrame()]};
+        Check(Rig3DMovement.ForDisplay(pair).Frames.Count==3 && pair.Frames.Count==2,"legacy synthetic return");
+        pair.Frames[0].TransitionSeconds=1;
+        Check(Rig3DMovement.ForDisplay(pair).Frames.Count==2,"authored sequence preserved");
         frame.HoldSeconds=-1;Reject(pose);frame.HoldSeconds=0;
         frame.TransitionSeconds=float.NaN;Reject(pose);frame.TransitionSeconds=1.2f;
         frame.PhaseType="invalid";Reject(pose);

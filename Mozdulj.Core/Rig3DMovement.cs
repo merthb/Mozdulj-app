@@ -7,7 +7,7 @@ public static class Rig3DMovement
     /// <summary>Display a 2-frame movement as start/action/return; never mutate saved user poses.</summary>
     public static Rig3DPose ForDisplay(Rig3DPose pose)
     {
-        if (pose.Frames.Count != 2) return pose;
+        if (pose.Frames.Count != 2 || pose.Frames.Any(f=>f.PhaseType is not null || f.TransitionSeconds is not null || f.HoldSeconds is not null)) return pose;
         var copy = JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose, CatalogCodec.JsonOptions), CatalogCodec.JsonOptions)!;
         var starting = JsonSerializer.Deserialize<Rig3DFrame>(JsonSerializer.Serialize(copy.Frames[0], CatalogCodec.JsonOptions), CatalogCodec.JsonOptions)!;
         starting.Name = "Visszatérés";

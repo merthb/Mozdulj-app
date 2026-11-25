@@ -12,7 +12,7 @@ function syncHistory(){ $('undoPose').disabled=!history.canUndo; $('redoPose').d
 function closeGesture(){if(pose&&history.pending!==null)history.finish(snapshot());gesture=null;controlGesture=null;syncHistory();if(pose&&$('tab-phases').getAttribute('aria-selected')==='true')syncTimeline();}
 function beginGesture(owner){if(gesture!==owner){closeGesture();gesture=owner;history.begin(snapshot());}}
 function tracked(change){
- activeIssue=null;
+ stopPreview();activeIssue=null;
  const before=snapshot();
  change();
  history.record(before,snapshot());
@@ -319,6 +319,8 @@ window.setReadOnlyMode=()=>{
   document.querySelector('main > section:nth-child(2)').style.display='none';
   // Retain camera and animation controls in the viewer, without editor tabs.
   document.querySelector('.viewport-shell').append(document.querySelector('.view-controls'),document.querySelector('.preview-tools'));
+  // Keep projection selection visible in the standalone viewer as well.
+  document.querySelector('.view-controls').append($('projection').closest('.line'));
   document.querySelector('.header strong').textContent='3D mozgásábra';
   document.querySelector('.header .hint').textContent='A modellen húzva körbeforgathatod a nézetet';
   document.querySelector('.float-l').style.display='none';
@@ -345,7 +347,7 @@ function playbackTick(now){
  if(a.last!==null)a.elapsed+=(now-a.last)*a.speed;
  a.last=now;
  const state=MozduljRig.previewAt(a.plan,a.elapsed);
- a.display=state.frame;show();
+ if(a.display!==state.frame){a.display=state.frame;show();}
  $('previewProgress').value=state.progress;
  const label=state.kind==='hold'?window.rigText('Kitartás')+' · '+(state.from+1): (state.from+1)+' → '+(state.to+1);
  if(label!==a.label){a.label=label;$('previewStatus').textContent=window.rigText('Ellenőrzött animációs előnézet')+' · '+label;}
@@ -371,7 +373,7 @@ function playPreview(){
    return;
  }
  animation={plan,elapsed:0,last:null,paused:false,speed:Number($('previewSpeed').value||1),display:plan.segments[0].samples[0],request:0,label:null};
- playbackButtons();animation.request=requestAnimationFrame(playbackTick);
+ playbackButtons();show();animation.request=requestAnimationFrame(playbackTick);
 }
 // Reports are based on the same geometry as the editor, including band routing.
 function reviewPose(){
