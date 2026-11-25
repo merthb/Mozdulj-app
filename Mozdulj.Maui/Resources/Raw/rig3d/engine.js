@@ -1373,6 +1373,7 @@ function resetBodyPart(frame,reference,group){
    const side=group.startsWith('left')?'left':'right',kind=group.endsWith('Arm')?'arm':'leg',target=kind==='arm'?'hands':'feet',mode=modeKeys[kind],pole=(kind==='arm'?'elbow':'knee')+(side==='left'?'Left':'Right');
    // Restore the original limb in its current body-local reference frame:
    // an unrelated translation or rotation of the body is not undone.
+   for(const suffix of SIDE_ARTICULATION[kind])copy(out,reference,side+suffix);
    const a=articulationAxes(reference),b=articulationAxes(out);
    const original=joints(reference),current=joints(out);
    const anchor=kind==='arm'?'shoulder':'hip';
@@ -1382,7 +1383,6 @@ function resetBodyPart(frame,reference,group){
    out.poles??={};
    if(reference.poles?.[pole])out.poles[pole]=relocate(reference.poles[pole]);else delete out.poles[pole];
    out[mode]??={};copy(out[mode],reference[mode],side);
-   for(const suffix of SIDE_ARTICULATION[kind])copy(out,reference,side+suffix);
    if(kind==='arm')copy(out,reference,side+'HandCurl');
    else {out.footPitch??={};copy(out.footPitch,reference.footPitch,side);}
  }
