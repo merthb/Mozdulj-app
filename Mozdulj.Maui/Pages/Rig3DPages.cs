@@ -266,6 +266,9 @@ public sealed class Rig3DViewerPage : ContentPage
     private readonly WebView _web;
     private readonly Label _info;
     private bool _webReady;
+    private readonly bool _isCustom;
+    private readonly SemaphoreSlim _reloadGate = new(1,1);
+    private static bool JsTrue(string? value) => value?.Trim().Trim('"') == "true";
 
     /// <param name="edit3d">
     /// Only provided when navigated from the exercise library. All other entry
@@ -275,19 +278,21 @@ public sealed class Rig3DViewerPage : ContentPage
     /// Reloads the saved model after returning from the editor.
     /// </param>
     public Rig3DViewerPage(MotionPose source, string? exerciseName = null,
-        Func<Task>? edit3d = null, Func<MotionPose>? currentPose = null)
+        Func<Task>? edit3d = null, Func<MotionPose>? currentPose = null, bool isCustom = false)
     {
         _initialPose = source;
+        _isCustom = isCustom;
         _currentPose = currentPose;
         _exerciseName = exerciseName;
         UI.Setup(this, (AppLocalization.IsEnglish ? "3D movement illustration" : "3D mozgásábra"));
 
-        _web = new WebView { Source = "rig3d/index.html" };
+        _web = new WebView { Source = "rig3d/index.html", Opacity=0, InputTransparent=true };
         _info = UI.Label("", 12, color: UI.Muted);
         _web.Navigated += async (_, e) =>
         {
             if (e.Result != WebNavigationResult.Success)
             {
+                _webReady=false;_web.Opacity=0;_web.InputTransparent=true;
                 _info.Text = (AppLocalization.IsEnglish ? "Could not load the local 3D viewer." : "A helyi 3D megjelenítő nem tölthető be.");
                 return;
             }
@@ -304,6 +309,7 @@ public sealed class Rig3DViewerPage : ContentPage
             Padding = new Thickness(13, 10),
             BackgroundColor = UI.CardColor
         };
+        if(_isCustom) footer.Children.Add(UI.Label(AppLocalization.Text("OwnExerciseUnreviewed"),13,true,color:UI.Muted));
         footer.Children.Add(_info);
 
         if (edit3d is not null)
@@ -338,29 +344,39 @@ public sealed class Rig3DViewerPage : ContentPage
     private async Task ReloadPoseAsync()
     {
         if (!_webReady) return;
+        await _reloadGate.WaitAsync();
         try
         {
+            _web.Opacity=0;_web.InputTransparent=true;
             var pose = _currentPose?.Invoke() ?? _initialPose;
             if (pose.Rig3D is not null)
             {
                 var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(
                     JsonSerializer.Serialize(Rig3DMovement.ForDisplay(pose.Rig3D), CatalogCodec.JsonOptions)));
-                await _web.EvaluateJavaScriptAsync("window.loadRigBase64('" + b64 + "')");
+                if(!JsTrue(await _web.EvaluateJavaScriptAsync("window.loadRigBase64('" + b64 + "')")))
+                    throw new InvalidDataException(AppLocalization.IsEnglish ? "Invalid 3D model." : "Érvénytelen 3D modell.");
             }
             else
             {
                 var preset = Rig3DPresetMapper.From(pose.TemplateId, _exerciseName);
-                await _web.EvaluateJavaScriptAsync("window.loadRigPreset('"+preset+"')");
+                if(!JsTrue(await _web.EvaluateJavaScriptAsync("window.loadRigPreset('"+preset+"')")))
+                    throw new InvalidDataException(AppLocalization.IsEnglish ? "Could not load the substitute pose." : "A helyettesítő póz nem tölthető be.");
             }
-            await _web.EvaluateJavaScriptAsync("window.setReadOnlyMode()");
-            _info.Text = pose.Rig3D?.RequiresFineJoints == true
+            if(!JsTrue(await _web.EvaluateJavaScriptAsync("window.setReadOnlyMode()")))
+                throw new InvalidDataException(AppLocalization.IsEnglish ? "3D rendering unavailable." : "A 3D megjelenítés nem érhető el.");
+            _web.Opacity=1;_web.InputTransparent=false;
+            _info.Text = pose.Rig3D is null
+                ? (AppLocalization.IsEnglish ? "Substitute starting pose only; not an authored exercise demonstration." : "Csak helyettesítő kiinduló póz, nem a gyakorlat elkészített bemutatása.")
+                : pose.Rig3D?.RequiresFineJoints == true
                 ? (AppLocalization.IsEnglish ? "The 3D model cannot yet accurately show fine hand or foot movements. Follow the written instructions." : "A finom kéz- vagy lábmozdulatot a 3D modell még nem tudja pontosan megmutatni. A leírást kövesd.")
                 : (AppLocalization.IsEnglish ? "The 3D movement illustration is illustrative and requires professional review." : "A 3D mozgásábra szemléltető jellegű, szakmai ellenőrzést igényel.");
         }
         catch (Exception ex)
         {
+            _web.Opacity=0;_web.InputTransparent=true;
             _info.Text = (AppLocalization.IsEnglish ? "Could not refresh the 3D illustration: " : "A 3D ábra frissítése sikertelen: ") + ex.Message;
         }
+        finally { _reloadGate.Release(); }
     }
 }
 
