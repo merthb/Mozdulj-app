@@ -464,3 +464,45 @@ test('local articulation axes and inverse axes are consistent',()=>{
  assert.ok(m.len(m.sub(axes.legLocal(axes.pelvis(v)),v))<1e-8);
  assert.ok(m.len(m.sub(axes.armLocal(axes.upper(v)),v))<1e-8);
 });
+
+test('independent shoulder controls preserve clavicle and arm lengths and opposite side',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),before=rig.joints(f);
+ f.leftShoulderElevation=.2;f.leftShoulderProtraction=.25;
+ const after=rig.joints(f),d=(a,b)=>m.len(m.sub(a,b));
+ assert.ok(d(after.shoulder.left,before.shoulder.left)>.03);
+ assert.equal(JSON.stringify(after.shoulder.right),JSON.stringify(before.shoulder.right));
+ assert.ok(Math.abs(d(after.shoulder.left,after.elbow.left)-.31)<1e-8);
+ assert.ok(Math.abs(d(after.elbow.left,after.hands.left)-.28)<1e-8);
+ assert.equal(JSON.stringify(after.root),JSON.stringify(before.root));
+});
+test('wrist deviation and ankle turning work in target mode without moving limb endpoints',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),before=rig.joints(f);
+ f.leftWristDeviation=.25;f.rightAnkleYaw=.3;f.rightAnkleRoll=.25;
+ const after=rig.joints(f),d=(a,b)=>m.len(m.sub(a,b));
+ assert.equal(JSON.stringify(before.hands),JSON.stringify(after.hands));
+ assert.equal(JSON.stringify(before.feet),JSON.stringify(after.feet));
+ assert.ok(d(before.palms.left,after.palms.left)>.01);
+ assert.ok(d(before.toes.right,after.toes.right)>.01);
+ assert.ok(Math.abs(d(after.feet.right,after.toes.right)-.18)<1e-8);
+ assert.ok(Math.abs(d(after.hands.left,after.palms.left)-.115)<1e-8);
+ const axes=after.footAxes.right;assert.ok(Math.abs(m.len(axes.up)-1)<1e-8);
+ const rollOnly=JSON.parse(JSON.stringify(f));rollOnly.rightAnkleRoll=0;
+ const noRoll=rig.joints(rollOnly);
+ assert.ok(d(noRoll.footAxes.right.up,axes.up)>.05);
+ assert.equal(JSON.stringify(noRoll.toes.right),JSON.stringify(after.toes.right));
+});
+test('side controls mirror, copy, limit symmetric edits and interpolate to legacy values',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ f.leftShoulderElevation=.2;f.leftWristDeviation=.1;f.rightAnkleRoll=.2;
+ const mirrored=rig.mirrorFrame(f);
+ assert.equal(mirrored.rightShoulderElevation,.2);assert.equal(mirrored.rightWristDeviation,.1);assert.equal(mirrored.leftAnkleRoll,.2);
+ assert.equal(mirrored.leftShoulderElevation,undefined);
+ rig.copyLimb(f,'arm','left');assert.equal(f.rightShoulderElevation,.2);assert.equal(f.rightWristDeviation,.1);
+ rig.editSideArticulation(f,'left','ShoulderElevation',1,true);
+ assert.ok(Math.abs(f.leftShoulderElevation-rig.ARTICULATION_LIMITS.leftShoulderElevation)<1e-8);
+ assert.equal(f.leftShoulderElevation,f.rightShoulderElevation);
+ const neutral=rig.baseFrame('stand');
+ assert.equal(rig.Collision.interpolate(f,neutral,.5).rightAnkleRoll,.1);
+ const pose=rig.initialPose('stand');pose.frames[0]=f;assert.doesNotThrow(()=>rig.checkPose(pose));
+ f.leftWristDeviation=2;assert.throws(()=>rig.checkPose(pose));
+});

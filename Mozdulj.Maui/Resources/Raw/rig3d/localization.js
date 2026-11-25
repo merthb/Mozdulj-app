@@ -1,6 +1,11 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Váll önálló emelése / süllyesztése":"Individual shoulder elevation / depression",
+  "Váll előretolása / hátrahúzása":"Shoulder protraction / retraction",
+  "Csukló oldalirányú hajlítása":"Wrist lateral deviation",
+  "Lábfej befelé / kifelé fordítása":"Foot inward / outward rotation",
+  "Talp befelé / kifelé billentése":"Sole inward / outward tilt",
   "Medence előre / hátra forgatása":"Pelvis forward / backward rotation",
   "Medence oldalirányú forgatása":"Pelvis axial rotation",
   "Medence oldalra billentése":"Pelvis lateral tilt",

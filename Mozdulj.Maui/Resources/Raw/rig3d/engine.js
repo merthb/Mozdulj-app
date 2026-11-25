@@ -125,7 +125,23 @@ function initialPose(preset='stand'){
 function axisRotate(v,axis,angle){return add(add(mul(v,Math.cos(angle)),mul(cross(axis,v),Math.sin(angle))),mul(axis,dot(axis,v)*(1-Math.cos(angle))));}
 // Additive local articulations. Missing fields are exactly neutral: existing
 // catalog poses retain their original geometry and serialized representation.
-const ARTICULATION_LIMITS={pelvisPitch:30*Math.PI/180,pelvisYaw:35*Math.PI/180,pelvisRoll:25*Math.PI/180,lumbarBend:30*Math.PI/180,lumbarSideBend:25*Math.PI/180,thoracicBend:35*Math.PI/180,thoracicSideBend:25*Math.PI/180};
+const ARTICULATION_LIMITS={pelvisPitch:30*Math.PI/180,pelvisYaw:35*Math.PI/180,pelvisRoll:25*Math.PI/180,lumbarBend:30*Math.PI/180,lumbarSideBend:25*Math.PI/180,thoracicBend:35*Math.PI/180,thoracicSideBend:25*Math.PI/180,leftShoulderElevation:20*Math.PI/180,leftShoulderProtraction:25*Math.PI/180,leftWristDeviation:25*Math.PI/180,leftAnkleYaw:30*Math.PI/180,leftAnkleRoll:25*Math.PI/180,rightShoulderElevation:20*Math.PI/180,rightShoulderProtraction:25*Math.PI/180,rightWristDeviation:25*Math.PI/180,rightAnkleYaw:30*Math.PI/180,rightAnkleRoll:25*Math.PI/180};
+const SIDE_ARTICULATION={arm:['ShoulderElevation','ShoulderProtraction','WristDeviation'],leg:['AnkleYaw','AnkleRoll']};
+function sideAngle(frame,side,field){
+ const key=side+field,limit=ARTICULATION_LIMITS[key];
+ return clamp(frame[key]||0,-limit,limit);
+}
+function editSideArticulation(frame,side,field,value,symmetric=false){
+ const key=side+field,other=swapSide(side)+field,limit=ARTICULATION_LIMITS[key];
+ if(limit==null||!Number.isFinite(value))return false;
+ const old=frame[key]||0;let delta=clamp(value,-limit,limit)-old;
+ if(symmetric){
+   const opposite=frame[other]||0;
+   delta=clamp(delta,-limit-opposite,limit-opposite);
+   frame[other]=opposite+delta;
+ }
+ frame[key]=old+delta;return true;
+}
 function validArticulation(frame){
  return Object.entries(ARTICULATION_LIMITS).every(([key,limit])=>frame[key]==null||(Number.isFinite(frame[key])&&Math.abs(frame[key])<=limit+1e-6));
 }
@@ -151,12 +167,19 @@ function joints(frame){
  const axes=articulationAxes(frame);
  const midLocal=spineLocal(.28),mid=add(root,axes.lower(midLocal));
  const upperPoint=v=>axes.l.some(Boolean)||axes.t.some(Boolean)?add(mid,axes.upper(sub(v,midLocal))):world(v);
- const shoulderLocal=(side)=>add(spineLocal(.54+(frame.shoulderLift||0)),rotY([side==='left'?-.215:.215,0,0],twist));
+ const shoulderLocal=side=>{
+   const sign=side==='left'?-1:1;
+   const elevation=sideAngle(frame,side,'ShoulderElevation'),protraction=sideAngle(frame,side,'ShoulderProtraction');
+   // Rotate the simplified clavicle around the chest anchor, rather than
+   // stretching the upper arm or translating the entire ribcage.
+   const clavicle=rotY(rotZ([sign*.215,0,0],sign*elevation),-sign*protraction);
+   return add(spineLocal(.54+(frame.shoulderLift||0)),rotY(clavicle,twist));
+ };
  const hip={left:add(root,axes.pelvis([-.13,0,0])),right:add(root,axes.pelvis([.13,0,0]))};
  const shoulder={left:upperPoint(shoulderLocal('left')),right:upperPoint(shoulderLocal('right'))};
  const neck=upperPoint(spineLocal(.70));
  const head=add(neck,axes.upper(rotate([0,.21,.015],[frame.headPitch||0,frame.headYaw||0,frame.headRoll||0])));
- const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},clamped:[]};
+ const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},clamped:[]};
  for(const side of ['left','right']){
   let s=side==='left'?-1:1;
   // Anatomical hinge pole is anchored to the current body rotation, not a fixed
@@ -218,8 +241,19 @@ function joints(frame){
   let neutral=cross(shinDirection,ankleAxis);
   if(len(neutral)<1e-4)neutral=axes.pelvis([0,0,1]);
   neutral=norm(neutral);
-  const toeDirection=norm(add(mul(neutral,Math.cos(pitch)),mul(shinDirection,Math.sin(pitch))));
+  let toeDirection=norm(add(mul(neutral,Math.cos(pitch)),mul(shinDirection,Math.sin(pitch))));
+  const ankleYaw=sideAngle(frame,side,'AnkleYaw'),ankleRoll=sideAngle(frame,side,'AnkleRoll');
+  if(ankleYaw)toeDirection=norm(axisRotate(toeDirection,shinDirection,-s*ankleYaw));
   j.toes[side]=add(j.feet[side],mul(toeDirection,.18));
+  // A noncircular sole needs an orientation as well as a toe endpoint.
+  // Rotate the transverse axis with the toe, then tilt around the long axis.
+  let transverse=ankleYaw?axisRotate(ankleAxis,shinDirection,-s*ankleYaw):ankleAxis;
+  transverse=sub(transverse,mul(toeDirection,dot(transverse,toeDirection)));
+  if(len(transverse)<1e-5)transverse=cross(toeDirection,shinDirection);
+  if(len(transverse)<1e-5)transverse=cross(toeDirection,Math.abs(toeDirection[1])<.9?[0,1,0]:[0,0,1]);
+  transverse=norm(transverse);
+  if(ankleRoll)transverse=norm(axisRotate(transverse,toeDirection,s*ankleRoll));
+  j.footAxes[side]={right:transverse,up:norm(cross(toeDirection,transverse)),forward:toeDirection};
   // Wrist flexion and forearm pronation/supination change the hand orientation
   // but never move the elbow or stretch either arm segment.
   const forearm=norm(sub(j.hands[side],j.elbow[side]));
@@ -229,7 +263,13 @@ function joints(frame){
   let wristBend=cross(forearm,wristAxis);
   if(len(wristBend)<1e-4)wristBend=axes.upper([0,0,1]);
   wristBend=norm(wristBend);
-  const palmDir=norm(add(mul(forearm,Math.cos(wrist)),mul(wristBend,Math.sin(wrist))));
+  let palmDir=norm(add(mul(forearm,Math.cos(wrist)),mul(wristBend,Math.sin(wrist))));
+  const deviation=sideAngle(frame,side,'WristDeviation');
+  if(deviation){
+    let lateral=sub(wristAxis,mul(palmDir,dot(wristAxis,palmDir)));
+    if(len(lateral)<1e-5)lateral=cross(palmDir,wristBend);
+    palmDir=norm(add(mul(palmDir,Math.cos(deviation)),mul(norm(lateral),s*Math.sin(deviation))));
+  }
   j.palms[side]=add(j.hands[side],mul(palmDir,.115));
   let thumbAxis=sub(wristAxis,mul(palmDir,dot(wristAxis,palmDir)));
   if(len(thumbAxis)<1e-4)thumbAxis=cross(palmDir,axes.upper([0,1,0]));
@@ -326,6 +366,12 @@ function mirrorFrame(frame){
    if(f[key]!=null)f[key]=Object.fromEntries(Object.entries(f[key]).map(([name,pos])=>[swapSide(name),reflectX(pos)]));
  }
  if(f.footPitch!=null)f.footPitch=Object.fromEntries(Object.entries(f.footPitch).map(([side,value])=>[swapSide(side),value]));
+ for(const suffix of [...SIDE_ARTICULATION.arm,...SIDE_ARTICULATION.leg]){
+   for(const side of ['left','right']){
+     const key=side+suffix,opposite=swapSide(side)+suffix;
+     if(frame[opposite]!=null)f[key]=frame[opposite];else delete f[key];
+   }
+ }
  for(const key of ['armAngles','legAngles'])if(f[key]!=null)
    f[key]=Object.fromEntries(Object.entries(f[key]).map(([side,a])=>[swapSide(side),mirrorControls(a)]));
  for(const prop of f.equipment||[]){
@@ -348,6 +394,10 @@ function copyLimb(frame,kind,source){
  frame[key]??={};
  if(frame[key][source])frame[key][dest]=mirrorControls(frame[key][source]);
  else delete frame[key][dest];
+ for(const suffix of SIDE_ARTICULATION[kind]){
+   const from=source+suffix,to=dest+suffix;
+   if(frame[from]!=null)frame[to]=frame[from];else delete frame[to];
+ }
  if(kind==='leg'){
    frame.footPitch??={};
    if(frame.footPitch[source]!=null)frame.footPitch[dest]=frame.footPitch[source];
@@ -1072,7 +1122,12 @@ function shaded3D(canvas){
   const shoulder=j.shoulder[side],hip=j.hip[side],elbow=j.elbow[side],hand=j.hands[side],knee=j.knee[side],foot=j.feet[side];
   ell(shoulder,[.12,.115,.12],'shirt');limb(shoulder,elbow,.092,'skin');ell(elbow,[.075,.075,.075],'skin');limb(elbow,hand,.065,'skin');ell(hand,[.06,.055,.055],'skin');limb(hand,j.palms[side],.046,'skin');limb(hand,j.thumbs[side],.018,'skin');
   ell(hip,[.11,.11,.11],'leggings');limb(hip,knee,.13,'leggings');ell(knee,[.109,.108,.105],'leggings');limb(knee,foot,.092,'leggings');
-  limb(foot,j.toes[side],.067,'shoes');ell(j.toes[side],[.065,.050,.070],'shoes');
+  if(sideAngle(frame,side,'AnkleYaw')||sideAngle(frame,side,'AnkleRoll')){
+    const {right,up,forward}=j.footAxes[side];
+    const centre=mul(add(foot,j.toes[side]),.5);
+    drawM(model(centre,mul(right,.067),mul(up,.047),mul(forward,.145)),'shoes');
+    drawM(model(add(centre,mul(up,-.038)),mul(right,.058),mul(up,.013),mul(forward,.13)),'leggings');
+  }else {limb(foot,j.toes[side],.067,'shoes');ell(j.toes[side],[.065,.050,.070],'shoes');}
  }
  // Move the head with the neck and look direction; face is on head's local +Z axis.
  const head=j.head,hyaw=frame.headYaw||0,hpitch=frame.headPitch||0,hroll=frame.headRoll||0;
@@ -1177,5 +1232,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,articulationAxes,validArticulation,ARTICULATION_LIMITS,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

@@ -237,13 +237,15 @@ function drawEquipmentLabels(frame,j){
 function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked,issue:activeIssue,dark:document.documentElement.classList.contains('dark'),equipmentMode:mode==='editEquipment',equipmentSelection:selectedEquipment});drawEquipmentLabels(f,j);$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='inspect'?window.rigText('Ez a pont kijelölhető; a hozzá tartozó vezérlőkkel módosítható.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
 function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number((f.root[1]*100).toFixed(1));$('upperYaw').value=Math.round(deg(f.upperYaw||0));$('spineBend').value=Math.round(deg(f.spineBend||0));
- for(const id of Object.keys(MozduljRig.ARTICULATION_LIMITS))$(id).value=Math.round(deg(f[id]||0));
+ for(const id of Object.keys(MozduljRig.ARTICULATION_LIMITS))if($(id))$(id).value=Math.round(deg(f[id]||0));
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||MozduljRig.inferAngles(f,'leg',side)?.angles||{};
  $('hipFlex').value=Math.round(deg(leg.flexion||0));
  $('hipAbduct').value=Math.round(deg(leg.abduction||0));
  $('kneeFlex').value=Math.round(deg(leg.kneeFlexion||0));$('hipRotation').value=Math.round(deg(leg.axialRotation||0));
  $('footPitch').value=Math.round(deg(f.footPitch?.[side]||0));
  const armSide=$('armSide').value||'right';const arm=f.armAngles?.[armSide]||MozduljRig.inferAngles(f,'arm',armSide)?.angles||{};
+ for(const [kind,selected] of [['arm',armSide],['leg',side]])
+   for(const suffix of MozduljRig.SIDE_ARTICULATION[kind])$('side'+suffix).value=Math.round(deg(f[selected+suffix]||0));
  for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])$(id).value=Math.round(deg(arm[k]||0));
  syncPrecision();
 }
@@ -606,7 +608,12 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('pelvicTilt').oninput=e=>guardedEdit(f=>{f.pelvicTilt=rad(+e.target.value);},null,true);
  $('upperYaw').oninput=e=>guardedEdit(f=>{f.upperYaw=rad(+e.target.value);},null,true);
  $('spineBend').oninput=e=>guardedEdit(f=>{f.spineBend=rad(+e.target.value);},null,true);
- for(const id of Object.keys(MozduljRig.ARTICULATION_LIMITS))$(id).oninput=e=>guardedEdit(f=>{f[id]=rad(+e.target.value);},null,true);
+ for(const id of Object.keys(MozduljRig.ARTICULATION_LIMITS))if($(id))$(id).oninput=e=>guardedEdit(f=>{f[id]=rad(+e.target.value);},null,true);
+ for(const [kind,selector] of [['arm','armSide'],['leg','legSide']])
+   for(const suffix of MozduljRig.SIDE_ARTICULATION[kind])$('side'+suffix).oninput=e=>{
+     const selected=$(selector).value,value=rad(+e.target.value),symmetric=$('symmetricEdit').checked;
+     guardedEdit(f=>MozduljRig.editSideArticulation(f,selected,suffix,value,symmetric),null,suffix.startsWith('Shoulder'));
+   };
  $('armSide').onchange=()=>focusBody($('armSide').value+'Arm',false);
  function editArm(field,value){const side=$('armSide').value;
    const symmetric=$('symmetricEdit').checked,other=side==='left'?'right':'left';
