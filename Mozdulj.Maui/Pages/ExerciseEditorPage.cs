@@ -102,9 +102,17 @@ public sealed class ExerciseEditorPage : ContentPage
     {
         _content.Children.Add(UI.Label("Saját gyakorlat",26,true));
         _content.Children.Add(UI.Label("Piszkozatot hiányos adatokkal is menthetsz. A gyakorlatsor-generátor csak teljes, aktív gyakorlatot használ.",13,color:UI.Muted));
-        _content.Children.Add(UI.Label("Alapadatok",20,true));
-        _content.Children.Add(Field("Gyakorlat neve / Name (HU)",_name));
-        _content.Children.Add(Field("Exercise name / Név (EN)",_englishName));
+        var language = new Picker { Title = AppLocalization.IsEnglish ? "Exercise text language" : "Gyakorlat szövegének nyelve" };
+        language.Items.Add("Magyar"); language.Items.Add("English");
+        _content.Children.Add(Field(AppLocalization.IsEnglish ? "Editing language" : "Szerkesztés nyelve",language));
+        _content.Children.Add(UI.Label(AppLocalization.IsEnglish ?
+            "Switch languages to edit the other text. Both versions are kept when you switch and saved together." :
+            "Nyelvváltással a másik nyelvű szöveget szerkesztheted. Mindkét változat megmarad váltáskor, és együtt menthető.",13,color:UI.Muted));
+        _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Basic information" : "Alapadatok",20,true));
+        var huNameField = Field("Gyakorlat neve (HU)",_name);
+        var enNameField = Field("Exercise name (EN)",_englishName);
+        _content.Children.Add(huNameField);
+        _content.Children.Add(enNameField);
         _content.Children.Add(Field("Mozgástípus *",_category));
         _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Affected body areas *" : "Érintett testtájak *", 13, true));
         foreach (var group in new[] { "upper", "lower", "full" })
@@ -131,19 +139,21 @@ public sealed class ExerciseEditorPage : ContentPage
         _content.Children.Add(UI.Label(AppLocalization.IsEnglish ?
             "Provide a name and instructions in at least one language. Missing text uses the other language." :
             "Legalább egy nyelven adj meg nevet és végrehajtási leírást. A hiányzó szöveg helyén a másik nyelv jelenik meg.",13,color:UI.Muted));
-        var language = new Picker { Title = "Nyelv / Language" };
-        language.Items.Add("Magyar"); language.Items.Add("English");
         var huFields = new VerticalStackLayout { Spacing=8, Children = {
             Field("Rövid leírás",_summary), Field("Kiinduló helyzet",_position),
             Field("Végrehajtási lépések (soronként)",_steps), Field("Gyakori hibák",_mistakes), Field("Biztonsági megjegyzés",_safety) }};
         var enFields = new VerticalStackLayout { Spacing=8, Children = {
             Field("Summary",_englishSummary), Field("Starting position",_englishPosition),
             Field("Steps (one per line)",_englishSteps), Field("Common mistakes",_englishMistakes), Field("Safety note",_englishSafety) }};
-        void ShowLanguage() { huFields.IsVisible=language.SelectedIndex!=1; enFields.IsVisible=language.SelectedIndex==1; }
+        void ShowLanguage()
+        {
+            bool english = language.SelectedIndex == 1;
+            huNameField.IsVisible = huFields.IsVisible = !english;
+            enNameField.IsVisible = enFields.IsVisible = english;
+        }
         language.SelectedIndex = AppLocalization.IsEnglish ? 1 : 0;
         language.SelectedIndexChanged += (_,_)=>ShowLanguage();
         ShowLanguage();
-        _content.Children.Add(language);
         _content.Children.Add(huFields);
         _content.Children.Add(enFields);
         _content.Children.Add(UI.Label("Ábra (opcionális)",20,true));
