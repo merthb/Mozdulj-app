@@ -1091,3 +1091,22 @@ test('scapula control supports symmetry and direct body-point editing',()=>{
  assert.ok(rig.moveTargetBy(f,sel,[0,.01,0]));
  assert.ok(rig.validArticulation(f));
 });
+
+test('coordinated girdle editing gently recruits scapula and thoracic spine without moving pelvis',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),before=rig.joints(f),m=rig.math;
+ assert.ok(rig.editSideArticulation(f,'left','ShoulderProtraction',.2,false,true));
+ assert.ok(f.leftScapulaProtraction>0);assert.equal(f.rightScapulaProtraction,undefined);
+ assert.ok(f.thoracicBend>0);
+ const after=rig.joints(f);
+ assert.deepEqual(after.hip,before.hip);assert.deepEqual(after.root,before.root);
+ assert.ok(Math.abs(m.len(m.sub(after.shoulder.left,after.elbow.left))-.31)<1e-8);
+ assert.ok(rig.editSideArticulation(f,'left','ShoulderProtraction',0,false,true));
+ assert.ok(Math.abs(f.thoracicBend)<1e-8);assert.ok(Math.abs(f.leftScapulaProtraction)<1e-8);
+ const separate=rig.baseFrame('stand');
+ rig.editSideArticulation(separate,'left','ScapulaProtraction',.2,false,false);
+ assert.equal(separate.thoracicBend,undefined);
+ const symmetric=rig.baseFrame('stand');
+ rig.editSideArticulation(symmetric,'left','ScapulaRotation',.2,true,true);
+ assert.equal(symmetric.rightScapulaRotation,.2);assert.ok(symmetric.thoracicBend<0);
+ assert.ok(rig.validArticulation(symmetric));
+});
