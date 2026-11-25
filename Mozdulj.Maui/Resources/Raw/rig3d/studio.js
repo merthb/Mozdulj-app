@@ -552,11 +552,12 @@ function reviewPose(){
  for(const item of findings.slice(0,100)){
    const button=document.createElement('button');button.type='button';
    const labels={collision:'Geometriai átfedés',lock:'Rögzített testpont eltérése',reach:'Elérési korlát',band:'Akadályos szalagútvonal',transition:'Nem lejátszható átmenet'};
-   const id=item.id.startsWith('body:')?item.id.slice(5).split('/').map(bodyPartLabel).join(' – '):targetLabels[item.id]?window.rigText(targetLabels[item.id]):item.id;
+   const bendTarget=item.id.startsWith('bend:')?item.id.slice(5):null;
+   const id=bendTarget?window.rigText('Hirtelen hajlításirány-váltás: ')+window.rigText(targetLabels[bendTarget]||bendTarget):item.id.startsWith('body:')?item.id.slice(5).split('/').map(bodyPartLabel).join(' – '):targetLabels[item.id]?window.rigText(targetLabels[item.id]):item.id;
    button.textContent=(item.phase+1)+'. '+window.rigText('Fázis')+' · '+window.rigText(labels[item.kind])+' · '+id;
    button.onclick=()=>{
-     switchFrame(item.phase);activeIssue=item.kind==='lock'?'lock:'+item.id:item.kind==='collision'?item.id:null;
-     const key=targetLabels[item.id]?item.id:item.kind==='collision'&&item.id.startsWith('body:')?item.id.slice(5).split('/').map(id=>{const [part,side]=id.split('-');return side&&(part==='hand'||part==='forearm'?side+'Hand':part==='foot'||part==='shin'?side+'Foot':null);}).find(Boolean):null;
+     switchFrame(item.phase);activeIssue=bendTarget?item.id:item.kind==='lock'?'lock:'+item.id:item.kind==='collision'?item.id:null;
+     const key=bendTarget|| (targetLabels[item.id]?item.id:item.kind==='collision'&&item.id.startsWith('body:')?item.id.slice(5).split('/').map(id=>{const [part,side]=id.split('-');return side&&(part==='hand'||part==='forearm'?side+'Hand':part==='foot'||part==='shin'?side+'Foot':null);}).find(Boolean):null);
      if(key){if([...$('targetSelect').options].some(o=>o.value===key))$('targetSelect').value=key;else $('targetSelect').value='auto';selectedTarget=key;focusBody(bodyFocusFor(key));setMode('move');}else selectTab('body');show();
    };
    panel.appendChild(button);
