@@ -102,6 +102,7 @@ function guardedEdit(change,prepare=null,adapt=false){
    sync();
    const issue=result.issue||'';
    if(issue.startsWith('lock:'))msg(window.rigText('Rögzített testpont: ')+window.rigText(targetLabels[issue.slice(5)]||'Eszközkapcsolat')+' — '+window.rigText('Oldd fel a rögzítést a további mozgatáshoz.'));
+   else if(issue.startsWith('bend:'))msg(window.rigText('Hirtelen hajlításirány-váltás: ')+window.rigText(targetLabels[issue.slice(5)]||issue.slice(5))+' — '+window.rigText('Módosítsd fokozatosan a hajlítási síkot.'));
    else if(issue.startsWith('body:'))msg(window.rigText('Testrészek ütközése: ')+issue.slice(5).split('/').map(bodyPartLabel).join(' – '));
    else msg(window.rigText('Ütközési korlát: a végtag nem haladhat át a padlón, falon vagy eszközön. (')+issue+')');
  }
@@ -520,7 +521,7 @@ function playPreview(){
  closeGesture();
  const plan=MozduljRig.previewPlan(pose.frames,$('previewLoop').checked);
  if(!plan.ok){
-   const detail=plan.issue==='representation'?window.rigText('Eltérő vezérlés vagy rögzítés'):plan.issue==='empty'?window.rigText('Nincs lejátszható időtartam.'):plan.issue;
+   const detail=plan.issue?.startsWith('bend:')?window.rigText('Hirtelen hajlításirány-váltás: ')+window.rigText(targetLabels[plan.issue.slice(5)]||plan.issue.slice(5)):plan.issue==='representation'?window.rigText('Eltérő vezérlés vagy rögzítés'):plan.issue==='empty'?window.rigText('Nincs lejátszható időtartam.'):plan.issue;
    const message=window.rigText('Nem lejátszható átmenet: ')+(plan.from!=null?(plan.from+1)+' → '+(plan.to+1)+' · ':'')+detail;
    $('previewStatus').textContent=message;msg(message);
    if(!document.body.classList.contains('view-only'))selectTab('phases');
