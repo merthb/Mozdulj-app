@@ -37,6 +37,7 @@ public sealed class WorkoutMandatoryPage : ContentPage
             UI.Label("A csillaggal megjelölt gyakorlatok garantáltan bekerülnek a még el nem kezdett gyakorlatsorba. A program a többi feladatot köréjük rendezi úgy, hogy a bemelegítés, a fő rész és a levezetés sorrendje megmaradjon.",13,color:UI.Muted),
             UI.Label($"Az időkereted: {_state.PreferencesForWorkout(_workout).WorkoutMinutes} perc · legfeljebb {_state.MaximumMandatoryExercisesFor(_workout)} kijelölt feladat. A konkrét időtartamot is ellenőrizzük.",13,color:UI.Muted)));
         _root.Children.Add(_count);
+        _root.Children.Add(UI.Label("Keresés", 14, true));
         var search=new SearchBar { Placeholder="Gyakorlat keresése" };
         search.TextChanged+=(_,e)=>{_query=e.NewTextValue??"";DrawOptions();};
         _root.Children.Add(search);
