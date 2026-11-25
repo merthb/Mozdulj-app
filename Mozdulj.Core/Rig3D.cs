@@ -100,6 +100,13 @@ public sealed class Rig3DFrame
     /// <summary>Optional equipment-local point locks, exclusive with world-space locks for the same key.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string,Rig3DEquipmentPointLock>? EquipmentPointLocks { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,Rig3DBodyPointLink>? BodyPointLinks { get; set; }
+}
+public sealed class Rig3DBodyPointLink
+{
+    public string Leader { get; set; } = "";
+    public float[]? Offset { get; set; }
 }
 public sealed class Rig3DEquipmentPointLock
 {
@@ -176,6 +183,7 @@ public static class Rig3DValidator
         ["auto", "direct", "front", "back", "left", "right"];
     private static readonly HashSet<string> PositionableTypes = ["chair","ball","softBall","roller","wall","step","block","balancePad"];
     private static readonly HashSet<string> LockKeys = ["root", "leftHand", "rightHand", "leftFoot", "rightFoot", "leftKnee", "rightKnee", "leftElbow", "rightElbow"];
+    private static readonly HashSet<string> LinkKeys = ["leftHand","rightHand","leftFoot","rightFoot"];
     public static void Validate(Rig3DPose rig)
     {
         if(rig.Version != 1 || rig.Frames is null || rig.Frames.Count is < 1 or > 16 ||
@@ -197,6 +205,19 @@ public static class Rig3DValidator
             foreach(var (angle,degrees) in new (float? Angle,int Degrees)[]{(f.PelvisPitch,30),(f.PelvisYaw,35),(f.PelvisRoll,25),(f.LumbarBend,30),(f.LumbarSideBend,25),(f.ThoracicBend,35),(f.ThoracicSideBend,25),(f.LeftShoulderElevation,20),(f.LeftShoulderProtraction,25),(f.LeftWristDeviation,25),(f.LeftAnkleYaw,30),(f.LeftAnkleRoll,25),(f.RightShoulderElevation,20),(f.RightShoulderProtraction,25),(f.RightWristDeviation,25),(f.RightAnkleYaw,30),(f.RightAnkleRoll,25),(f.LeftWristPitch,59),(f.RightWristPitch,59),(f.LeftPalmTurn,90),(f.RightPalmTurn,90)})
                 if(angle is float value && (!float.IsFinite(value)||Math.Abs(value)>degrees*Math.PI/180+1e-6))
                     throw new InvalidDataException(AppLocalization.Text("RigInvalidArticulation"));
+            if(f.BodyPointLinks is not null)
+            {
+                var used = new HashSet<string>(StringComparer.Ordinal);
+                foreach(var (key,binding) in f.BodyPointLinks)
+                {
+                    if(!LinkKeys.Contains(key)||binding is null||!LinkKeys.Contains(binding.Leader)||!used.Add(key)||!used.Add(binding.Leader)||
+                       f.PointLocks?.ContainsKey(key)==true||f.EquipmentPointLocks?.ContainsKey(key)==true||binding.Offset is null||binding.Offset.Length!=3||binding.Offset.Any(x=>!float.IsFinite(x)||Math.Abs(x)>6))
+                        throw new InvalidDataException(AppLocalization.Text("RigInvalidPointLock"));
+                    var side=key.StartsWith("left",StringComparison.Ordinal)?"left":"right";
+                    if(key.EndsWith("Hand",StringComparison.Ordinal)?f.ArmAngles?.ContainsKey(side)==true:f.LegAngles?.ContainsKey(side)==true)
+                        throw new InvalidDataException(AppLocalization.Text("RigInvalidPointLock"));
+                }
+            }
             if(f.PointLocks is not null)
                 foreach(var (key,position) in f.PointLocks)
                 {
