@@ -288,3 +288,5 @@ html.dark .quick-camera button{background:var(--surface);color:var(--purple-dark
 .lock-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))}
 .lock-grid label{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;align-content:start}
 .lock-grid select{width:100%;min-width:0;min-height:44px;font:inherit}
+
+#phaseCompareTools .line{min-width:0}#phaseCompareTools select,#copyPhaseBodyPart{min-height:44px;width:100%;min-width:0}#phaseCompareTools .hint{overflow-wrap:anywhere}
