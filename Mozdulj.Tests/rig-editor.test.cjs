@@ -446,3 +446,21 @@ test('pelvis and spine articulations are independent and mirror correctly',()=>{
  const mirror=rig.mirrorFrame(f);assert.equal(mirror.pelvisYaw,-.3);assert.equal(mirror.pelvisRoll,-.2);assert.equal(mirror.lumbarSideBend,-.1);assert.equal(mirror.thoracicSideBend,-.2);assert.equal(mirror.lumbarBend,.25);assert.equal(mirror.pelvisPitch,.1);
  const pose=rig.initialPose('stand');pose.frames[0]=f;assert.doesNotThrow(()=>rig.checkPose(pose));f.lumbarBend=2;assert.throws(()=>rig.checkPose(pose));
 });
+
+test('optional articulation interpolates continuously to and from the legacy neutral pose',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
+ a.lumbarBend=.4;a.pelvisYaw=.2;a.thoracicSideBend=-.2;
+ const forward=rig.Collision.interpolate(a,b,.5),reverse=rig.Collision.interpolate(b,a,.5);
+ for(const k of ['lumbarBend','pelvisYaw','thoracicSideBend']){
+   assert.ok(Math.abs(forward[k]-a[k]/2)<1e-9);
+   assert.equal(forward[k],reverse[k]);
+   assert.equal(rig.Collision.interpolate(a,b,1)[k],undefined);
+ }
+ b.lumbarBend=null;assert.equal(rig.Collision.interpolate(a,b,.5).lumbarBend,.2);
+});
+test('local articulation axes and inverse axes are consistent',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand');f.euler=[.3,-.2,.1];f.pelvisPitch=.2;f.pelvisYaw=.3;f.pelvisRoll=.1;f.lumbarBend=-.2;f.thoracicSideBend=.3;
+ const axes=rig.articulationAxes(f),v=[.2,.4,-.5];
+ assert.ok(m.len(m.sub(axes.legLocal(axes.pelvis(v)),v))<1e-8);
+ assert.ok(m.len(m.sub(axes.armLocal(axes.upper(v)),v))<1e-8);
+});

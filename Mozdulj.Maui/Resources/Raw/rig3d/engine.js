@@ -625,8 +625,9 @@ const Collision3D=(()=>{
    if(Array.isArray(b))return b.map((x,i)=>i<(Array.isArray(a)?a.length:0)?interpolate(a[i],x,t):x);
    if(b&&typeof b==='object'){
      const out={};
-     for(const k of Object.keys(b))out[k]=interpolate(a?.[k],b[k],t);
-     for(const k of Object.keys(a||{}))if(!(k in b)&&t<1)out[k]=a[k];
+     for(const k of Object.keys(b))out[k]=Object.hasOwn(ARTICULATION_LIMITS,k)&&b[k]==null&&typeof a?.[k]==='number'&&t<1?a[k]*(1-t):interpolate(a?.[k],b[k],t);
+     for(const k of Object.keys(a||{}))if(!(k in b)&&t<1)
+       out[k]=Object.hasOwn(ARTICULATION_LIMITS,k)&&typeof a[k]==='number'?a[k]*(1-t):a[k];
      return out;
    }
    return b;
@@ -689,7 +690,7 @@ const Collision3D=(()=>{
    return {ok:true,samples};
  }
  function report(frame){const issues=overlaps(frame);return {count:issues.size,examples:[...issues.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,depth])=>({name,depth:+depth.toFixed(4)}))};}
- return {bodyProbes,bodySegments,selfOverlaps,segmentDistance,solids,overlaps,transition,previewTransition,report,worse};
+ return {bodyProbes,bodySegments,selfOverlaps,segmentDistance,solids,overlaps,transition,previewTransition,interpolate,report,worse};
 })();
 
 function mul4(a,b){let c=new Float32Array(16);for(let i=0;i<4;i++)for(let k=0;k<4;k++)for(let j=0;j<4;j++)c[j*4+i]+=a[k*4+i]*b[j*4+k];return c;}
