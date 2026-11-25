@@ -859,3 +859,33 @@ test('support mode selectors cover all lock keys and preserve relative identity 
  for(const key of ['Szabad','Térben rögzített ●','Eszközhöz rögzített ✚','Rögzítés sikeres illesztés után'])
    assert.ok(localization.includes(JSON.stringify(key)+':'));
 });
+
+
+test('creation templates place palms, soles, chair seat and wall supports within contact tolerance',()=>{
+ const rig=loadRig();
+ const cases=[
+   ['stand','floor',['leftFoot','rightFoot'],null,true],
+   ['tabletop','floor',['leftHand','rightHand'],null,true],
+   ['catcow','floor',['leftHand','rightHand'],null,true],
+   ['plank','floor',['leftHand','rightHand'],null,true],
+   ['chair','seat',['root'],0,false],
+   ['chair','floor',['leftFoot','rightFoot'],null,true],
+   ['ballseat','floor',['leftFoot','rightFoot'],null,true],
+   ['legs-wall','wall',['leftFoot','rightFoot'],1,false]
+ ];
+ for(const [name,type,keys,index,align] of cases){
+   const frame=rig.baseFrame(name),j=rig.joints(frame);
+   for(const key of keys){
+     const surface=rig.contactSurface(frame,key,type,index);
+     assert.ok(Math.abs(rig.contactDistance(j,key,surface)-.002)<=.005,name+' '+key);
+     assert.ok(rig.contactInside(j,key,surface),name+' '+key+' outside');
+     if(align)assert.ok(rig.supportAlignment(j,key,surface)>=Math.cos(Math.PI/12),name+' '+key+' orientation');
+   }
+ }
+ const f=rig.baseFrame('chair');f.equipment[0].id='chair-test';
+ const before=JSON.stringify(f),fit=rig.fitSupport(f,'seat',['root'],0,true,false,true);
+ assert.equal(fit.ok,true,fit.issue);assert.equal(JSON.stringify(f),before);
+ assert.equal(fit.frame.equipmentPointLocks.root.equipmentId,'chair-test');
+ const crossed=rig.joints(rig.baseFrame('crosslegged'));
+ assert.ok(crossed.root[1]<=.28&&crossed.feet.left[1]>=.067);
+});
