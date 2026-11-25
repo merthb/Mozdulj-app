@@ -1167,7 +1167,8 @@ test('scapular rhythm is optional and reversible with explicit stored angles',()
 test('body map exposes every selectable point and every rotation ring maps to an existing control',()=>{
  const rig=loadRig(),html=fs.readFileSync(path.join(root,'index.html'),'utf8'),source=fs.readFileSync(path.join(root,'studio.js'),'utf8');
  const keys=[...html.matchAll(/data-body-map="([^"]+)"/g)].map(m=>m[1]).sort();
- assert.deepEqual(keys,rig.BODY_TARGETS.map(p=>p.key).sort());
+ // The rig runs in a separate node:vm realm; copy its keys into the test realm.
+ assert.deepEqual(keys,Array.from(rig.BODY_TARGETS,p=>p.key).sort());
  const chunk=source.slice(source.indexOf('const ringFields='),source.indexOf('let ringDrag='));
  const {ringControls,ringSamples,nearestRingTangent}=new Function('MozduljRig',chunk+';return {ringControls,ringSamples,nearestRingTangent};')(rig);
  for(const key of keys){
