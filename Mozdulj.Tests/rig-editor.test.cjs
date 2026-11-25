@@ -199,12 +199,12 @@ test('phase direction and expanded phase limit validate, mirror and reorder',()=
  pose.frames.push(pose.frames[0]);assert.throws(()=>rig.checkPose(pose));pose.frames.pop();
  pose.frames[0].direction='unknown';assert.throws(()=>rig.checkPose(pose));
 });
-test('preview is read-only, checks every displayed sample and rejects representation changes',()=>{
+test('preview is read-only, checks every displayed sample and rejects incompatible equipment changes',()=>{
  const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
  const original=JSON.stringify(a),result=rig.Collision.previewTransition(a,b);
  assert.equal(result.ok,true);assert.equal(result.samples.length,49);
  assert.equal(JSON.stringify(a),original);
- b.armAngles.left={flexion:.3,abduction:.2,elbowFlexion:.4};
+ b.equipment.push({type:'mat'});
  assert.equal(rig.Collision.previewTransition(a,b).issue,'representation');
 });
 
@@ -579,4 +579,34 @@ test('swept multi-support edits never accept newly violated locks and keep root 
  const free=rig.baseFrame('stand'),raw=JSON.parse(JSON.stringify(free));rig.moveRoot(raw,[.01,0,0]);
  const requested=JSON.stringify(raw.root);rig.adaptSupportPoints(raw,{}, {source:free,projectRoot:true});
  assert.equal(JSON.stringify(raw.root),requested);
+});
+
+test('mixed IK/FK animation normalizes representable limbs without changing authored poses',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
+ assert.equal(rig.prepareAngleMode(b,'arm','left'),true);
+ const before=JSON.stringify([a,b]),result=rig.Collision.previewTransition(a,b);
+ assert.equal(result.ok,true,JSON.stringify(result.issue));
+ assert.equal(result.samples.length,49);
+ assert.equal(JSON.stringify([a,b]),before);
+ for(const sample of result.samples)assert.ok(rig.limbError(rig.joints(a),rig.joints(sample),'arm','left')<1e-5);
+ assert.equal(JSON.stringify(result.samples[0]),JSON.stringify(a));
+ assert.equal(JSON.stringify(result.samples[48]),JSON.stringify(b));
+});
+test('revised support presets are finite, reachable and improve geometric baseline',()=>{
+ const rig=loadRig(),m=rig.math;
+ for(const name of ['tabletop','supine','kneel','plank']){
+   const f=rig.baseFrame(name),j=rig.joints(f);
+   assert.equal(j.clamped.length,0,name);
+   assert.equal(rig.Collision.report(f).count,0,name);
+   for(const side of ['left','right']){
+     assert.ok(Math.abs(m.len(m.sub(j.hip[side],j.knee[side]))-.45)<1e-8);
+     assert.ok(Math.abs(m.len(m.sub(j.knee[side],j.feet[side]))-.43)<1e-8);
+   }
+ }
+ for(const name of ['tabletop','kneel'])for(const y of Object.values(rig.joints(rig.baseFrame(name)).knee))assert.ok(y[1]>=.09&&y[1]<.13);
+ assert.ok(rig.PRESET_NAMES.length>=21);
+ for(const name of rig.PRESET_NAMES){
+   const p=rig.initialPose(name);assert.doesNotThrow(()=>rig.checkPose(p));
+   const audit=rig.auditPreset(name);assert.equal(audit.frames.length,2);
+ }
 });

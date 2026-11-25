@@ -108,18 +108,50 @@ function baseFrame(preset){
  }
  if(preset==='plank'){f.root=[0,.39,.14];f.euler=[Math.PI/2,0,0];f.hands={left:[-.24,.055,.48],right:[.24,.055,.48]};f.feet={left:[-.16,.055,-.88],right:[.16,.055,-.88]};f.poles.kneeLeft=[-.17,.20,-.66];f.poles.kneeRight=[.17,.20,-.66];f.poles.elbowLeft=[-.25,.35,.30];f.poles.elbowRight=[.25,.35,.30];f.equipment=[{type:'mat'}];}
  if(['tabletop','catcow','child','plank'].includes(preset)){for(const side of ['left','right'])if(f.feet[side][1]<.1){f.feet[side][1]=.12;f.footPitch[side]=-.65;}}
+ // Revised creation-only presets. Never apply these adjustments to loaded
+ // exercise poses. Use rigid chains for the intended support geometry.
+ if(preset==='tabletop'||preset==='catcow'){
+   f.root=[0,.55,.15];
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:Math.PI/2,abduction:.32,kneeFlexion:1.69};
+     f.footPitch[side]=.95;f.hands[side]=[side==='left'?-.24:.24,.07,.69];
+   }
+ }
+ if(preset==='supine'||preset==='bridge'){
+   f.root=[0,.20,.20];
+   for(const side of ['left','right'])f.feet[side]=[side==='left'?-.16:.16,.075,.83];
+ }
+ if(preset==='kneel'){
+   f.root=[0,.55,.03];
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:0,abduction:.02,kneeFlexion:1.69};f.footPitch[side]=.95;
+   }
+ }
+ if(preset==='plank'){
+   f.root=[0,.33,.14];f.euler=[1.25,0,0];
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:-.15,abduction:.03,kneeFlexion:0};
+     f.footPitch[side]=.95;
+     f.hands[side]=[side==='left'?-.215:.215,.07,.14+.54*Math.sin(1.25)];
+   }
+ }
  return f;
 }
+const PRESET_NAMES=['stand','crosslegged','chair','tabletop','catcow','child','supine','bridge','side','rowband','lunge','balance','boat','reclinedbutterfly','legs-wall','prone','sideplank','kneel','hinge','ballseat','plank'];
 function initialPose(preset='stand'){
  let a=baseFrame(preset),b=JSON.parse(JSON.stringify(a));b.name='Mozdulat';
- if(preset==='catcow'){b.euler[0]+=.18;b.headPitch=.30;}
- if(preset==='bridge'){b.root[1]=.49;b.feet.left=[-.16,.055,.87];b.feet.right=[.16,.055,.87];}
+ if(preset==='catcow'){b.lumbarBend=.12;b.thoracicBend=.12;b.headPitch=.30;}
+ if(preset==='bridge'){b.root[1]=.49;b.euler[0]=-1.94;}
  if(preset==='rowband'){b.hands.left=[-.33,.61,.02];b.hands.right=[.33,.61,.02];}
  if(preset==='side'){b.hands.right=[.02,.83,-.28];}
  if(preset==='balance'){b.feet.right=[.18,.77,.26];}
  if(preset==='lunge'){b.root[1]=.84;}
  if(preset==='child'){b.root[1]=.30;b.hands.left=[-.28,.055,.55];b.hands.right=[.28,.055,.55];}
  return {version:1,preset,reviewStatus:'illustrative',frames:[a,b],camera:{azimuth:.58,elevation:.35,distance:3.55,target:[0,.72,0]}};
+}
+// Review the authored geometry of every template frame; no clinical claim.
+function auditPreset(name){
+ const pose=initialPose(name);return {name,frames:pose.frames.map(frame=>({overlaps:Collision3D.report(frame),clamped:[...joints(frame).clamped]})),transition:Collision3D.previewTransition(pose.frames[0],pose.frames[1]).ok};
 }
 // Rotate a direction about a unit axis without changing bone length.
 function axisRotate(v,axis,angle){return add(add(mul(v,Math.cos(angle)),mul(cross(axis,v),Math.sin(angle))),mul(axis,dot(axis,v)*(1-Math.cos(angle))));}
@@ -569,7 +601,13 @@ function prepareTargetMode(frame,kind,side){
  candidate[target][side]=[...j[target][side]];
  candidate.poles??={};candidate.poles[pole]=[...j[middle][side]];
  delete candidate[key][side];
- if(limbError(j,joints(candidate),kind,side)>1e-5)return false;
+ if(limbError(j,joints(candidate),kind,side)>1e-5){
+   // The actual elbow/knee vector may lie outside the historical pole cone
+   // even when its bend plane has a valid pole inside that cone.
+   const anchor=j[kind==='arm'?'shoulder':'hip'][side];
+   candidate.poles[pole]=constrainedPole(anchor,j[target][side],j[middle][side],j.hingePoles[kind][side]);
+   if(limbError(j,joints(candidate),kind,side)>1e-5)return false;
+ }
  frame[target]=candidate[target];frame.poles=candidate.poles;frame[key]=candidate[key];
  return true;
 }
@@ -778,13 +816,56 @@ const Collision3D=(()=>{
    if(v&&typeof v==='object')return Object.fromEntries(Object.keys(v).sort().map(k=>[k,shape(v[k])]));
    return typeof v==='number'?'number':v;
  }
+ // Resolve different representation modes on temporary copies only.
+ // Prefer the already authored FK mode; otherwise use exact IK conversion.
+ // Even optional fields (notably legacy leg axial rotation) must be checked
+ // against the rendered endpoints before normalizing their shape.
+ function normalizePreview(a,b){
+   const x=cloneFrame(a),y=cloneFrame(b),ja=joints(a),jb=joints(b);
+   for(const kind of ['arm','leg'])for(const side of ['left','right']){
+     const key=modeKeys[kind],target=kind==='arm'?'hands':'feet',middle=kind==='arm'?'elbow':'knee';
+     const pole=middle+(side==='left'?'Left':'Right');
+     const lx=x[key]?.[side],ly=y[key]?.[side];
+     if(!lx&&!ly)continue;
+     const candidates=[];
+     // Work one limb at a time; failed conversions never affect the originals.
+     for(const mode of ['angle','target']){
+       const u=cloneFrame(x),v=cloneFrame(y);
+       const convert=mode==='angle'?prepareAngleMode:prepareTargetMode;
+       if(!convert(u,kind,side)||!convert(v,kind,side))continue;
+       if(mode==='angle'){
+         for(const q of [u,v]){
+           const control=q[key][side];
+           if(kind==='arm')for(const k of ['wristFlexion','forearmRotation','axialRotation'])control[k]??=0;
+         }
+         if(kind==='leg'&&((u[key][side].axialRotation==null)!==(v[key][side].axialRotation==null))){
+           for(const q of [u,v])if(q[key][side].axialRotation==null)q[key][side].axialRotation=0;
+         }
+         if(JSON.stringify(shape(u[key][side]))!==JSON.stringify(shape(v[key][side])))continue;
+       }
+       // Poles and unused targets are inert in FK. Fill missing poles without
+       // introducing a jump; the geometry comparison below is authoritative.
+       for(const [q,j] of [[u,ja],[v,jb]]){
+         q.poles??={};q.poles[pole]??=[...j[middle][side]];
+         if(mode==='angle')q[target][side]=[...j[target][side]];
+       }
+       if(limbError(ja,joints(u),kind,side)>1e-5||limbError(jb,joints(v),kind,side)>1e-5)continue;
+       candidates.push([u,v]);break;
+     }
+     if(!candidates.length)return null;
+     Object.assign(x,candidates[0][0]);Object.assign(y,candidates[0][1]);
+   }
+   return previewCompatible(x,y)?[x,y]:null;
+ }
  function previewCompatible(a,b){
    for(const key of ['armAngles','legAngles','footPitch','poles','equipment'])
      if(JSON.stringify(shape(a[key]??{}))!==JSON.stringify(shape(b[key]??{})))return false;
    return JSON.stringify(a.pointLocks??{})===JSON.stringify(b.pointLocks??{});
  }
  function previewTransition(a,b){
-   if(!previewCompatible(a,b))return {ok:false,issue:'representation'};
+   const normalized=previewCompatible(a,b)?[a,b]:normalizePreview(a,b);
+   if(!normalized)return {ok:false,issue:'representation'};
+   const [from,to]=normalized;
    const baseline=overlaps(a);
    for(const [id,depth] of overlaps(b))baseline.set(id,Math.max(depth,baseline.get(id)||0));
    const locks=a.pointLocks||{},start=lockErrors(joints(a),locks),end=lockErrors(joints(b),locks);
@@ -792,7 +873,7 @@ const Collision3D=(()=>{
    // Precompute the exact samples that will be displayed. Never render unchecked
    // intermediate poses. Fixed sampling is approximate, not continuous proof.
    for(let i=0;i<=48;i++){
-     const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(a,b,i/48);
+     const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(from,to,i/48);
      if(i>0&&i<48&&Object.keys(locks).length)adaptSupportPoints(frame,locks,{reference:samples.at(-1)});
      const j=joints(frame);
      const err=worse(overlaps(frame,j),baseline);
@@ -803,7 +884,7 @@ const Collision3D=(()=>{
    return {ok:true,samples};
  }
  function report(frame){const issues=overlaps(frame);return {count:issues.size,examples:[...issues.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,depth])=>({name,depth:+depth.toFixed(4)}))};}
- return {bodyProbes,bodySegments,selfOverlaps,segmentDistance,solids,overlaps,transition,previewTransition,interpolate,report,worse};
+ return {bodyProbes,bodySegments,selfOverlaps,segmentDistance,solids,overlaps,transition,previewTransition,normalizePreview,interpolate,report,worse};
 })();
 
 function mul4(a,b){let c=new Float32Array(16);for(let i=0;i<4;i++)for(let k=0;k<4;k++)for(let j=0;j<4;j++)c[j*4+i]+=a[k*4+i]*b[j*4+k];return c;}
@@ -1397,5 +1478,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
