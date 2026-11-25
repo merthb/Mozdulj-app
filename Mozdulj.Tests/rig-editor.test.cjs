@@ -697,3 +697,29 @@ test('skeleton uses the actual articulated joints and preserves pose data',()=>{
  assert.ok(segments.flat(2).every(Number.isFinite));
  assert.equal(JSON.stringify(f),before);
 });
+
+test('movement axes follow world, body and camera coordinates without stretching',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),c=rig.initialPose().camera;
+ f.euler=[0,Math.PI/2,0];const sel=rig.bodyTarget('root');
+ const world=rig.targetAxes(f,sel,c,'world'),body=rig.targetAxes(f,sel,c,'body'),camera=rig.targetAxes(f,sel,c,'camera');
+ assert.ok(m.len(m.sub(body[0],world[0]))>1);
+ for(const axes of [world,body,camera])for(const axis of axes)assert.ok(Math.abs(m.len(axis)-1)<1e-8);
+ const delta=rig.pointDragDelta(f,sel,c,400,15,-7,'x','body');
+ assert.ok(m.len(m.cross(delta,body[0]))<1e-8);
+ const original=[...f.root];assert.equal(rig.moveTargetBy(f,sel,[.02,0,0]),true);
+ assert.ok(Math.abs(f.root[0]-original[0]-.02)<1e-8);
+});
+test('body-part reset preserves unrelated settings, locks and equipment',()=>{
+ const rig=loadRig(),baseline=rig.baseFrame('stand'),f=JSON.parse(JSON.stringify(baseline));
+ f.headYaw=.3;f.leftHandCurl=.8;f.rightHandCurl=.4;f.leftShoulderElevation=.1;
+ f.root[0]=.1;f.hands.left[0]-=.07;f.equipment.push({type:'band',anchorA:'leftHand',anchorB:'rightHand'});
+ rig.setPointLock(f,'rightHand',true);
+ const reset=rig.resetBodyPart(f,baseline,'leftArm');
+ assert.equal(reset.leftHandCurl,undefined);assert.equal(reset.leftShoulderElevation,undefined);
+ assert.equal(reset.rightHandCurl,.4);assert.equal(reset.headYaw,.3);
+ for(const key of ['root','equipment','pointLocks','feet'])assert.equal(JSON.stringify(reset[key]),JSON.stringify(f[key]));
+ assert.equal(JSON.stringify(reset.hands.right),JSON.stringify(f.hands.right));
+ assert.ok(Math.abs(reset.hands.left[0]-baseline.hands.left[0]-.1)<1e-8);
+ assert.equal(f.leftHandCurl,.8);
+ assert.equal(rig.resetBodyPart(f,baseline,'all'),null);
+});

@@ -1331,6 +1331,63 @@ function equipmentDragDelta(camera,height,dx,dy,axis='free'){
  if(axis==='depth')return mul(forward,-dy*size);
  return add(mul(right,dx*size),mul(up,-dy*size));
 }
+function targetAxes(frame,sel,camera,space='world'){
+ if(space==='camera'){const {right,up,forward}=cameraBasis(camera);return [right,up,forward];}
+ const unit=[[1,0,0],[0,1,0],[0,0,1]];
+ if(space!=='body')return unit;
+ const axes=articulationAxes(frame);
+ const transform=['root','feet','knee'].includes(sel?.kind)?axes.pelvis:axes.upper;
+ return unit.map(transform);
+}
+function pointDragDelta(frame,sel,camera,height,dx,dy,axis='free',space='world'){
+ const {right,up,forward}=cameraBasis(camera),size=pixelScale(camera,height);
+ if(axis==='depth')return mul(forward,-dy*size);
+ if(axis==='free')return add(mul(right,dx*size),mul(up,-dy*size));
+ const vector=targetAxes(frame,sel,camera,space)[['x','y','z'].indexOf(axis)];
+ if(!vector)return [0,0,0];
+ const horizontal=dot(vector,right),vertical=dot(vector,up),screen=Math.hypot(horizontal,vertical);
+ // A nearly edge-on axis uses vertical movement for depth instead of
+ // amplifying tiny projected motion into an enormous world-space delta.
+ const amount=screen>.15?(dx*horizontal-dy*vertical)/screen:-dy;
+ return mul(vector,amount*size);
+}
+function moveTargetBy(frame,sel,delta){
+ if(!sel||sel.kind==='inspect'||!Array.isArray(delta)||delta.length!==3||delta.some(v=>!Number.isFinite(v)))return false;
+ if(sel.kind==='root'){moveRoot(frame,delta);return true;}
+ const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg';
+ if(frame[modeKeys[kind]]?.[sel.side])return false;
+ if(sel.kind==='elbow'||sel.kind==='knee')return moveBendPoint(frame,sel.kind,sel.side,delta);
+ const key=sel.kind==='hands'?'hands':'feet',origin=frame[key][sel.side];
+ frame[key][sel.side]=add(origin,delta).map((v,i)=>clamp(v,key==='feet'&&i===1?.05:-3,3));
+ return true;
+}
+function resetBodyPart(frame,reference,group){
+ if(!reference||!['root','head','trunk','leftArm','rightArm','leftLeg','rightLeg'].includes(group))return null;
+ const out=cloneFrame(frame);
+ const copy=(to,from,key)=>{if(from?.[key]!=null)to[key]=cloneFrame(from[key]);else delete to[key];};
+ const fields={root:['root','pelvicTilt','pelvisPitch','pelvisYaw','pelvisRoll'],head:['headYaw','headPitch','headRoll'],trunk:['shoulderLift','upperYaw','spineBend','lumbarBend','lumbarSideBend','thoracicBend','thoracicSideBend']};
+ if(fields[group]){
+   for(const key of fields[group])copy(out,reference,key);
+   if(group==='trunk')out.euler=[...reference.euler];
+ }else{
+   const side=group.startsWith('left')?'left':'right',kind=group.endsWith('Arm')?'arm':'leg',target=kind==='arm'?'hands':'feet',mode=modeKeys[kind],pole=(kind==='arm'?'elbow':'knee')+(side==='left'?'Left':'Right');
+   // Restore the original limb in its current body-local reference frame:
+   // an unrelated translation or rotation of the body is not undone.
+   const a=articulationAxes(reference),b=articulationAxes(out);
+   const original=joints(reference),current=joints(out);
+   const anchor=kind==='arm'?'shoulder':'hip';
+   const local=kind==='arm'?a.armLocal:a.legLocal,world=kind==='arm'?b.upper:b.pelvis;
+   const relocate=point=>add(current[anchor][side],world(local(sub(point,original[anchor][side]))));
+   out[target][side]=relocate(reference[target][side]);
+   out.poles??={};
+   if(reference.poles?.[pole])out.poles[pole]=relocate(reference.poles[pole]);else delete out.poles[pole];
+   out[mode]??={};copy(out[mode],reference[mode],side);
+   for(const suffix of SIDE_ARTICULATION[kind])copy(out,reference,side+suffix);
+   if(kind==='arm')copy(out,reference,side+'HandCurl');
+   else {out.footPitch??={};copy(out.footPitch,reference.footPitch,side);}
+ }
+ return out;
+}
 function moveRoot(frame,delta){
  frame.root=frame.root.map((v,i)=>clamp(v+delta[i],i===1?0:-3,3));
  return frame;
@@ -1445,7 +1502,7 @@ function shaded3D(canvas){
     for(const sign of [-1,1])ell(add(p,mul(axis,sign*.12)),[.035,.06,.06],'metal');
   }}
  }}
- function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false,axisSpace='world',moveAxis='free'}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],dark?[.26,.23,.34]:'floor');
@@ -1515,6 +1572,17 @@ function shaded3D(canvas){
      }
    }finally{if(ghost||skeleton)gl.enable(gl.DEPTH_TEST);}
  }
+ if(edit&&!equipmentMode&&selected){
+   const target=bodyTarget(selected),origin=bodyPoint(j,selected);
+   if(target&&origin){
+     const axes=targetAxes(frame,target,camera,axisSpace),colors=[[.92,.18,.22],[.12,.65,.30],[.12,.42,.95]];
+     gl.disable(gl.DEPTH_TEST);
+     try{for(const [i,vector] of axes.entries()){
+       const end=add(origin,mul(vector,.19));const active=moveAxis==='free'||moveAxis===['x','y','z'][i];
+       limb(origin,end,active?.013:.007,colors[i]);ell(end,[.022,.022,.022],colors[i]);
+     }}finally{gl.enable(gl.DEPTH_TEST);}
+   }
+ }
  if(edit&&equipmentMode){
    gl.disable(gl.DEPTH_TEST);
    try{
@@ -1554,18 +1622,10 @@ function shaded3D(canvas){
  }
  function pickEquipment(frame,x,y){return equipmentHandles(frame,lastJoints||joints(frame)).map(h=>{const s=project(h.position);return {h,d:s?Math.hypot(x-s[0],y-s[1]):Infinity};}).filter(v=>v.d<=28).sort((a,b)=>a.d-b.d).map(v=>v.h);}
  function pick(x,y,showAll=false){return pickAll(x,y,showAll)[0]||null;}
- function dragTarget(frame,sel,dx,dy,depth=false,axis='free'){const c=camera,right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)],up=[-Math.sin(c.azimuth)*Math.sin(c.elevation),Math.cos(c.elevation),-Math.cos(c.azimuth)*Math.sin(c.elevation)],forward=[Math.sin(c.azimuth),0,Math.cos(c.azimuth)];let size=pixelScale(c,dims.h);let delta=depth||axis==='depth'?mul(forward,-dy*size):add(mul(right,dx*size),mul(up,-dy*size));
- if(axis==='x')delta=[dx*size,0,0];else if(axis==='y')delta=[0,-dy*size,0];else if(axis==='z')delta=[0,0,-dy*size];
- if(sel.kind==='root'){moveRoot(frame,delta);return joints(frame).clamped;}
- if(sel.kind==='elbow'||sel.kind==='knee'){moveBendPoint(frame,sel.kind,sel.side,delta);return joints(frame).clamped;}
- if(sel.kind==='inspect')return null;
- let key=sel.kind==='hands'?'hands':'feet';let origin=frame[key][sel.side];
- // The studio prepares an equivalent target-mode frame before interpolation.
- if((key==='feet'&&frame.legAngles?.[sel.side])||(key==='hands'&&frame.armAngles?.[sel.side]))return null;
- origin=frame[key][sel.side];
- let point=add(origin,delta);
- if(key==='feet')point[1]=Math.max(.05,point[1]);
- frame[key][sel.side]=point;return joints(frame).clamped;}
+ function dragTarget(frame,sel,dx,dy,depth=false,axis='free',space='world'){
+ const delta=pointDragDelta(frame,sel,camera,dims.h,dx,dy,depth?'depth':axis,space);
+ return moveTargetBy(frame,sel,delta)?joints(frame).clamped:null;
+ }
  return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,pickEquipment,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
 function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');if(!validEquipmentIds(p.frames))throw Error('Érvénytelen eszközazonosító.');for(let f of p.frames){if(!validHandCurl(f))throw Error('Érvénytelen kéztartás.');if(!validArticulation(f))throw Error('Érvénytelen helyi gerinc- vagy medenceforgatás.');if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
@@ -1603,5 +1663,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

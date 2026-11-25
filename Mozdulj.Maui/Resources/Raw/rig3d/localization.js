@@ -1,6 +1,19 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Mozgatás koordinátarendszere":"Movement coordinate system",
+  "Világ":"World",
+  "Testhez igazított":"Body-relative",
+  "Kamerához igazított":"Camera-relative",
+  "Testpont világkoordinátái (cm)":"World coordinates of body point (cm)",
+  "Koordináták alkalmazása":"Apply coordinates",
+  "A mezők a tényleges testponthelyzetet mutatják. A rögzítések és az anatómiai korlátok továbbra is érvényesek.":"Fields show the actual body point position. Locks and anatomical limits still apply.",
+  "↶ Kiválasztott testrész visszaállítása":"↶ Restore selected body part",
+  "Az adott fázis kiinduló testrész-beállításait állítja vissza; a többi szerkesztés megmarad.":"Restore the initial settings of this body part for the phase; other edits remain.",
+  "Érvénytelen testpont-koordináta.":"Invalid body point coordinate.",
+  "A kért koordinátát az anatómiai korlátok miatt nem lehet pontosan elérni. A tényleges helyzet látható.":"Anatomical limits prevent reaching the exact requested coordinate. The actual position is shown.",
+  "A testrész visszaállítása a jelenlegi rögzítések vagy ütközések miatt nem lehetséges.":"The body part cannot be restored because of current locks or collisions.",
+  "A kiválasztott testrész kiinduló beállításai visszaállítva.":"Initial settings of the selected body part restored.",
   "Nézetkocka":"View cube",
   "Szerkesztőpanel méretezése":"Resize editor panel",
   "Felül":"Top",
