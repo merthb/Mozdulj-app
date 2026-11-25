@@ -75,6 +75,18 @@ function syncLocks(){
  const active=current().pointLocks||{};
  for(const input of document.querySelectorAll('[data-lock-point]'))input.checked=Object.hasOwn(active,input.dataset.lockPoint);
 }
+function discreteEdit(build,validate,insert=false){
+ closeGesture();
+ const before=clone(current()),next=build(clone(before));
+ const problem=validate(before,next);
+ if(problem){msg('A tükrözés vagy másolás ütközést okozna, illetve megsértene egy rögzítést. A póz változatlan maradt.');return;}
+ if(insert&&pose.frames.length>=6){msg('Legfeljebb 6 fázis adható hozzá.');return;}
+ tracked(()=>{
+   if(insert){next.name='Új fázis '+(pose.frames.length+1);pose.frames.splice(frameIndex+1,0,next);frameIndex++;}
+   else pose.frames[frameIndex]=next;
+ });
+ sync();msg('A pózmódosítás elkészült.');
+}
 function updatePhaseControls(){
  if(!pose)return;
  const n=pose.frames.length;
@@ -83,7 +95,7 @@ function updatePhaseControls(){
  $('phasePrev').disabled=frameIndex===0;
  $('phaseNext').disabled=frameIndex>=n-1;
  $('phaseName').value=pose.frames[frameIndex].name||('Fázis '+(frameIndex+1));
- $('addPhase').disabled=n>=6;
+ $('addPhase').disabled=n>=6;$('mirrorCopy').disabled=n>=6;
  $('removePhase').disabled=n<=1;
  $('phasePrev').setAttribute('aria-disabled',String(frameIndex===0));
  $('phaseNext').setAttribute('aria-disabled',String(frameIndex>=n-1));
@@ -194,6 +206,10 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(!Number.isFinite(value)||value<0||value>3){sync();msg('Érvénytelen medencemagasság.');return;}
    guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]));sync();
  };
+ $('mirrorPose').onclick=()=>discreteEdit(MozduljRig.mirrorFrame,MozduljRig.mirrorIssue);
+ $('mirrorCopy').onclick=()=>discreteEdit(MozduljRig.mirrorFrame,MozduljRig.mirrorIssue,true);
+ $('copyArm').onclick=()=>discreteEdit(f=>MozduljRig.copyLimb(f,'arm',$('armSide').value),MozduljRig.copyIssue);
+ $('copyLeg').onclick=()=>discreteEdit(f=>MozduljRig.copyLimb(f,'leg',$('legSide').value),MozduljRig.copyIssue);
  $('phasePrev').addEventListener('click',()=>switchFrame(frameIndex-1));
  $('phaseNext').addEventListener('click',()=>switchFrame(frameIndex+1));
  $('addPhase').addEventListener('click',()=>{

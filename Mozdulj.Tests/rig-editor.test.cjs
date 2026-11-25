@@ -143,3 +143,33 @@ test('axial rotations preserve bone lengths, move the distal joint and are infer
  const pose=rig.initialPose('stand');pose.frames[0].legAngles.left={...f.legAngles.left,axialRotation:2};
  assert.throws(()=>rig.checkPose(pose));
 });
+
+test('full mirror swaps sides and reflects bone geometry, props and support locks',()=>{
+ const rig=loadRig(),f=rig.baseFrame('lunge'),m=rig.math;
+ f.root[0]=.12;f.euler=[.12,.35,.1];f.upperYaw=.2;f.headYaw=.1;f.headRoll=-.15;
+ f.armAngles.right={flexion:.4,abduction:.3,elbowFlexion:.7,axialRotation:.3};
+ f.legAngles.left={flexion:.6,abduction:.2,kneeFlexion:.8,axialRotation:.2};
+ f.equipment.push({type:'band',anchorA:'leftHand',anchorB:'fixed',anchorC:'floorRight',positionB:[.3,.2,.7],route:'left'});
+ rig.setPointLock(f,'rightHand',true);
+ const a=rig.joints(f),g=rig.mirrorFrame(f),b=rig.joints(g);
+ const reflected=p=>[-p[0],p[1],p[2]];
+ for(const k of ['root','head','neck','spineUpper'])assert.ok(m.len(m.sub(b[k],reflected(a[k])))<1e-7,k);
+ for(const k of ['hip','shoulder','elbow','hands','knee','feet','toes','palms'])
+   for(const side of ['left','right'])assert.ok(m.len(m.sub(b[k][side],reflected(a[k][side==='left'?'right':'left'])))<1e-7,k+' '+side);
+ const band=g.equipment.at(-1);
+ assert.equal(band.anchorA,'rightHand');assert.equal(band.anchorC,'floorLeft');assert.equal(band.route,'right');
+ assert.equal(JSON.stringify(band.positionB),JSON.stringify([-.3,.2,.7]));
+ assert.equal(JSON.stringify(g.pointLocks.leftHand),JSON.stringify(reflected(f.pointLocks.rightHand)));
+ assert.equal(JSON.stringify(rig.mirrorFrame(g)),JSON.stringify(f));
+});
+test('copy limb transfers angles in body space without changing the source limb',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math;
+ f.euler=[.1,.2,.1];
+ f.armAngles.left={flexion:.3,abduction:.5,elbowFlexion:.7,axialRotation:.2};
+ const a=rig.joints(f),original=JSON.stringify(f.armAngles.left);
+ rig.copyLimb(f,'arm','left');
+ const b=rig.joints(f);
+ assert.equal(JSON.stringify(f.armAngles.left),original);
+ assert.equal(f.armAngles.right.axialRotation,-.2);
+ assert.ok(m.len(m.sub(a.hands.left,b.hands.left))<1e-9);
+});

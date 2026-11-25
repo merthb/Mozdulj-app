@@ -231,6 +231,68 @@ function inferAngles(frame,kind,side,requireAxial=false){
 // A representable conversion does not alter other limbs or the frame.
 // Unsupported configurations remain in their original mode, rather than
 // being silently snapped into a different anatomical position.
+// Reflect across the world sagittal plane (X=0), exchanging anatomical sides.
+const reflectX=p=>[-p[0],p[1],p[2]];
+const swapSide=s=>s.replace(/left|right|Left|Right/g,k=>({left:'right',right:'left',Left:'Right',Right:'Left'})[k]);
+function mirrorControls(a){
+ const result=cloneFrame(a);
+ for(const key of ['axialRotation','forearmRotation'])if(result[key]!=null)result[key]=-result[key];
+ return result;
+}
+function mirrorFrame(frame){
+ const f=cloneFrame(frame);
+ f.root=reflectX(f.root);f.euler=[f.euler[0],-f.euler[1],-f.euler[2]];
+ for(const key of ['headYaw','headRoll','upperYaw'])if(f[key]!=null)f[key]=-f[key];
+ for(const key of ['hands','feet','poles','pointLocks']){
+   if(f[key]!=null)f[key]=Object.fromEntries(Object.entries(f[key]).map(([name,pos])=>[swapSide(name),reflectX(pos)]));
+ }
+ if(f.footPitch!=null)f.footPitch=Object.fromEntries(Object.entries(f.footPitch).map(([side,value])=>[swapSide(side),value]));
+ for(const key of ['armAngles','legAngles'])if(f[key]!=null)
+   f[key]=Object.fromEntries(Object.entries(f[key]).map(([side,a])=>[swapSide(side),mirrorControls(a)]));
+ for(const prop of f.equipment||[]){
+   for(const key of ['position','positionB','positionC'])if(prop[key]!=null)prop[key]=reflectX(prop[key]);
+   for(const key of ['anchor','anchorA','anchorB','anchorC','route'])if(typeof prop[key]==='string')prop[key]=swapSide(prop[key]);
+ }
+ return f;
+}
+// Copy one side relative to the body, not the camera or world orientation.
+// The other limb's existing mode is replaced; its locks remain constraints.
+function copyLimb(frame,kind,source){
+ const dest=swapSide(source),target=kind==='arm'?'hands':'feet',key=modeKeys[kind];
+ const pole=kind==='arm'?'elbow':'knee';
+ const localMirror=point=>add(frame.root,rotate(reflectX(unrotate(sub(point,frame.root),frame.euler)),frame.euler));
+ frame[target][dest]=localMirror(frame[target][source]);
+ const fromPole=pole+(source==='left'?'Left':'Right'),toPole=swapSide(fromPole);
+ if(frame.poles?.[fromPole])frame.poles[toPole]=localMirror(frame.poles[fromPole]);
+ else if(frame.poles)delete frame.poles[toPole];
+ frame[key]??={};
+ if(frame[key][source])frame[key][dest]=mirrorControls(frame[key][source]);
+ else delete frame[key][dest];
+ if(kind==='leg'){
+   frame.footPitch??={};
+   if(frame.footPitch[source]!=null)frame.footPitch[dest]=frame.footPitch[source];
+   else delete frame.footPitch[dest];
+ }
+ return frame;
+}
+// A mirror is a discrete construction operation, not an animation through the
+// centre of the body. Compare reflected collision identities with the source.
+function mirrorIssue(source,result){
+ const baseline=new Map();
+ for(const [id,depth] of Collision3D.overlaps(source)){
+   let mirrored=swapSide(id);
+   if(mirrored.startsWith('body:'))mirrored='body:'+mirrored.slice(5).split('/').sort().join('/');
+   baseline.set(mirrored,depth);
+ }
+ return Collision3D.worse(Collision3D.overlaps(result),baseline,1e-6);
+}
+function copyIssue(source,result){
+ const collision=Collision3D.worse(Collision3D.overlaps(result),Collision3D.overlaps(source),1e-6);
+ if(collision)return collision;
+ const before=lockErrors(joints(source),source.pointLocks),after=lockErrors(joints(result),source.pointLocks);
+ for(const [key,d] of after)if(d>Math.max(.005,before.get(key)||0)+1e-7)return {id:'lock:'+key,depth:d};
+ return null;
+}
 function prepareAngleMode(frame,kind,side){
  const key=modeKeys[kind];
  if(frame[key]?.[side])return true;
@@ -656,5 +718,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,mirrorFrame,mirrorIssue,copyLimb,copyIssue,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

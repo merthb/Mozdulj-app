@@ -1,11 +1,18 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Póz tükrözése": "Mirror pose",
+  "+ Tükrözött fázis": "+ Mirrored phase",
+  "A tükrözés felcseréli a bal és jobb oldalt, az eszközökkel és rögzítésekkel együtt.": "Mirroring swaps left and right, including equipment and locks.",
+  "A kiválasztott kar másolása a másik oldalra": "Copy selected arm to opposite side",
+  "A kiválasztott láb másolása a másik oldalra": "Copy selected leg to opposite side",
+  "A tükrözés vagy másolás ütközést okozna, illetve megsértene egy rögzítést. A póz változatlan maradt.": "Mirroring or copying would cause a collision or violate a lock. The pose has been preserved.",
+  "A pózmódosítás elkészült.": "Pose updated.",
   "Felkar befelé / kifelé forgatása":"Upper-arm inward / outward rotation",
   "Csípő befelé / kifelé forgatása":"Hip inward / outward rotation",
   "Érvénytelen végtagrotáció.":"Invalid limb rotation.",
   "Mellkas csavarása a medencéhez képest": "Chest rotation relative to pelvis",
-  "Gerinc görbítése / homorítása": "Spinal flexion / extension",
+  "Gerinc domborítása / homorítása": "Spinal flexion / extension",
   "A jelenlegi póz ebben a vezérlési módban nem adható meg pontosan. A póz változatlan maradt.": "The current pose cannot be represented precisely in this control mode. The pose has been preserved.",
   "Támaszpontok rögzítése": "Lock support points",
   "A kijelölt pontok maradnak a jelenlegi térbeli helyükön. A kék jelölés a rögzített pontokat mutatja. Ha a póz így nem megoldható, a mozgatás megáll.": "Selected points stay at their current world positions. Blue markers show locked points. Motion stops if the pose cannot satisfy the constraints.",
