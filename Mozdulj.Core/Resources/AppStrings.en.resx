@@ -15,4 +15,115 @@
   <data name="LoadingCatalog" xml:space="preserve"><value>Loading exercise library…</value></data>
   <data name="StartupError" xml:space="preserve"><value>Startup error</value></data>
   <data name="Minutes" xml:space="preserve"><value>{0} min</value></data>
+  <data name="ProfileHeading" xml:space="preserve"><value>Your movement profile</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="AppTheme" xml:space="preserve"><value>App theme</value></data>
+  <data name="Light" xml:space="preserve"><value>Light</value></data>
+  <data name="Dark" xml:space="preserve"><value>Dark (graphite grey)</value></data>
+  <data name="Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Contrast" xml:space="preserve"><value>High contrast</value></data>
+  <data name="FontScale" xml:space="preserve"><value>The app automatically follows your phone’s text size setting.</value></data>
+  <data name="EditProfile" xml:space="preserve"><value>✎ Edit profile</value></data>
+  <data name="TimeDifficulty" xml:space="preserve"><value>Time and difficulty</value></data>
+  <data name="TargetDuration" xml:space="preserve"><value>Target workout duration</value></data>
+  <data name="MaxDifficulty" xml:space="preserve"><value>Maximum difficulty</value></data>
+  <data name="Beginner" xml:space="preserve"><value>Beginner</value></data>
+  <data name="Intermediate" xml:space="preserve"><value>Intermediate</value></data>
+  <data name="Advanced" xml:space="preserve"><value>Advanced</value></data>
+  <data name="Transition" xml:space="preserve"><value>Transition between exercises</value></data>
+  <data name="WeeklyGoal" xml:space="preserve"><value>Weekly goal</value></data>
+  <data name="Countdown" xml:space="preserve"><value>Countdown sounds</value></data>
+  <data name="On" xml:space="preserve"><value>On</value></data>
+  <data name="Off" xml:space="preserve"><value>Off</value></data>
+  <data name="RelaxationMusic" xml:space="preserve"><value>Relaxation music</value></data>
+  <data name="Reminder" xml:space="preserve"><value>Daily reminder</value></data>
+  <data name="Personalization" xml:space="preserve"><value>Personalisation</value></data>
+  <data name="FocusRegions" xml:space="preserve"><value>Focus areas</value></data>
+  <data name="PreferredTypes" xml:space="preserve"><value>Preferred movement types</value></data>
+  <data name="Equipment" xml:space="preserve"><value>Available equipment</value></data>
+  <data name="ManageLibrary" xml:space="preserve"><value>Manage exercise library</value></data>
+  <data name="ImportLibrary" xml:space="preserve"><value>Import exercise library JSON</value></data>
+  <data name="PickLibrary" xml:space="preserve"><value>Choose a Mozdulj library JSON</value></data>
+  <data name="ImportMode" xml:space="preserve"><value>How should custom exercises be imported?</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="AddNew" xml:space="preserve"><value>Add new</value></data>
+  <data name="Merge" xml:space="preserve"><value>Merge</value></data>
+  <data name="ReplaceList" xml:space="preserve"><value>Replace custom list</value></data>
+  <data name="ConfirmReplace" xml:space="preserve"><value>Replace custom list?</value></data>
+  <data name="ArchiveNotice" xml:space="preserve"><value>Existing custom exercises will be archived. Built-in exercises are never overwritten.</value></data>
+  <data name="Replace" xml:space="preserve"><value>Replace</value></data>
+  <data name="Imported" xml:space="preserve"><value>Imported</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>Import failed</value></data>
+  <data name="ExportLibrary" xml:space="preserve"><value>Export current exercise library (.json)</value></data>
+  <data name="Exported" xml:space="preserve"><value>Exported</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>Export failed</value></data>
+  <data name="ExportedLibrary" xml:space="preserve"><value>Built-in and custom exercises and their statuses have been saved.</value></data>
+  <data name="ShareLibrary" xml:space="preserve"><value>Export exercise library</value></data>
+  <data name="LibraryBackupInfo" xml:space="preserve"><value>Library backup: built-in and custom exercises, disabled items and local edits. Built-in workout data is protected.</value></data>
+  <data name="BackupHeading" xml:space="preserve"><value>Full backup and app updates</value></data>
+  <data name="BackupInfo" xml:space="preserve"><value>Back up your data before changing phones or uninstalling. Ordinary app updates preserve your data.</value></data>
+  <data name="ExportBackup" xml:space="preserve"><value>Export full backup (.json)</value></data>
+  <data name="BackupDone" xml:space="preserve"><value>Backup complete</value></data>
+  <data name="BackupContents" xml:space="preserve"><value>Profile, favourites, XP, badges, history, custom exercises and edits exported.</value></data>
+  <data name="ShareBackup" xml:space="preserve"><value>Full backup</value></data>
+  <data name="SaveError" xml:space="preserve"><value>Save failed</value></data>
+  <data name="RestoreBackup" xml:space="preserve"><value>Restore full backup (.json)</value></data>
+  <data name="RestoreFailed" xml:space="preserve"><value>Restore failed</value></data>
+  <data name="Safety" xml:space="preserve"><value>Move at your own pace. If you experience pain or are unsure, seek professional advice.</value></data>
+  <data name="NoneSelected" xml:space="preserve"><value>None selected</value></data>
+  <data name="AndroidSaveUnavailable" xml:space="preserve"><value>Android file saving is unavailable.</value></data>
+  <data name="FileSaveUnavailable" xml:space="preserve"><value>The system file saver is unavailable.</value></data>
+  <data name="InitialSetup" xml:space="preserve"><value>Initial setup</value></data>
+  <data name="DurationPrompt" xml:space="preserve"><value>How much time do you have for a workout?</value></data>
+  <data name="DifficultyPrompt" xml:space="preserve"><value>Choose difficulty</value></data>
+  <data name="RestPrompt" xml:space="preserve"><value>Rest between exercises</value></data>
+  <data name="SaveStart" xml:space="preserve"><value>Save and start</value></data>
+  <data name="Welcome" xml:space="preserve"><value>Welcome to Mozdulj!</value></data>
+  <data name="SetupInfo" xml:space="preserve"><value>First, choose the movement that suits you. Daily workouts and monthly challenges will be created afterwards.</value></data>
+  <data name="HaveBackup" xml:space="preserve"><value>Do you have a previous full backup?</value></data>
+  <data name="DailyMovement" xml:space="preserve"><value>Daily movement</value></data>
+  <data name="WorkoutLength" xml:space="preserve"><value>Workout duration</value></data>
+  <data name="Difficulty" xml:space="preserve"><value>Difficulty</value></data>
+  <data name="ExerciseTransition" xml:space="preserve"><value>Transition between exercises</value></data>
+  <data name="WeeklyMovement" xml:space="preserve"><value>Weekly movement goal</value></data>
+  <data name="FocusAreas" xml:space="preserve"><value>Focus areas</value></data>
+  <data name="FocusInfo" xml:space="preserve"><value>Give these body areas extra attention.</value></data>
+  <data name="PreferredInfo" xml:space="preserve"><value>These movement types will be prioritised.</value></data>
+  <data name="HomeEquipment" xml:space="preserve"><value>Equipment available at home</value></data>
+  <data name="EquipmentInfo" xml:space="preserve"><value>Select only equipment you have available. You can also start without equipment.</value></data>
+  <data name="SetupChangeInfo" xml:space="preserve"><value>You can change your settings later in Profile. All data stays locally on your phone.</value></data>
+  <data name="SetupSaveError" xml:space="preserve"><value>Could not save settings</value></data>
+  <data name="TodayError" xml:space="preserve"><value>Could not create today's workout plan.</value></data>
+  <data name="TodayErrorHelp" xml:space="preserve"><value>You can change the filters in Profile.</value></data>
+  <data name="TodayGreeting" xml:space="preserve"><value>Hi! Let's move today! ☀</value></data>
+  <data name="ActiveDayInfo" xml:space="preserve"><value>A day becomes active when you finish at least one workout, even partially.</value></data>
+  <data name="ThreeWorkouts" xml:space="preserve"><value>Today's three workouts</value></data>
+  <data name="Completed" xml:space="preserve"><value>✓ Completed</value></data>
+  <data name="Resume" xml:space="preserve"><value>▶ Resume</value></data>
+  <data name="Partial" xml:space="preserve"><value>◐ Partially completed</value></data>
+  <data name="Available" xml:space="preserve"><value>Available</value></data>
+  <data name="View" xml:space="preserve"><value>View</value></data>
+  <data name="TaskList" xml:space="preserve"><value>Exercise list ›</value></data>
+  <data name="RecoveryDone" xml:space="preserve"><value>✓ Completed – streak preserved</value></data>
+  <data name="RecoveryInterrupted" xml:space="preserve"><value>Previous relaxation interrupted</value></data>
+  <data name="NotStarted" xml:space="preserve"><value>Not started</value></data>
+  <data name="ViewRecovery" xml:space="preserve"><value>View recovery session</value></data>
+  <data name="RestartRelaxation" xml:space="preserve"><value>↻ Restart relaxation</value></data>
+  <data name="TenMinuteRelaxation" xml:space="preserve"><value>🌿 10-minute full-body relaxation</value></data>
+  <data name="RecoveryDay" xml:space="preserve"><value>Recovery day – rest your body and mind</value></data>
+  <data name="RecoveryInfo" xml:space="preserve"><value>10 minutes of uninterrupted relaxation · no pause, restart if you leave early · protects your streak only on completion</value></data>
+  <data name="Seconds" xml:space="preserve"><value>{0} sec</value></data>
+  <data name="DaysPerWeek" xml:space="preserve"><value>{0} days / week</value></data>
+  <data name="ActiveDays" xml:space="preserve"><value>{0} active days</value></data>
+  <data name="LibraryCount" xml:space="preserve"><value>{0} available exercises · Offline library</value></data>
+  <data name="ImportCount" xml:space="preserve"><value>{0} → {1} exercises. The library was copied to internal storage.</value></data>
+  <data name="BackupRestoreInfo" xml:space="preserve"><value>You can restore older backups here too. After reinstalling, if the previous authentication key is lost, the app will warn you and ask for confirmation. Only use your own backups.</value></data>
+  <data name="OnboardingRestoreInfo" xml:space="preserve"><value>If you have used Mozdulj! before, you can restore an existing backup using the usual restore feature. The app will tell you if the authentication key is missing.</value></data>
+  <data name="Streak" xml:space="preserve"><value>🔥 {0}-day activity streak</value></data>
+  <data name="FreezeInventory" xml:space="preserve"><value>🧊 {0} / {1} streak freezes available</value></data>
+  <data name="XpLevel" xml:space="preserve"><value>⭐ {0:N0} XP · level {1} · next freeze at {2:N0} XP</value></data>
+  <data name="NextLevel" xml:space="preserve"><value>Next level at {0:N0} XP</value></data>
+  <data name="MonthlyActive" xml:space="preserve"><value>Active days this month: {0}.</value></data>
+  <data name="WeeklyProgress" xml:space="preserve"><value>Weekly goal · {0} / {1} active days</value></data>
+  <data name="WorkoutCount" xml:space="preserve"><value>{0} exercises · approx. {1} min</value></data>
 </root>

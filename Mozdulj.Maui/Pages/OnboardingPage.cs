@@ -11,11 +11,11 @@ namespace Mozdulj.Maui.Pages;
 public sealed class OnboardingPage : ContentPage
 {
     private readonly AppState _state;
-    private readonly Picker _minutes = new() { Title = "Mennyi időd van egy gyakorlatsorra?" };
-    private readonly Picker _difficulty = new() { Title = "Válassz nehézséget" };
-    private readonly Picker _transition = new() { Title = "Pihenő két gyakorlat között" };
-    private readonly Picker _weeklyDays = new() { Title = "Heti cél" };
-    private readonly Button _save = UI.Button("Mentés és kezdés");
+    private readonly Picker _minutes = new() { Title = AppLocalization.Text("DurationPrompt") };
+    private readonly Picker _difficulty = new() { Title = AppLocalization.Text("DifficultyPrompt") };
+    private readonly Picker _transition = new() { Title = AppLocalization.Text("RestPrompt") };
+    private readonly Picker _weeklyDays = new() { Title = AppLocalization.Text("WeeklyGoal") };
+    private readonly Button _save = UI.Button(AppLocalization.Text("SaveStart"));
     private readonly List<string> _regions;
     private readonly List<string> _categories;
     private readonly List<string> _equipment;
@@ -27,7 +27,7 @@ public sealed class OnboardingPage : ContentPage
     public OnboardingPage(AppState state)
     {
         _state = state;
-        UI.Setup(this, "Kezdő beállítások");
+        UI.Setup(this, AppLocalization.Text("InitialSetup"));
         var pref = state.Preferences;
         _draft = new UserPreferences
         {
@@ -51,14 +51,14 @@ public sealed class OnboardingPage : ContentPage
         _equipment = _draft.AvailableEquipment;
 
         var content = UI.Stack();
-        content.Children.Add(UI.Label("Üdv a Mozdulj!-ban!", 28, true, UI.Purple));
+        content.Children.Add(UI.Label(AppLocalization.Text("Welcome"), 28, true, UI.Purple));
         content.Children.Add(UI.Label(
-            "Először állítsuk be, milyen mozgás illik hozzád. A napi programokat és a havi kihívásokat csak ezután állítjuk össze.",
+            AppLocalization.Text("SetupInfo"),
             15, color:UI.Muted));
 
         // The same standard restore action is available before first setup,
         // so a reinstalled user does not have to create a replacement profile.
-        var restore=UI.Button("Teljes adatmentés visszaállítása (.json)",false);
+        var restore=UI.Button(AppLocalization.Text("RestoreBackup"),false);
         restore.Clicked+=async (_, _)=>
         {
             try
@@ -69,43 +69,41 @@ public sealed class OnboardingPage : ContentPage
             }
             catch(Exception ex)
             {
-                await DisplayAlertAsync("Visszaállítás sikertelen",ex.Message,"Rendben");
+                await DisplayAlertAsync(AppLocalization.Text("RestoreFailed"),ex.Message,AppLocalization.Text("OK"));
             }
         };
         content.Children.Add(UI.Card(
-            UI.Label("Van korábbi teljes mentésed?",17,true),
-            UI.Label("Ha már használtad a Mozdulj!-at, a meglévő mentésedet " +
-                "a szokásos visszaállítás funkcióval is betöltheted. " +
-                "A rendszer szükség esetén tájékoztat az elveszett hitelesítő kulcsról.",
+            UI.Label(AppLocalization.Text("HaveBackup"),17,true),
+            UI.Label(AppLocalization.Text("OnboardingRestoreInfo"),
                 13,color:UI.Muted),
             restore));
 
-        foreach (var value in Durations) _minutes.Items.Add($"{value} perc");
+        foreach (var value in Durations) _minutes.Items.Add(AppLocalization.Format("Minutes", value));
         _minutes.SelectedIndex = Math.Max(0, Array.IndexOf(Durations, pref.WorkoutMinutes));
-        foreach (var label in new[] { "Kezdő", "Középhaladó", "Haladó" }) _difficulty.Items.Add(label);
+        foreach (var label in new[] { AppLocalization.Text("Beginner"), AppLocalization.Text("Intermediate"), AppLocalization.Text("Advanced") }) _difficulty.Items.Add(label);
         _difficulty.SelectedIndex = Math.Clamp(pref.MaximumDifficulty - 1, 0, 2);
-        for (var n = 5; n <= 10; n++) _transition.Items.Add($"{n} másodperc");
+        for (var n = 5; n <= 10; n++) _transition.Items.Add(AppLocalization.Format("Seconds", n));
         _transition.SelectedIndex = Math.Clamp(pref.TransitionSeconds - 5, 0, 5);
-        for (var n = 1; n <= 7; n++) _weeklyDays.Items.Add($"{n} nap / hét");
+        for (var n = 1; n <= 7; n++) _weeklyDays.Items.Add(AppLocalization.Format("DaysPerWeek", n));
         _weeklyDays.SelectedIndex = Math.Clamp(pref.WeeklyTargetDays - 1, 0, 6);
 
         content.Children.Add(UI.Card(
-            UI.Label("Napi mozgás", 19, true),
-            Labeled("Egy gyakorlatsor hossza", _minutes),
-            Labeled("Nehézség", _difficulty),
-            Labeled("Átvezetés a gyakorlatok között", _transition),
-            Labeled("Heti mozgási cél", _weeklyDays)));
+            UI.Label(AppLocalization.Text("DailyMovement"), 19, true),
+            Labeled(AppLocalization.Text("WorkoutLength"), _minutes),
+            Labeled(AppLocalization.Text("Difficulty"), _difficulty),
+            Labeled(AppLocalization.Text("ExerciseTransition"), _transition),
+            Labeled(AppLocalization.Text("WeeklyMovement"), _weeklyDays)));
 
-        content.Children.Add(UI.Card(UI.Label("Fókuszterületek", 19, true),
-            UI.Label("Ezeknek a testrészeknek szívesen adnál több figyelmet.", 13, color:UI.Muted),
+        content.Children.Add(UI.Card(UI.Label(AppLocalization.Text("FocusAreas"), 19, true),
+            UI.Label(AppLocalization.Text("FocusInfo"), 13, color:UI.Muted),
             RegionChoices.Create(state.Exercises, _regions)));
-        AddChoices(content, "Kedvelt mozgástípusok", "Ezeket a mozgásformákat részesítjük előnyben.",
+        AddChoices(content, AppLocalization.Text("PreferredTypes"), AppLocalization.Text("PreferredInfo"),
             state.Catalog.Categories, _categories);
-        AddChoices(content, "Otthon elérhető eszközök", "Csak olyat jelölj meg, ami tényleg kéznél van. Eszköz nélkül is elkezdheted.",
+        AddChoices(content, AppLocalization.Text("HomeEquipment"), AppLocalization.Text("EquipmentInfo"),
             state.Exercises.SelectMany(x => x.Equipment).Distinct().OrderBy(x => x), _equipment);
 
         content.Children.Add(UI.Label(
-            "A beállításaidat később a Profil oldalon is módosíthatod. Minden adat helyben, a telefonodon marad.",
+            AppLocalization.Text("SetupChangeInfo"),
             12, color:UI.Muted));
 
         _save.Clicked += async (_, _) => await FinishAsync();
@@ -159,7 +157,7 @@ public sealed class OnboardingPage : ContentPage
         }
         catch (Exception e)
         {
-            await DisplayAlertAsync("Nem sikerült elmenteni a beállításokat", e.Message, "Rendben");
+            await DisplayAlertAsync(AppLocalization.Text("SetupSaveError"), e.Message, AppLocalization.Text("OK"));
         }
         finally
         {

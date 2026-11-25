@@ -15,4 +15,115 @@
   <data name="LoadingCatalog" xml:space="preserve"><value>Gyakorlattár betöltése…</value></data>
   <data name="StartupError" xml:space="preserve"><value>Indítási hiba</value></data>
   <data name="Minutes" xml:space="preserve"><value>{0} perc</value></data>
+  <data name="ProfileHeading" xml:space="preserve"><value>Saját mozgásprofil</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Megjelenés</value></data>
+  <data name="AppTheme" xml:space="preserve"><value>Alkalmazás témája</value></data>
+  <data name="Light" xml:space="preserve"><value>Világos</value></data>
+  <data name="Dark" xml:space="preserve"><value>Sötét (grafitszürke)</value></data>
+  <data name="Theme" xml:space="preserve"><value>Téma</value></data>
+  <data name="Contrast" xml:space="preserve"><value>Magas kontraszt</value></data>
+  <data name="FontScale" xml:space="preserve"><value>A telefon betűméret-beállítását az alkalmazás automatikusan követi.</value></data>
+  <data name="EditProfile" xml:space="preserve"><value>✎ Profil szerkesztése</value></data>
+  <data name="TimeDifficulty" xml:space="preserve"><value>Idő és nehézség</value></data>
+  <data name="TargetDuration" xml:space="preserve"><value>Gyakorlatsor célhossza</value></data>
+  <data name="MaxDifficulty" xml:space="preserve"><value>Legmagasabb megengedett nehézség</value></data>
+  <data name="Beginner" xml:space="preserve"><value>Kezdő</value></data>
+  <data name="Intermediate" xml:space="preserve"><value>Középhaladó</value></data>
+  <data name="Advanced" xml:space="preserve"><value>Haladó</value></data>
+  <data name="Transition" xml:space="preserve"><value>Átvezetés két feladat között</value></data>
+  <data name="WeeklyGoal" xml:space="preserve"><value>Heti cél</value></data>
+  <data name="Countdown" xml:space="preserve"><value>Időzítő hangjelzései</value></data>
+  <data name="On" xml:space="preserve"><value>Bekapcsolva</value></data>
+  <data name="Off" xml:space="preserve"><value>Kikapcsolva</value></data>
+  <data name="RelaxationMusic" xml:space="preserve"><value>Relaxációs zene</value></data>
+  <data name="Reminder" xml:space="preserve"><value>Napi emlékeztető</value></data>
+  <data name="Personalization" xml:space="preserve"><value>Személyre szabás</value></data>
+  <data name="FocusRegions" xml:space="preserve"><value>Fókusztesttájak</value></data>
+  <data name="PreferredTypes" xml:space="preserve"><value>Kedvelt mozgástípusok</value></data>
+  <data name="Equipment" xml:space="preserve"><value>Elérhető eszközök</value></data>
+  <data name="ManageLibrary" xml:space="preserve"><value>Gyakorlattár kezelése</value></data>
+  <data name="ImportLibrary" xml:space="preserve"><value>JSON-gyakorlattár importálása</value></data>
+  <data name="PickLibrary" xml:space="preserve"><value>Válassz Mozdulj könyvtár-JSON-t</value></data>
+  <data name="ImportMode" xml:space="preserve"><value>Hogyan importáljuk a saját gyakorlatokat?</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Mégse</value></data>
+  <data name="AddNew" xml:space="preserve"><value>Újak hozzáadása</value></data>
+  <data name="Merge" xml:space="preserve"><value>Összefésülés</value></data>
+  <data name="ReplaceList" xml:space="preserve"><value>Saját lista cseréje</value></data>
+  <data name="ConfirmReplace" xml:space="preserve"><value>Saját lista cseréje?</value></data>
+  <data name="ArchiveNotice" xml:space="preserve"><value>Az eddigi saját gyakorlatok archiválódnak. Az alapgyakorlatok sosem íródnak felül.</value></data>
+  <data name="Replace" xml:space="preserve"><value>Csere</value></data>
+  <data name="Imported" xml:space="preserve"><value>Importálva</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>Sikertelen import</value></data>
+  <data name="ExportLibrary" xml:space="preserve"><value>Aktuális gyakorlattár exportálása (.json)</value></data>
+  <data name="Exported" xml:space="preserve"><value>Exportálva</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>Exportálási hiba</value></data>
+  <data name="ExportedLibrary" xml:space="preserve"><value>A beépített és saját gyakorlatokat, állapotokkal együtt mentettük.</value></data>
+  <data name="ShareLibrary" xml:space="preserve"><value>Gyakorlattár exportálása</value></data>
+  <data name="LibraryBackupInfo" xml:space="preserve"><value>Gyakorlattár mentése: alap- és saját gyakorlatok, kikapcsolások és helyi javítások. Az alapgyakorlatok edzésadatai védettek.</value></data>
+  <data name="BackupHeading" xml:space="preserve"><value>Teljes adatmentés és APK-frissítések</value></data>
+  <data name="BackupInfo" xml:space="preserve"><value>Telefoncsere vagy eltávolítás előtt mentsd el az adataidat. A szokásos alkalmazásfrissítés megtartja őket.</value></data>
+  <data name="ExportBackup" xml:space="preserve"><value>Teljes adatmentés exportálása (.json)</value></data>
+  <data name="BackupDone" xml:space="preserve"><value>Mentés kész</value></data>
+  <data name="BackupContents" xml:space="preserve"><value>Profil, kedvencek, XP, badge-ek, előzmények, saját gyakorlatok és korrektúrák exportálva.</value></data>
+  <data name="ShareBackup" xml:space="preserve"><value>Teljes adatmentés</value></data>
+  <data name="SaveError" xml:space="preserve"><value>Mentési hiba</value></data>
+  <data name="RestoreBackup" xml:space="preserve"><value>Teljes adatmentés visszaállítása (.json)</value></data>
+  <data name="RestoreFailed" xml:space="preserve"><value>Visszaállítás sikertelen</value></data>
+  <data name="Safety" xml:space="preserve"><value>Mozogj a saját tempódban. Fájdalom vagy bizonytalanság esetén kérj szakmai segítséget.</value></data>
+  <data name="NoneSelected" xml:space="preserve"><value>Nincs kiválasztva</value></data>
+  <data name="AndroidSaveUnavailable" xml:space="preserve"><value>Az Android fájlmentő nem érhető el.</value></data>
+  <data name="FileSaveUnavailable" xml:space="preserve"><value>A rendszerfájlmentő nem elérhető.</value></data>
+  <data name="InitialSetup" xml:space="preserve"><value>Kezdő beállítások</value></data>
+  <data name="DurationPrompt" xml:space="preserve"><value>Mennyi időd van egy gyakorlatsorra?</value></data>
+  <data name="DifficultyPrompt" xml:space="preserve"><value>Válassz nehézséget</value></data>
+  <data name="RestPrompt" xml:space="preserve"><value>Pihenő két gyakorlat között</value></data>
+  <data name="SaveStart" xml:space="preserve"><value>Mentés és kezdés</value></data>
+  <data name="Welcome" xml:space="preserve"><value>Üdv a Mozdulj!-ban!</value></data>
+  <data name="SetupInfo" xml:space="preserve"><value>Először állítsuk be, milyen mozgás illik hozzád. A napi programokat és a havi kihívásokat csak ezután állítjuk össze.</value></data>
+  <data name="HaveBackup" xml:space="preserve"><value>Van korábbi teljes mentésed?</value></data>
+  <data name="DailyMovement" xml:space="preserve"><value>Napi mozgás</value></data>
+  <data name="WorkoutLength" xml:space="preserve"><value>Egy gyakorlatsor hossza</value></data>
+  <data name="Difficulty" xml:space="preserve"><value>Nehézség</value></data>
+  <data name="ExerciseTransition" xml:space="preserve"><value>Átvezetés a gyakorlatok között</value></data>
+  <data name="WeeklyMovement" xml:space="preserve"><value>Heti mozgási cél</value></data>
+  <data name="FocusAreas" xml:space="preserve"><value>Fókuszterületek</value></data>
+  <data name="FocusInfo" xml:space="preserve"><value>Ezeknek a testrészeknek szívesen adnál több figyelmet.</value></data>
+  <data name="PreferredInfo" xml:space="preserve"><value>Ezeket a mozgásformákat részesítjük előnyben.</value></data>
+  <data name="HomeEquipment" xml:space="preserve"><value>Otthon elérhető eszközök</value></data>
+  <data name="EquipmentInfo" xml:space="preserve"><value>Csak olyat jelölj meg, ami tényleg kéznél van. Eszköz nélkül is elkezdheted.</value></data>
+  <data name="SetupChangeInfo" xml:space="preserve"><value>A beállításaidat később a Profil oldalon is módosíthatod. Minden adat helyben, a telefonodon marad.</value></data>
+  <data name="SetupSaveError" xml:space="preserve"><value>Nem sikerült elmenteni a beállításokat</value></data>
+  <data name="TodayError" xml:space="preserve"><value>A napi program nem állítható össze.</value></data>
+  <data name="TodayErrorHelp" xml:space="preserve"><value>A Profil oldalon módosíthatod a szűrőket.</value></data>
+  <data name="TodayGreeting" xml:space="preserve"><value>Szia! Mozduljunk ma is! ☀</value></data>
+  <data name="ActiveDayInfo" xml:space="preserve"><value>A nap akkor válik aktívvá, ha legalább egy gyakorlatsort lezársz – akár részlegesen is.</value></data>
+  <data name="ThreeWorkouts" xml:space="preserve"><value>Mai három gyakorlatsor</value></data>
+  <data name="Completed" xml:space="preserve"><value>✓ Teljesítve</value></data>
+  <data name="Resume" xml:space="preserve"><value>▶ Folytatható</value></data>
+  <data name="Partial" xml:space="preserve"><value>◐ Részben teljesítve</value></data>
+  <data name="Available" xml:space="preserve"><value>Elérhető</value></data>
+  <data name="View" xml:space="preserve"><value>Megtekintés</value></data>
+  <data name="TaskList" xml:space="preserve"><value>Feladatlista ›</value></data>
+  <data name="RecoveryDone" xml:space="preserve"><value>✓ Teljesítve – a sorozat megőrizve</value></data>
+  <data name="RecoveryInterrupted" xml:space="preserve"><value>Korábbi relaxáció megszakadt</value></data>
+  <data name="NotStarted" xml:space="preserve"><value>Még nem indult el</value></data>
+  <data name="ViewRecovery" xml:space="preserve"><value>Regeneráló program megtekintése</value></data>
+  <data name="RestartRelaxation" xml:space="preserve"><value>↻ Relaxáció újrakezdése</value></data>
+  <data name="TenMinuteRelaxation" xml:space="preserve"><value>🌿 10 perces teljes testes relaxáció</value></data>
+  <data name="RecoveryDay" xml:space="preserve"><value>Regeneráló nap – test és elme pihenése</value></data>
+  <data name="RecoveryInfo" xml:space="preserve"><value>10 perc egybefüggő relaxáció · nincs szüneteltetés, korai kilépéskor újrakezdés · csak a végén védi meg a sorozatot</value></data>
+  <data name="Seconds" xml:space="preserve"><value>{0} másodperc</value></data>
+  <data name="DaysPerWeek" xml:space="preserve"><value>{0} nap / hét</value></data>
+  <data name="ActiveDays" xml:space="preserve"><value>{0} aktív nap</value></data>
+  <data name="LibraryCount" xml:space="preserve"><value>{0} elérhető gyakorlat · Offline gyakorlattár</value></data>
+  <data name="ImportCount" xml:space="preserve"><value>{0} → {1} gyakorlat. A katalógust belső tárhelyre másoltuk.</value></data>
+  <data name="BackupRestoreInfo" xml:space="preserve"><value>A régebbi mentések is ugyanitt tölthetők vissza. Újratelepítés után, ha elveszett a korábbi hitelesítő kulcs, az alkalmazás külön figyelmeztetést és jóváhagyást kér. Csak saját mentést használj.</value></data>
+  <data name="OnboardingRestoreInfo" xml:space="preserve"><value>Ha már használtad a Mozdulj!-at, a meglévő mentésedet a szokásos visszaállítás funkcióval is betöltheted. A rendszer szükség esetén tájékoztat az elveszett hitelesítő kulcsról.</value></data>
+  <data name="Streak" xml:space="preserve"><value>🔥 {0} napos mozgássorozat</value></data>
+  <data name="FreezeInventory" xml:space="preserve"><value>🧊 {0} / {1} elérhető streak freeze</value></data>
+  <data name="XpLevel" xml:space="preserve"><value>⭐ {0:N0} XP · {1}. szint · következő freeze {2:N0} XP-nél</value></data>
+  <data name="NextLevel" xml:space="preserve"><value>Következő szint {0:N0} XP-nél</value></data>
+  <data name="MonthlyActive" xml:space="preserve"><value>Havi aktív napok: {0}.</value></data>
+  <data name="WeeklyProgress" xml:space="preserve"><value>Heti cél · {0} / {1} aktív nap</value></data>
+  <data name="WorkoutCount" xml:space="preserve"><value>{0} feladat · kb. {1} perc</value></data>
 </root>
