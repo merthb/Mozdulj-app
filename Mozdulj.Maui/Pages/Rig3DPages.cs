@@ -14,8 +14,8 @@ public sealed class Rig3DEditorPage : ContentPage
     private readonly MotionPose _working;
     private readonly Func<MotionPose, Task> _onSavedAsync;
     private readonly WebView _browser;
-    private readonly Button _save = UI.Button("3D ábra mentése");
-    private readonly Label _note = UI.Label("A forgatható 3D nézet betöltése…",12,color:UI.Muted);
+    private readonly Button _save = UI.Button((AppLocalization.IsEnglish ? "Save 3D illustration" : "3D ábra mentése"));
+    private readonly Label _note = UI.Label((AppLocalization.IsEnglish ? "Loading rotatable 3D view…" : "A forgatható 3D nézet betöltése…"),12,color:UI.Muted);
     private bool _loaded;
     private bool _saving;
 
@@ -34,16 +34,17 @@ public sealed class Rig3DEditorPage : ContentPage
     {
         _working=BuiltInContentRules.ClonePose(source);
         _onSavedAsync=onSavedAsync;
-        UI.Setup(this,"3D ábra szerkesztése");
+        UI.Setup(this,(AppLocalization.IsEnglish ? "Edit 3D illustration" : "3D ábra szerkesztése"));
         _browser = new WebView {Source="rig3d/index.html",HorizontalOptions=LayoutOptions.Fill,
             VerticalOptions=LayoutOptions.Fill};
         _browser.Navigated += async (_, e) =>
         {
             if(e.Result!=WebNavigationResult.Success)
-            { _note.Text="A helyi 3D megjelenítő nem tölthető be."; return; }
+            { _note.Text=(AppLocalization.IsEnglish ? "Could not load the local 3D viewer." : "A helyi 3D megjelenítő nem tölthető be."); return; }
             try
             {
                 await _browser.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+");document.documentElement.classList.toggle('high-contrast', "+(UI.HighContrast ? "true" : "false")+")");
+                await _browser.EvaluateJavaScriptAsync("window.setRigLanguage(\'" + AppLocalization.Language + "\')");
                 var result= _working.Rig3D is not null
                     ? await _browser.EvaluateJavaScriptAsync("window.loadRigBase64('"+
                           Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(_working.Rig3D,CatalogCodec.JsonOptions)))+"')")
@@ -53,15 +54,15 @@ public sealed class Rig3DEditorPage : ContentPage
                 _loaded=health?.Contains("\\\"webgl\\\":true",StringComparison.OrdinalIgnoreCase)==true
                       || health?.Contains("\"webgl\":true",StringComparison.OrdinalIgnoreCase)==true;
                 _note.Text=_loaded
-                    ? "A 3D póz külön tárolódik. Mentéskor a leírás és az eddigi eredmények nem változnak."
-                    : "A WebGL nem érhető el. A modell nem menthető a megjelenítés ellenőrzése nélkül.";
+                    ? (AppLocalization.IsEnglish ? "The 3D pose is stored separately. Saving does not change the description or past results." : "A 3D póz külön tárolódik. Mentéskor a leírás és az eddigi eredmények nem változnak.")
+                    : (AppLocalization.IsEnglish ? "WebGL is unavailable. The model cannot be saved without checking the rendering." : "A WebGL nem érhető el. A modell nem menthető a megjelenítés ellenőrzése nélkül.");
                 _save.IsEnabled=_loaded;
             }
-            catch(Exception ex){_note.Text="3D betöltési hiba: "+ex.Message;_save.IsEnabled=false;}
+            catch(Exception ex){_note.Text=(AppLocalization.IsEnglish ? "3D loading error: " : "3D betöltési hiba: ")+ex.Message;_save.IsEnabled=false;}
         };
         _save.IsEnabled=false;
         _save.Clicked+=async (_,_)=>await SaveAsync();
-        var cancel=UI.Button("Mégse",false);
+        var cancel=UI.Button((AppLocalization.IsEnglish ? "Cancel" : "Mégse"),false);
         cancel.Clicked+=async(_,_)=>await Navigation.PopAsync();
         var footer=new VerticalStackLayout{Spacing=7,Padding=new Thickness(14,8,14,12),BackgroundColor=UI.CardColor,
             Children={_note,_save,cancel}};
@@ -78,10 +79,10 @@ public sealed class Rig3DEditorPage : ContentPage
         {
             // Base64 avoids browser-specific quoting/escaping of JSON responses.
             var result=(await _browser.EvaluateJavaScriptAsync("window.exportRigBase64()"))?.Trim().Trim('"')
-                ?? throw new InvalidDataException("Nem érkezett 3D pózadat.");
+                ?? throw new InvalidDataException((AppLocalization.IsEnglish ? "No 3D pose data received." : "Nem érkezett 3D pózadat."));
             var json=Encoding.UTF8.GetString(Convert.FromBase64String(result));
             var rig=JsonSerializer.Deserialize<Rig3DPose>(json,CatalogCodec.JsonOptions)
-                ?? throw new InvalidDataException("Hiányzó 3D modell.");
+                ?? throw new InvalidDataException((AppLocalization.IsEnglish ? "Missing 3D model." : "Hiányzó 3D modell."));
             Rig3DValidator.Validate(rig);
             _working.Rig3D=rig;
             _working.ReviewStatus="illustrative";
@@ -90,7 +91,7 @@ public sealed class Rig3DEditorPage : ContentPage
             await _onSavedAsync(_working);
             await Navigation.PopAsync();
         }
-        catch(Exception e){await DisplayAlertAsync("Mentés sikertelen",e.Message,"Rendben");}
+        catch(Exception e){await DisplayAlertAsync((AppLocalization.IsEnglish ? "Save failed" : "Mentés sikertelen"),e.Message,(AppLocalization.IsEnglish ? "OK" : "Rendben"));}
         finally{_saving=false;_save.IsEnabled=_loaded;}
     }
 }
@@ -117,7 +118,7 @@ public sealed class Rig3DViewerPage : ContentPage
         _initialPose = source;
         _currentPose = currentPose;
         _exerciseName = exerciseName;
-        UI.Setup(this, "3D mozgásábra");
+        UI.Setup(this, (AppLocalization.IsEnglish ? "3D movement illustration" : "3D mozgásábra"));
 
         _web = new WebView { Source = "rig3d/index.html" };
         _info = UI.Label("", 12, color: UI.Muted);
@@ -125,12 +126,13 @@ public sealed class Rig3DViewerPage : ContentPage
         {
             if (e.Result != WebNavigationResult.Success)
             {
-                _info.Text = "A helyi 3D megjelenítő nem tölthető be.";
+                _info.Text = (AppLocalization.IsEnglish ? "Could not load the local 3D viewer." : "A helyi 3D megjelenítő nem tölthető be.");
                 return;
             }
 
             _webReady = true;
             await _web.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark', "+(UI.IsDark ? "true" : "false")+");document.documentElement.classList.toggle('high-contrast', "+(UI.HighContrast ? "true" : "false")+")");
+            await _web.EvaluateJavaScriptAsync("window.setRigLanguage(\'" + AppLocalization.Language + "\')");
             await ReloadPoseAsync();
         };
 
@@ -144,7 +146,7 @@ public sealed class Rig3DViewerPage : ContentPage
 
         if (edit3d is not null)
         {
-            var edit = UI.Button("✎ Szerkesztés", false);
+            var edit = UI.Button((AppLocalization.IsEnglish ? "✎ Edit" : "✎ Szerkesztés"), false);
             edit.Clicked += async (_, _) => await edit3d();
             footer.Children.Add(edit);
         }
@@ -191,12 +193,12 @@ public sealed class Rig3DViewerPage : ContentPage
             }
             await _web.EvaluateJavaScriptAsync("window.setReadOnlyMode()");
             _info.Text = pose.Rig3D?.RequiresFineJoints == true
-                ? "A finom kéz- vagy lábmozdulatot a 3D modell még nem tudja pontosan megmutatni. A leírást kövesd."
-                : "A 3D mozgásábra szemléltető jellegű, szakmai ellenőrzést igényel.";
+                ? (AppLocalization.IsEnglish ? "The 3D model cannot yet accurately show fine hand or foot movements. Follow the written instructions." : "A finom kéz- vagy lábmozdulatot a 3D modell még nem tudja pontosan megmutatni. A leírást kövesd.")
+                : (AppLocalization.IsEnglish ? "The 3D movement illustration is illustrative and requires professional review." : "A 3D mozgásábra szemléltető jellegű, szakmai ellenőrzést igényel.");
         }
         catch (Exception ex)
         {
-            _info.Text = "A 3D ábra frissítése sikertelen: " + ex.Message;
+            _info.Text = (AppLocalization.IsEnglish ? "Could not refresh the 3D illustration: " : "A 3D ábra frissítése sikertelen: ") + ex.Message;
         }
     }
 }
