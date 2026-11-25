@@ -638,3 +638,27 @@ test('ball seat, hip hinge and single-leg balance presets pass both frame and tr
  assert.ok(b.feet.right[1]>a.feet.right[1]+.1);
  assert.equal(JSON.stringify(a.feet.left),JSON.stringify(b.feet.left));
 });
+
+test('folded and stacked templates preserve intended geometry without unreachable limb targets',()=>{
+ const rig=loadRig(),m=rig.math;
+ for(const name of ['crosslegged','child','side','lunge','sideplank']){
+   const a=rig.auditPreset(name);
+   assert.ok(a.frames.every(f=>f.clamped.length===0),name);
+   for(const f of rig.initialPose(name).frames){
+     const j=rig.joints(f);
+     for(const side of ['left','right']){
+       assert.ok(Math.abs(m.len(m.sub(j.hip[side],j.knee[side]))-.45)<1e-8);
+       assert.ok(Math.abs(m.len(m.sub(j.knee[side],j.feet[side]))-.43)<1e-8);
+     }
+   }
+ }
+ const crossed=rig.joints(rig.baseFrame('crosslegged'));
+ assert.ok(crossed.feet.left[0]>0&&crossed.feet.right[0]<0);
+ assert.ok(crossed.feet.right[1]>crossed.feet.left[1]+.08);
+ const child=rig.joints(rig.baseFrame('child'));
+ assert.ok(child.head[1]<.25);
+ assert.ok(child.knee.left[1]<.15);
+ assert.ok(child.feet.left[2]<child.knee.left[2]-.2);
+ const plank=rig.joints(rig.baseFrame('sideplank'));
+ assert.ok(plank.hands.left[1]<.09&&plank.feet.left[1]<.09);
+});

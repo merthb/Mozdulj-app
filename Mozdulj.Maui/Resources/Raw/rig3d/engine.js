@@ -183,6 +183,38 @@ function baseFrame(preset){
      f.footPitch[side]=-.22;
    }
  }
+ // Third template pass: use actual local articulations for folded and
+ // stacked limbs rather than forcing unreachable world targets.
+ if(preset==='crosslegged'){
+   f.root[1]=.34;
+   f.legAngles.left={flexion:1.25,abduction:.65,kneeFlexion:2.15,axialRotation:1.3};
+   f.legAngles.right={flexion:1.55,abduction:.65,kneeFlexion:2.15,axialRotation:-1.3};
+   f.hands.left=[-.36,.55,.15];f.hands.right=[.36,.55,.15];
+ }
+ if(preset==='child'){
+   f.root=[0,.45,.18];f.euler=[1.8,0,0];f.pelvisPitch=-.35;
+   f.lumbarBend=.12;f.thoracicBend=.14;
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:1.95,abduction:.55,kneeFlexion:2.36,axialRotation:side==='left'?.3:-.3};
+     f.footPitch[side]=.95;f.hands[side]=[side==='left'?-.32:.32,.08,.97];
+   }
+ }
+ if(preset==='side'){
+   f.root[1]=.35;
+   for(const side of ['left','right'])f.legAngles[side]={flexion:0,abduction:.12,kneeFlexion:.12};
+   f.hands.left=[.35,.10,-.53];f.hands.right=[.32,.47,-.12];
+ }
+ if(preset==='lunge'){
+   f.feet.left=[-.18,.20,-.45];f.feet.right=[.18,.075,.42];
+   f.footPitch.left=.65;f.footPitch.right=-.15;
+ }
+ if(preset==='sideplank'){
+   f.root=[0,.35,.14];f.euler=[-1.2,0,1];
+   for(const side of ['left','right'])f.legAngles[side]={flexion:0,abduction:0,kneeFlexion:0};
+   const j=joints(f);
+   f.hands.left=[j.shoulder.left[0],.075,j.shoulder.left[2]];
+   f.hands.right=[.26,.70,-.05];
+ }
  return f;
 }
 const PRESET_NAMES=['stand','crosslegged','chair','tabletop','catcow','child','supine','bridge','side','rowband','lunge','balance','boat','reclinedbutterfly','legs-wall','prone','sideplank','kneel','hinge','ballseat','plank'];
@@ -191,10 +223,10 @@ function initialPose(preset='stand'){
  if(preset==='catcow'){b.lumbarBend=.08;b.thoracicBend=.16;b.headPitch=.30;}
  if(preset==='bridge'){b.root[1]=.49;b.euler[0]=-1.94;}
  if(preset==='rowband'){b.hands.left=[-.33,.61,.02];b.hands.right=[.33,.61,.02];}
- if(preset==='side'){b.hands.right=[.02,.83,-.28];}
+ if(preset==='side'){b.hands.right=[.34,.52,-.18];}
  if(preset==='balance'){b.legAngles.right.flexion=1.45;b.legAngles.right.kneeFlexion=.7;}
- if(preset==='lunge'){b.root[1]=.84;}
- if(preset==='child'){b.root[1]=.30;b.hands.left=[-.28,.055,.55];b.hands.right=[.28,.055,.55];}
+ if(preset==='lunge'){b.root[1]=.73;}
+ if(preset==='child'){b.thoracicBend=.17;b.hands.left=[-.32,.08,.99];b.hands.right=[.32,.08,.99];}
  return {version:1,preset,reviewStatus:'illustrative',frames:[a,b],camera:{azimuth:.58,elevation:.35,distance:3.55,target:[0,.72,0]}};
 }
 // Review the authored geometry of every template frame; no clinical claim.
