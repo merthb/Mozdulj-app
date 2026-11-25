@@ -454,8 +454,9 @@ window.setWorkoutGuideBase64=payload=>{
    const timing=JSON.parse(b64toStr(payload));
    if(!timing||!MozduljRig.PHASE_DIRECTIONS.includes(timing.direction)||!Number.isFinite(timing.elapsedSeconds)||!Number.isFinite(timing.totalSeconds)||timing.totalSeconds<=0)return false;
    if(workoutGuideRequest)cancelAnimationFrame(workoutGuideRequest);
-   const plan=workoutGuide?.direction===timing.direction?workoutGuide.plan:MozduljRig.workoutGuidePlan(pose.frames,timing.direction);
-   workoutGuide={direction:timing.direction,elapsed:timing.elapsedSeconds,total:timing.totalSeconds,playing:timing.playing===true,received:performance.now(),plan,display:null};
+   const repetitions=timing.repetitions===true;
+   const plan=workoutGuide?.direction===timing.direction&&workoutGuide.repetitions===repetitions?workoutGuide.plan:MozduljRig.workoutGuidePlan(pose.frames,timing.direction,repetitions);
+   workoutGuide={direction:timing.direction,repetitions,elapsed:timing.elapsedSeconds,total:timing.totalSeconds,playing:timing.playing===true,received:performance.now(),plan,display:null};
    canvas.style.visibility=MozduljRig.workoutGuideAt(plan,0)?'visible':'hidden';
    const status=$('workoutGuideStatus');
    status.textContent=window.rigText(plan.kind==='unassigned'?'Ehhez az irányhoz nincs hozzárendelt 3D mozgás.':plan.kind==='blocked'?'Az animáció nem lejátszható biztonságosan; csak állókép jelenik meg.':'Szemléltető 3D útmutató');
