@@ -22,6 +22,34 @@ const PROP_POSITIONS={chair:[0,.30,-.14],ball:[0,.36,.20],softBall:[0,.36,.20],r
 function propPosition(prop){return prop.position||PROP_POSITIONS[prop.type];}
 function propYaw(prop){return prop.yaw||0;}
 function propTransform(prop,local){return add(propPosition(prop),rotY(local,propYaw(prop)));}
+// Relative support coordinates use the equipment's own origin and yaw, not
+// its array index. This is the geometry layer; existing world-space locks
+// and persisted poses remain unchanged until the constraint solver is wired.
+function captureEquipmentSupport(frame,key,index){
+ const prop=frame.equipment?.[index];
+ if(!LOCK_KEYS.includes(key)||!prop||!PROP_POSITIONS[prop.type]||
+    typeof prop.id!=='string'||!/^[a-zA-Z0-9_-]{1,64}$/.test(prop.id)||
+    frame.equipment.filter(p=>p.id===prop.id).length!==1)return null;
+ const world=lockPoint(joints(frame),key);
+ const local=rotY(sub(world,propPosition(prop)),-propYaw(prop));
+ return {equipmentId:prop.id,equipmentType:prop.type,local};
+}
+function resolveEquipmentSupport(frame,binding){
+ if(!binding||typeof binding.equipmentId!=='string'||
+    !/^[a-zA-Z0-9_-]{1,64}$/.test(binding.equipmentId)||
+    !Object.hasOwn(PROP_POSITIONS,binding.equipmentType)||
+    !Array.isArray(binding.local)||binding.local.length!==3||
+    binding.local.some(x=>!Number.isFinite(x)||Math.abs(x)>10))return null;
+ const matches=(frame.equipment||[]).filter(p=>p.id===binding.equipmentId);
+ if(matches.length!==1||matches[0].type!==binding.equipmentType)return null;
+ const prop=matches[0],position=propPosition(prop),yaw=propYaw(prop);
+ if(!Array.isArray(position)||position.length!==3||position.some(x=>!Number.isFinite(x))||!Number.isFinite(yaw))return null;
+ return propTransform(prop,binding.local);
+}
+function mirrorEquipmentSupport(binding){
+ return {...binding,local:reflectX(binding.local)};
+}
+
 // IDs are local to a pose and shared by copies of an object across phases.
 // Never assign IDs to legacy objects merely by opening a pose.
 function newEquipmentId(frames){
@@ -1831,5 +1859,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
