@@ -180,3 +180,54 @@ html.dark.high-contrast :is(button,input,select,textarea,summary):focus-visible 
 .review-results button{text-align:left;overflow-wrap:anywhere}
 #propYaw{min-height:44px;width:100%;padding:8px;border:1px solid var(--outline);border-radius:9px;background:var(--surface);color:inherit;font:inherit}
 #propLocked{width:21px;height:21px;accent-color:var(--purple)}
+
+/* Workspace: keep the model and history visible while only the inspector scrolls. */
+.workspace-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;padding:6px;background:var(--surface);border-bottom:1px solid var(--outline);flex:0 0 auto}
+.workspace-tabs button{min-width:0;min-height:44px;padding:5px 2px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--purple-dark);font:650 .78rem/1.15 system-ui,sans-serif;overflow-wrap:anywhere;cursor:pointer}
+.workspace-tabs button[aria-selected=true]{background:var(--purple-dark);color:var(--surface);border-color:var(--purple-dark)}
+.workspace-tabs button:focus-visible{outline:2px solid currentColor;outline-offset:-3px}
+.workspace-shell,.viewport-shell{display:flex;flex-direction:column;min-height:0;min-width:0}
+.workspace-scroll{min-height:0;overflow:auto;overscroll-behavior:contain;flex:1}
+.workspace-content[hidden],.workspace-content [hidden]{display:none!important}
+.workspace-content{padding:12px;gap:12px}
+.workspace-shell>.status{flex:0 0 auto;max-height:4.5em;overflow:auto;margin:4px 8px;min-height:0}
+.workspace-shell>.status:empty{display:none}
+.workspace-shell>.header{flex:0 0 auto}
+.viewport-shell .stage{flex:1;min-height:0;height:auto}
+.viewport-shell .header,.history-bar,.phase-controls,.edit-tools{flex:0 0 auto}
+.viewport-shell .float-l{display:none}
+.viewport-shell .float-b{font-size:.68rem;line-height:1.25;padding:4px 7px;bottom:4px;left:4px;right:4px}
+.viewport-shell .phase-controls{padding:4px 8px;gap:6px;grid-template-columns:44px minmax(0,1fr) 44px}
+.viewport-shell .phase-controls button{width:44px;height:44px;font-size:30px}
+.viewport-shell .edit-tools{padding:4px;gap:4px}
+.viewport-shell .edit-tools button{font-size:.7rem;padding:4px;min-width:0}
+#quickPreview{flex:0 0 44px}
+.viewport-shell .history-bar{padding:4px;gap:4px}
+.target-controls{padding:8px;border:1px solid var(--outline);border-radius:10px}
+.precision-row{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:6px;align-items:center}
+.precision-row input{min-width:0;width:100%;min-height:44px;text-align:center;border:1px solid var(--outline);border-radius:9px;background:var(--surface);color:inherit;font:inherit}
+.precision-row button{min-height:44px;padding:5px!important}
+.precision-slider{min-height:36px!important}
+html.dark .phase-editor{background:var(--surface);border-color:var(--outline)}
+html.dark .phase-editor>label,html.dark .edit-group>summary{color:var(--purple-dark)}
+html.dark .phase-editor input{background:var(--surface);color:#f3f0fa;border-color:var(--outline)}
+@media(min-width:761px){
+ body:not(.view-only){overflow:hidden}
+ body:not(.view-only) main{height:100dvh;min-height:0;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);align-items:stretch}
+}
+@media(max-width:760px){
+ body:not(.view-only){overflow:hidden}
+ body:not(.view-only) main{height:100dvh;min-height:0;padding:4px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,56fr) minmax(0,44fr);gap:4px}
+ body:not(.view-only) .shell{margin:0;border-radius:12px}
+ body:not(.view-only) .viewport-shell>.header{display:none}
+ .workspace-shell>.header{display:none}
+ .workspace-content{padding:8px;gap:8px}
+}
+@media(max-height:440px) and (max-width:760px){
+ body:not(.view-only) main{grid-template-rows:minmax(0,60fr) minmax(0,40fr)}
+ .viewport-shell .history-bar button,.viewport-shell .edit-tools button{min-height:40px}
+}
+.view-only .viewport-shell{height:auto;min-height:0}
+.view-only .viewport-shell .stage{flex:none;height:min(66vh,570px);min-height:250px}
+.view-only #quickPreview{display:none}
+.view-only .view-controls{display:grid}

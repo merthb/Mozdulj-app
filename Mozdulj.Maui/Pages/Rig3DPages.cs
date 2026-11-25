@@ -82,8 +82,10 @@ public sealed class Rig3DEditorPage : ContentPage
         _save.Clicked+=async (_,_)=>await SaveAsync();
         var cancel=UI.Button((AppLocalization.IsEnglish ? "Cancel" : "Mégse"),false);
         cancel.Clicked+=async(_,_)=>await RequestExitAsync();
-        var footer=new VerticalStackLayout{Spacing=7,Padding=new Thickness(14,8,14,12),BackgroundColor=UI.CardColor,
-            Children={_note,_save,cancel}};
+        var actions=new Grid{ColumnSpacing=8,ColumnDefinitions={new ColumnDefinition{Width=GridLength.Star},new ColumnDefinition{Width=GridLength.Auto}}};
+        actions.Add(_save,0,0);actions.Add(cancel,1,0);
+        var footer=new VerticalStackLayout{Spacing=4,Padding=new Thickness(10,4,10,6),BackgroundColor=UI.CardColor,
+            Children={_note,actions}};
         var layout=new Grid{RowDefinitions={new RowDefinition{Height=GridLength.Star},
             new RowDefinition{Height=GridLength.Auto}}};
         layout.Add(_browser,0,0);layout.Add(footer,0,1);Content=layout;

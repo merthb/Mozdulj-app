@@ -28,7 +28,36 @@ function redoPose(){stopPreview();closeGesture();restoreHistory(history.redo(sna
 window.resetRigHistory=()=>{history.clear();gesture=null;controlGesture=null;syncHistory();return true;};
 const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej',leftKnee:'Bal térd',rightKnee:'Jobb térd',leftElbow:'Bal könyök',rightElbow:'Jobb könyök'};
 function targetKey(sel){return sel?.kind==='root'?'root':sel?sel.side+(sel.kind==='hands'?'Hand':'Foot'):null;}
-function chooseTarget(key){selectedTarget=key&&key!=='auto'?key:null;show();}
+function bodyFocusFor(key){
+ if(key==='root')return 'root';
+ if(!key)return 'all';
+ return (key.startsWith('left')?'left':'right')+(/Hand|Elbow/.test(key)?'Arm':'Leg');
+}
+function selectTab(name){
+ for(const tab of document.querySelectorAll('.workspace-tabs [role=tab]')){
+   const active=tab.id==='tab-'+name;
+   tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;
+   $(tab.getAttribute('aria-controls')).hidden=!active;
+ }
+ $('workspaceScroll').scrollTop=0;
+}
+function focusBody(value,open=true){
+ $('bodyFocus').value=value;
+ const group=value==='all'?'all':value.endsWith('Arm')?'arm':value.endsWith('Leg')?'leg':'central';
+ for(const detail of document.querySelectorAll('[data-body-group]')){
+   detail.hidden=group!=='all'&&detail.dataset.bodyGroup!==group;
+   if(group!=='all'&&!detail.hidden)detail.open=true;
+ }
+ if(group==='arm')$('armSide').value=value.startsWith('left')?'left':'right';
+ if(group==='leg')$('legSide').value=value.startsWith('left')?'left':'right';
+ if(open)selectTab('body');
+ if(pose)syncJointValues();
+}
+function chooseTarget(key){
+ selectedTarget=key&&key!=='auto'?key:null;
+ if(selectedTarget){focusBody(bodyFocusFor(selectedTarget));setMode('move');}
+ else show();
+}
 function explicitTarget(key){
  if(key==='root')return {kind:'root'};
  if(!key||key==='auto')return null;
@@ -37,7 +66,7 @@ function explicitTarget(key){
 function setMode(m){
  mode=m;
  for(const b of ['orbit','move','pan'])$(b).classList.toggle('active',m===b);
- $('targetControls').hidden=m!=='move';
+ if(m==='move'&&!document.body.classList.contains('view-only'))selectTab('body');
  show();
 }
 function current(){return pose.frames[frameIndex];}
@@ -63,7 +92,7 @@ function guardedEdit(change,prepare=null){
    else if(issue.startsWith('body:'))msg(window.rigText('Testrészek ütközése: ')+issue.slice(5).split('/').map(bodyPartLabel).join(' – '));
    else msg(window.rigText('Ütközési korlát: a végtag nem haladhat át a padlón, falon vagy eszközön. (')+issue+')');
  }
- else show();
+ else {syncJointValues();show();}
  return result;
 }
 
@@ -115,7 +144,7 @@ function updatePhaseControls(){
 }
 function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
-function sync(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number(f.root[1].toFixed(3));$('upperYaw').value=Math.round(deg(f.upperYaw||0));$('spineBend').value=Math.round(deg(f.spineBend||0));
+function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number((f.root[1]*100).toFixed(1));$('upperYaw').value=Math.round(deg(f.upperYaw||0));$('spineBend').value=Math.round(deg(f.spineBend||0));
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||MozduljRig.inferAngles(f,'leg',side)?.angles||{};
  $('hipFlex').value=Math.round(deg(leg.flexion||0));
  $('hipAbduct').value=Math.round(deg(leg.abduction||0));
@@ -123,7 +152,9 @@ function sync(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('
  $('footPitch').value=Math.round(deg(f.footPitch?.[side]||0));
  const armSide=$('armSide').value||'right';const arm=f.armAngles?.[armSide]||MozduljRig.inferAngles(f,'arm',armSide)?.angles||{};
  for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])$(id).value=Math.round(deg(arm[k]||0));
- $('preset').value=pose.preset;updatePhaseControls();syncBands();syncProps();syncLocks();$('zoom').value=studio.getCamera().distance;show();}
+ syncPrecision();
+}
+function sync(){syncJointValues();$('preset').value=pose.preset;updatePhaseControls();syncBands();syncProps();syncLocks();$('zoom').value=studio.getCamera().distance;show();}
 function syncBands(selected){
  const sel=$('bandSelect'),prior=selected===undefined?sel.value:selected;
  const items=current().equipment||[];
@@ -207,6 +238,8 @@ window.setReadOnlyMode=()=>{
   document.body.classList.add('view-only');
   document.querySelector('main').style.gridTemplateColumns='1fr';
   document.querySelector('main > section:nth-child(2)').style.display='none';
+  // Retain camera and animation controls in the viewer, without editor tabs.
+  document.querySelector('.viewport-shell').append(document.querySelector('.view-controls'),document.querySelector('.preview-tools'));
   document.querySelector('.header strong').textContent='3D mozgásábra';
   document.querySelector('.header .hint').textContent='A modellen húzva körbeforgathatod a nézetet';
   document.querySelector('.float-l').style.display='none';
@@ -218,7 +251,7 @@ const directionNames={all:'Irány nélkül',left:'Bal oldal',right:'Jobb oldal',
 function stopPreview(){
  if(!animation)return;
  cancelAnimationFrame(animation.request);animation=null;
- $('playPreview').textContent='▶ Előnézet';$('previewStatus').textContent='';
+ $('playPreview').textContent='▶ Előnézet';$('quickPreview').textContent='▶';$('previewStatus').textContent='';
  if(studio&&pose)show();
 }
 function playPreview(){
@@ -235,7 +268,7 @@ function playPreview(){
    transitions.push(result.samples);
  }
  animation={transitions,start:null,display:transitions[0][0],request:0};
- $('playPreview').textContent='■ Leállítás';
+ $('playPreview').textContent='■ Leállítás';$('quickPreview').textContent='■';
  $('previewStatus').textContent=window.rigText('Ellenőrzött animációs előnézet');
  function tick(now){
    if(!animation)return;
@@ -281,15 +314,57 @@ function reviewPose(){
    button.onclick=()=>{
      switchFrame(item.phase);
      const key=targetLabels[item.id]?item.id:item.kind==='collision'&&item.id.startsWith('body:')?item.id.slice(5).split('/').map(id=>{const [part,side]=id.split('-');return side&&(part==='hand'||part==='forearm'?side+'Hand':part==='foot'||part==='shin'?side+'Foot':null);}).find(Boolean):null;
-     if(key){setMode('move');selectedTarget=key;show();}
+     if(key){if([...$('targetSelect').options].some(o=>o.value===key))$('targetSelect').value=key;else $('targetSelect').value='auto';selectedTarget=key;focusBody(bodyFocusFor(key));setMode('move');}else selectTab('body');
    };
    panel.appendChild(button);
  }
- $('reviewPanel').open=true;
+ $('reviewPanel').open=true;selectTab('review');
  return {count:findings.length,findings};
 }
 window.reviewRigBase64=()=>strtoB64(JSON.stringify(reviewPose()));
+const precisionControls=new Map();
+function syncPrecision(){
+ for(const [id,entry] of precisionControls){
+   if(document.activeElement!==entry)entry.value=$(id).value;
+ }
+}
+function setupPrecision(){
+ for(const slider of document.querySelectorAll('input[type=range]:not(#zoom)')){
+   const label=document.querySelector('label[for="'+slider.id+'"]');
+   if(!label)continue;
+   const row=document.createElement('div');row.className='precision-row';
+   const number=document.createElement('input');number.type='number';number.min=slider.min;number.max=slider.max;number.step=slider.step||'1';number.value=slider.value;
+   const unit=slider.id==='shoulderLift'?'cm':'°';
+   number.setAttribute('aria-label',label.textContent+' ('+unit+')');
+   function apply(value){
+     if(!Number.isFinite(value)){number.value=slider.value;return;}
+     slider.value=String(Math.max(+slider.min,Math.min(+slider.max,value)));
+     slider.dispatchEvent(new Event('input',{bubbles:true}));
+     number.value=slider.value;
+   }
+   number.addEventListener('change',()=>apply(number.valueAsNumber));
+   const button=(text,delta)=>{
+     const b=document.createElement('button');b.type='button';b.textContent=text;
+     b.setAttribute('aria-label',label.textContent+' '+(delta>0?'+1':'−1')+' '+unit);
+     b.onclick=()=>{closeGesture();apply(+slider.value+delta);};return b;
+   };
+   row.append(button('−',-1),number,button('+',1));
+   slider.after(row);slider.classList.add('precision-slider');precisionControls.set(slider.id,number);
+ }
+ syncPrecision();
+}
 function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}catch(e){initError=e;$('canvasStatus').textContent=e.message;msg(window.rigText('WebGL nem áll rendelkezésre: ')+e.message);return;}
+ setupPrecision();
+ for(const tab of document.querySelectorAll('.workspace-tabs [role=tab]')){
+   tab.onclick=()=>selectTab(tab.id.slice(4));
+   tab.onkeydown=e=>{
+     const tabs=[...document.querySelectorAll('.workspace-tabs [role=tab]')],i=tabs.indexOf(tab);
+     let n=e.key==='ArrowRight'?(i+1)%tabs.length:e.key==='ArrowLeft'?(i+tabs.length-1)%tabs.length:e.key==='Home'?0:e.key==='End'?tabs.length-1:-1;
+     if(n>=0){e.preventDefault();tabs[n].click();tabs[n].focus();}
+   };
+ }
+ $('bodyFocus').onchange=e=>focusBody(e.target.value,false);
+ $('quickPreview').onclick=playPreview;
  $('runReview').onclick=()=>reviewPose();
  $('undoPose').onclick=undoPose;
  $('redoPose').onclick=redoPose;
@@ -309,7 +384,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  };
  $('clearPointLocks').onclick=()=>{closeGesture();tracked(()=>{delete current().pointLocks;});sync();};
  $('rootHeight').onchange=e=>{
-   const value=e.target.valueAsNumber;
+   const value=e.target.valueAsNumber/100;
    if(!Number.isFinite(value)||value<0||value>3){sync();msg('Érvénytelen medencemagasság.');return;}
    guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]));sync();
  };
@@ -378,13 +453,13 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('pelvicTilt').oninput=e=>guardedEdit(f=>{f.pelvicTilt=rad(+e.target.value);});
  $('upperYaw').oninput=e=>guardedEdit(f=>{f.upperYaw=rad(+e.target.value);});
  $('spineBend').oninput=e=>guardedEdit(f=>{f.spineBend=rad(+e.target.value);});
- $('armSide').onchange=sync;
+ $('armSide').onchange=()=>focusBody($('armSide').value+'Arm',false);
  function editArm(field,value){const side=$('armSide').value;
    const symmetric=$('symmetricEdit').checked,other=side==='left'?'right':'left';
    guardedEdit(frame=>MozduljRig.editLimbAngle(frame,'arm',side,field,rad(value),symmetric),f=>MozduljRig.prepareAngleMode(f,'arm',side)&&(!symmetric||MozduljRig.prepareAngleMode(f,'arm',other)));}
  for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])
    $(id).oninput=e=>editArm(k,+e.target.value);
- $('legSide').onchange=sync;
+ $('legSide').onchange=()=>focusBody($('legSide').value+'Leg',false);
  function editLeg(field,value){const side=$('legSide').value;
  const symmetric=$('symmetricEdit').checked,other=side==='left'?'right':'left';
  function prepare(f,side){
@@ -473,7 +548,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(mode==='move')stopPreview();
    canvas.setPointerCapture(e.pointerId);let p=loc(e);
    let sel=mode==='move'?(explicitTarget($('targetSelect').value)||studio.pick(p.x,p.y)):null;
-   if(mode==='move'){selectedTarget=targetKey(sel);if(sel)beginGesture(canvas);show();}
+   if(mode==='move'){selectedTarget=targetKey(sel);if(sel){focusBody(bodyFocusFor(selectedTarget));beginGesture(canvas);}show();}
    drag={id:e.pointerId,x:p.x,y:p.y,sel,button:e.button};
  });
  canvas.addEventListener('pointermove',e=>{if(!drag||!studio||drag.id!==e.pointerId)return;let p=loc(e),dx=p.x-drag.x,dy=p.y-drag.y,c=studio.getCamera();if(mode==='move'){if(drag.sel){const sel=drag.sel,symmetric=$('symmetricEdit').checked&&sel.kind!=='root',kind=sel.kind==='hands'?'arm':'leg',other=sel.side==='left'?'right':'left';guardedEdit(f=>{const before=clone(f);studio.dragTarget(f,sel,dx,dy,e.shiftKey,$('moveAxis').value);if(symmetric)MozduljRig.mirrorTargetDelta(f,before,sel.kind,sel.side);},f=>sel.kind==='root'||(MozduljRig.prepareTargetMode(f,kind,sel.side)&&(!symmetric||MozduljRig.prepareTargetMode(f,kind,other))));}}else if(mode==='pan'||drag.button===2){let right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)];let scale=c.distance/300;c.target=c.target.map((v,i)=>v-right[i]*dx*scale +(i===1?dy*scale:0));}else{c.azimuth-=dx*.012;c.elevation=Math.max(-1.25,Math.min(1.25,c.elevation+dy*.008));}drag.x=p.x;drag.y=p.y;show();});

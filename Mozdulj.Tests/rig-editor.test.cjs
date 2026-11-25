@@ -229,3 +229,18 @@ test('equipment scope matches by type and occurrence, locked changes are atomic'
  assert.equal(result.ok,true);assert.equal(result.frames[1].equipment[0].yaw,.3);
  assert.equal(a.equipment[1].yaw,undefined);
 });
+
+test('workspace has unique controls, five accessible tabs and valid angle limits',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
+ assert.equal(new Set(ids).size,ids.length);
+ for(const id of ['body','phases','props','view','review']){
+   assert.ok(html.includes('id="tab-'+id+'"'));
+   assert.ok(html.includes('id="pane-'+id+'"'));
+ }
+ for(const [id,min,max] of [['armFlex',-.52,3.05],['armAbduct',0,2.70],['wristFlex',-1.04,1.04],['forearmRotation',-1.57,1.57]]){
+   const m=html.match(new RegExp('id="'+id+'" type="range" min="([^"]+)" max="([^"]+)"'));
+   assert.ok(m,id);assert.ok(+m[1]*Math.PI/180>=min,id+' min');assert.ok(+m[2]*Math.PI/180<=max,id+' max');
+ }
+ assert.ok(html.includes('id="rootHeight" type="number" min="0" max="300"'));
+});

@@ -1,6 +1,22 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Szerkesztési területek": "Editing areas",
+  "Test": "Body",
+  "Fázisok": "Phases",
+  "Eszközök": "Equipment",
+  "Nézet": "View",
+  "Ellenőrzés": "Review",
+  "Szerkesztett testrész": "Body part to edit",
+  "Minden testrész": "All body parts",
+  "Fej és nyak": "Head and neck",
+  "Törzs és vállak": "Trunk and shoulders",
+  "Animációs előnézet": "Animation preview",
+  "Medence magassága (cm)": "Pelvis height (cm)",
+  "Kar előreemelése": "Arm forward raise",
+  "Kar oldalra emelése": "Arm lateral raise",
+  "Csukló hajlítása": "Wrist flexion",
+  "Alkar és tenyér fordítása": "Forearm and palm rotation",
   "A teljes pózsablon cseréje felülírja az aktuális fázisokat. Folytatod?": "Replacing the entire pose template replaces the current phases. Continue?",
   "Sablon lecserélése": "Replace template",
   "Mégse": "Cancel",
