@@ -1,6 +1,9 @@
 using Mozdulj.Core;
 using System.Text.Json;
 
+// Always run catalog-search regressions, including in the targeted CI mode.
+CatalogSearchRegression.Run();
+
 // Targeted recovery check. The historical full suite contains catalog-version
 // assertions that are independent from the backup-import path.
 if (args.Contains("--backup-recovery-only", StringComparer.Ordinal))

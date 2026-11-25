@@ -33,6 +33,8 @@ public sealed class CatalogPage : ContentPage
     private int _snapshotRevision = -1;
     private bool _snapshotReady;
     private bool _presented;
+    private bool _isAppearing;
+    private string _lastAppliedQuery = "";
     private HashSet<string> _lastFavorites = new(StringComparer.Ordinal);
     private HashSet<string> _lastEquipment = new(StringComparer.Ordinal);
 
@@ -58,7 +60,8 @@ public sealed class CatalogPage : ContentPage
             // Each item must be measured: a multi-line name or extra action changes row height.
             ItemSizingStrategy = ItemSizingStrategy.MeasureAllItems,
             ItemsUpdatingScrollMode = ItemsUpdatingScrollMode.KeepScrollOffset,
-            RemainingItemsThreshold = 4,
+            RemainingItemsThreshold = -1,
+            EmptyView = UI.Label("Nincs találat. Próbálj másik keresőkifejezést, vagy módosítsd a szűrőket.", 14, color: UI.Muted),
             ItemTemplate = new DataTemplate(() =>
             {
                 // DataTemplate is realized only for the visible native rows.
@@ -75,15 +78,27 @@ public sealed class CatalogPage : ContentPage
 
         var header = new VerticalStackLayout { Padding = new Thickness(18,16,18,8), Spacing = 9 };
         header.Children.Add(UI.Label("Gyakorlattár", 25, true));
+        // Keep the native editor mounted independently of the virtualized results.
+        header.Children.Add(UI.Label("Keresés", 14, true));
+        SemanticProperties.SetDescription(_search, "Gyakorlat vagy testtáj keresése");
+        header.Children.Add(_search);
 
         var create = UI.Button("+ Új saját gyakorlat");
         create.Clicked += async (_,_) => await Navigation.PushModalAsync(new NavigationPage(new ExerciseEditorPage(_state))
             { BarBackgroundColor=UI.Background, BarTextColor=UI.Ink });
-        header.Children.Add(create);
-        header.Children.Add(_search);
         var toggleFilters = UI.Button("⚙ További szűrők", false);
-        toggleFilters.FontSize=13; toggleFilters.HeightRequest=38;
-        var filterPanel = new VerticalStackLayout { Spacing=7, IsVisible=false };
+        toggleFilters.FontSize=13;
+        create.FontSize=13;
+        var actions = new Grid { ColumnSpacing = 8, ColumnDefinitions =
+        {
+            new ColumnDefinition { Width = GridLength.Star },
+            new ColumnDefinition { Width = GridLength.Star }
+        }};
+        actions.Children.Add(create);
+        Grid.SetColumn(toggleFilters, 1);
+        actions.Children.Add(toggleFilters);
+        header.Children.Add(actions);
+        var filterPanel = new VerticalStackLayout { Spacing=7 };
         // Source is a frequently-used filter: keep it visible without expanding a tall panel.
         var quickSources = new Grid { ColumnSpacing=5, ColumnDefinitions = {
             new ColumnDefinition { Width=GridLength.Star }, new ColumnDefinition { Width=GridLength.Star },
@@ -93,7 +108,7 @@ public sealed class CatalogPage : ContentPage
         {
             int idx=i;Grid.SetColumn(sourceButtons[i],i);quickSources.Children.Add(sourceButtons[i]);
             sourceButtons[i].Clicked += (_,_) => _origin.SelectedIndex=idx;
-            sourceButtons[i].HeightRequest=38;
+            sourceButtons[i].MinimumHeightRequest=44;
             sourceButtons[i].FontSize=13;
         }
         void SyncSourceButtons()
@@ -126,20 +141,28 @@ public sealed class CatalogPage : ContentPage
         switches.Children.Add(FilterRow(_availableOnly,"Elérhető eszköz"));
         switches.Children.Add(FilterRow(_favoritesOnly,"Kedvenc"));
         filterPanel.Children.Add(switches);
+        // Bound the expanded filters separately: do not put the result list in a
+        // ScrollView. Filters must remain reachable even with zero matches.
+        var filterScroll = new ScrollView
+        {
+            Content = filterPanel, IsVisible = false, MaximumHeightRequest = 160,
+            VerticalOptions = LayoutOptions.Start
+        };
         toggleFilters.Clicked += (_,_) =>
         {
-            filterPanel.IsVisible = !filterPanel.IsVisible;
-            toggleFilters.Text=filterPanel.IsVisible ? "⚙ Szűrők bezárása" : "⚙ További szűrők";
+            filterScroll.IsVisible = !filterScroll.IsVisible;
+            toggleFilters.Text=filterScroll.IsVisible ? "⚙ Szűrők bezárása" : "⚙ További szűrők";
         };
-        header.Children.Add(toggleFilters);
-        header.Children.Add(filterPanel);
+        header.Children.Add(filterScroll);
         header.Children.Add(_counter);
 
-        // Header participates in the CollectionView layout. An overlaid header used
-        // to cover the first cards and caused ScrollTo(0) to stop underneath filters.
-        // Keep the filter content INSIDE the list, so card #1 is always visible.
-        _items.Header = header;
-        var layout = new Grid();
+        var layout = new Grid { RowDefinitions =
+        {
+            new RowDefinition { Height = GridLength.Auto },
+            new RowDefinition { Height = GridLength.Star }
+        }};
+        layout.Children.Add(header);
+        Grid.SetRow(_items, 1);
         layout.Children.Add(_items);
         // Accessible floating shortcut; stays outside the virtualized list.
         var jumpTop = UI.Button("↑ Tetejére", false);
@@ -151,8 +174,12 @@ public sealed class CatalogPage : ContentPage
         jumpTop.VerticalOptions = LayoutOptions.End;
         jumpTop.Margin = new Thickness(0, 0, 18, 22);
         jumpTop.ZIndex = 8;
-        jumpTop.Clicked += (_, _) => _items.ScrollTo(0, position:ScrollToPosition.Start, animate:true);
+        jumpTop.Clicked += (_, _) =>
+        {
+            if (_visible.Count > 0) _items.ScrollTo(0, position:ScrollToPosition.Start, animate:true);
+        };
         _items.Scrolled += (_, e) => jumpTop.IsVisible = e.VerticalOffset > 550;
+        Grid.SetRow(jumpTop, 1);
         layout.Children.Add(jumpTop);
         Content = layout;
     }
@@ -166,16 +193,25 @@ public sealed class CatalogPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _isAppearing = true;
         // NavigationPage keeps this CatalogPage instance alive. When returning from
         // a detail/3D screen, do not clear the CollectionView or reset its scroll.
         // A revision/favorite change only reconciles the affected visible rows.
         var libraryChanged = EnsureLibrarySnapshot();
-        if (!_presented || libraryChanged || !_lastFavorites.SetEquals(_state.Data.FavoriteIds) ||
+        var queryChanged = !string.Equals(_lastAppliedQuery, _search.Text?.Trim() ?? "", StringComparison.Ordinal);
+        if (!_presented || libraryChanged || queryChanged || !_lastFavorites.SetEquals(_state.Data.FavoriteIds) ||
             (_availableOnly.IsToggled && !_lastEquipment.SetEquals(_state.Preferences.AvailableEquipment)))
         {
-            RefreshMatches(resetScroll: !_presented);
+            RefreshMatches(resetScroll: !_presented || queryChanged, fromSearch: queryChanged);
             _presented = true;
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        _isAppearing = false;
+        _searchDelay?.Cancel();
+        base.OnDisappearing();
     }
 
     private bool EnsureLibrarySnapshot()
@@ -220,104 +256,88 @@ public sealed class CatalogPage : ContentPage
     private async void DebounceSearch()
     {
         _searchDelay?.Cancel();
-        var token = (_searchDelay = new CancellationTokenSource()).Token;
+        var request = new CancellationTokenSource();
+        _searchDelay = request;
         try
         {
-            await Task.Delay(180,token);
-            if (!token.IsCancellationRequested) MainThread.BeginInvokeOnMainThread(() => RefreshMatches());
+            await Task.Delay(180, request.Token);
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                // Check again on the UI thread: a newer keystroke or navigation
+                // may have invalidated this request after the delay completed.
+                if (_isAppearing && ReferenceEquals(_searchDelay, request) &&
+                    !request.IsCancellationRequested &&
+                    !string.Equals(_lastAppliedQuery, _search.Text?.Trim() ?? "", StringComparison.Ordinal))
+                    RefreshMatches(fromSearch: true);
+            });
         }
-        catch (TaskCanceledException) { }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            if (ReferenceEquals(_searchDelay, request)) _searchDelay = null;
+            request.Dispose();
+        }
     }
 
-    private void RefreshMatches(bool resetScroll = true)
+    private void RefreshMatches(bool resetScroll = true, bool fromSearch = false)
     {
         if (_refreshing) return;
-        var query = _search.Text?.Trim() ?? "";
-        var category = _category.SelectedItem?.ToString() ?? "Összes mozgástípus";
-        var region = _region.SelectedItem?.ToString() ?? "Összes testtáj";
-        var source = _origin.SelectedItem?.ToString() ?? "Minden gyakorlat";
-        var favorites = _state.Data.FavoriteIds.ToHashSet(StringComparer.Ordinal);
-        var changedFavorites = new HashSet<string>(_lastFavorites, StringComparer.Ordinal);
-        changedFavorites.SymmetricExceptWith(favorites);
-        var equipment = _state.Preferences.AvailableEquipment.ToHashSet(StringComparer.Ordinal);
-        _matches = _librarySnapshot.Where(x =>
-            (category == "Összes mozgástípus" || x.Exercise.Category == category) &&
-            (region == "Összes testtáj" || x.Exercise.Regions.Contains(region)) &&
-            (query.Length == 0 || x.Exercise.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-                x.Exercise.Regions.Any(r => r.Contains(query, StringComparison.CurrentCultureIgnoreCase))) &&
-            (!_favoritesOnly.IsToggled || favorites.Contains(x.Exercise.Id)) &&
-            (!_availableOnly.IsToggled || x.Exercise.Equipment.All(equipment.Contains)) &&
-            (source == "Minden gyakorlat" ||
-                (source == "Alapgyakorlatok" && x.BuiltIn) ||
-                (source == "Saját gyakorlatok" && !x.BuiltIn) ||
-                (source == "Piszkozatok" && x.Status == LibraryStatuses.Draft) ||
-                (source == "Kikapcsolt" && x.Status == LibraryStatuses.Disabled)))
-            .OrderBy(x => x.Exercise.Category).ThenBy(x => x.Exercise.Name)
-            .ToList();
-
-        if (resetScroll)
+        _refreshing = true;
+        try
         {
-            // A deliberate search/filter change starts a new result set.
-            _visible.Clear();
-            _items.RemainingItemsThreshold = 4;
-            LoadNextBatch();
-            if (_visible.Count > 0)
+            // Ignore paging notifications generated by intermediate collection edits.
+            _items.RemainingItemsThreshold = -1;
+            var query = _search.Text?.Trim() ?? "";
+            var category = _category.SelectedItem?.ToString() ?? "Összes mozgástípus";
+            var region = _region.SelectedItem?.ToString() ?? "Összes testtáj";
+            var source = _origin.SelectedItem?.ToString() ?? "Minden gyakorlat";
+            var favorites = _state.Data.FavoriteIds.ToHashSet(StringComparer.Ordinal);
+            var changedFavorites = new HashSet<string>(_lastFavorites, StringComparer.Ordinal);
+            changedFavorites.SymmetricExceptWith(favorites);
+            var equipment = _state.Preferences.AvailableEquipment.ToHashSet(StringComparer.Ordinal);
+            _matches = _librarySnapshot.Where(x =>
+                (category == "Összes mozgástípus" || x.Exercise.Category == category) &&
+                (region == "Összes testtáj" || x.Exercise.Regions.Contains(region)) &&
+                CatalogSearch.MatchesText(x.Exercise, query) &&
+                (!_favoritesOnly.IsToggled || favorites.Contains(x.Exercise.Id)) &&
+                (!_availableOnly.IsToggled || x.Exercise.Equipment.All(equipment.Contains)) &&
+                (source == "Minden gyakorlat" ||
+                    (source == "Alapgyakorlatok" && x.BuiltIn) ||
+                    (source == "Saját gyakorlatok" && !x.BuiltIn) ||
+                    (source == "Piszkozatok" && x.Status == LibraryStatuses.Draft) ||
+                    (source == "Kikapcsolt" && x.Status == LibraryStatuses.Disabled)))
+                .OrderBy(x => x.Exercise.Category).ThenBy(x => x.Exercise.Name)
+                .ToList();
+
+            // A deliberate filter/search starts with one batch; returning from
+            // details or changing a card retains the already loaded prefix.
+            var count = resetScroll ? BatchSize : Math.Max(BatchSize, _visible.Count);
+            CatalogSearch.ReconcilePrefix(_visible, _matches, count,
+                row => row.Exercise.Id,
+                (current, next) => current.Status != next.Status || current.BuiltIn != next.BuiltIn ||
+                    !ReferenceEquals(current.Exercise, next.Exercise) ||
+                    changedFavorites.Contains(next.Exercise.Id));
+
+            _lastFavorites = favorites;
+            _lastEquipment = equipment;
+            _lastAppliedQuery = query;
+            _counter.Text = $"{_matches.Count} találat";
+
+            // Only explicit non-search navigation may scroll to the first card.
+            // Never move the viewport while the native text editor is active.
+            if (resetScroll && !fromSearch && !_search.IsFocused && _visible.Count > 0)
                 _items.ScrollTo(0, position: ScrollToPosition.Start, animate: false);
         }
-        else
+        finally
         {
-            // Toggle, favorite and returning from an exercise detail must NOT
-            // clear the list: only insert/remove/replace the affected cards.
-            // Retain the number of already loaded items when possible.
-            ReconcileVisibleRows(changedFavorites);
+            _refreshing = false;
+            _items.RemainingItemsThreshold = _visible.Count < _matches.Count ? 4 : -1;
         }
-        _lastFavorites = favorites;
-        _lastEquipment = equipment;
-        _counter.Text = $"{_matches.Count} találat";
-        _items.RemainingItemsThreshold = _visible.Count < _matches.Count ? 4 : -1;
-    }
-
-    private void ReconcileVisibleRows(HashSet<string> changedFavorites)
-    {
-        var count = Math.Max(BatchSize, _visible.Count);
-        var desired = _matches.Take(count).ToList();
-        var desiredIds = desired.Select(x => x.Exercise.Id).ToHashSet(StringComparer.Ordinal);
-        int index = 0;
-        while (index < desired.Count)
-        {
-            var next = desired[index];
-            if (index >= _visible.Count)
-            {
-                _visible.Add(next);
-                index++;
-                continue;
-            }
-            var current = _visible[index];
-            if (current.Exercise.Id == next.Exercise.Id)
-            {
-                if (current.Status != next.Status || current.BuiltIn != next.BuiltIn ||
-                    !ReferenceEquals(current.Exercise, next.Exercise) ||
-                    changedFavorites.Contains(next.Exercise.Id))
-                    _visible[index] = next; // one native card changes, not the list
-                index++;
-            }
-            else if (!desiredIds.Contains(current.Exercise.Id))
-            {
-                _visible.RemoveAt(index); // an item was removed by an active filter
-            }
-            else
-            {
-                _visible.Insert(index, next); // added or reordered, retain other rows
-                index++;
-            }
-        }
-        while (_visible.Count > desired.Count)
-            _visible.RemoveAt(_visible.Count - 1);
     }
 
     private void LoadNextBatch()
     {
-        if (_loading) return;
+        if (_loading || _refreshing) return;
         _loading=true;
         try
         {
