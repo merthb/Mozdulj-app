@@ -963,3 +963,26 @@ test('repetition guide loops authored holds instead of stopping at the first hol
  assert.equal(rig.workoutGuidePlan([a,b],'right',true).kind,'unassigned');
  assert.equal(JSON.stringify([a,b]),before);
 });
+
+
+test('bend plane guard identifies abrupt elbow and knee reversal, not unchanged joints',()=>{
+ const rig=loadRig(),m=rig.math,j=rig.joints(rig.baseFrame('stand'));
+ assert.equal(rig.bendFlip(j,j),null);
+ for(const [a,b,c,s,key] of [['shoulder','elbow','hands','left','leftElbow'],['hip','knee','feet','right','rightKnee']]){
+   const next=JSON.parse(JSON.stringify(j)),axis=m.norm(m.sub(j[c][s],j[a][s])),v=m.sub(j[b][s],j[a][s]);
+   const radial=m.sub(v,m.mul(axis,m.dot(v,axis)));
+   assert.ok(m.len(radial)>.025,key);
+   next[b][s]=m.sub(j[b][s],m.mul(radial,2));
+   assert.equal(rig.bendFlip(j,next),key);
+   assert.ok(rig.issueGeometry(rig.baseFrame('stand'),j,'bend:'+key).length);
+ }
+});
+test('supine IK elbow jump is not allowed in a checked preview or swept edit',()=>{
+ const rig=loadRig(),a=rig.baseFrame('supine'),b=JSON.parse(JSON.stringify(a));
+ a.hands.left[1]+=.195;b.hands.left[1]+=.200;
+ assert.equal(rig.bendFlip(rig.joints(a),rig.joints(b)),'leftElbow');
+ const before=JSON.stringify(a),after=JSON.stringify(b);
+ assert.equal(rig.Collision.previewTransition(a,b).ok,false);
+ assert.equal(rig.Collision.transition(a,b).limited,true);
+ assert.equal(JSON.stringify(a),before);assert.equal(JSON.stringify(b),after);
+});
