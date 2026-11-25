@@ -100,7 +100,7 @@ function guardedEdit(change,prepare=null,adapt=false){
  if(result.limited){
    sync();
    const issue=result.issue||'';
-   if(issue.startsWith('lock:'))msg(window.rigText('Rögzített testpont: ')+window.rigText(targetLabels[issue.slice(5)])+' — '+window.rigText('Oldd fel a rögzítést a további mozgatáshoz.'));
+   if(issue.startsWith('lock:'))msg(window.rigText('Rögzített testpont: ')+window.rigText(targetLabels[issue.slice(5)]||'Eszközkapcsolat')+' — '+window.rigText('Oldd fel a rögzítést a további mozgatáshoz.'));
    else if(issue.startsWith('body:'))msg(window.rigText('Testrészek ütközése: ')+issue.slice(5).split('/').map(bodyPartLabel).join(' – '));
    else msg(window.rigText('Ütközési korlát: a végtag nem haladhat át a padlón, falon vagy eszközön. (')+issue+')');
  }
@@ -114,10 +114,43 @@ function bodyPartLabel(id){
  const label=window.rigText(parts[part]||part);
  return side?window.rigText(side==='left'?'Bal':'Jobb')+' '+label:label;
 }
+function lockOption(select,value,label){
+ const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);
+}
 function syncLocks(){
- const active=MozduljRig.effectiveLocks(current());
- for(const input of document.querySelectorAll('[data-lock-point]'))input.checked=Object.hasOwn(active,input.dataset.lockPoint);
+ const f=current();
+ for(const input of document.querySelectorAll('[data-lock-point]')){
+   const key=input.dataset.lockPoint,binding=f.equipmentPointLocks?.[key];
+   input.replaceChildren();
+   lockOption(input,'free','Szabad');
+   lockOption(input,'world','Térben rögzített ●');
+   for(const [i,prop] of (f.equipment||[]).entries()){
+     if(POSITIONABLE.includes(prop.type))lockOption(input,'equipment:'+i,'◆ '+equipmentLabel(prop,i));
+   }
+   const index=binding?(f.equipment||[]).findIndex(p=>p.id===binding.equipmentId&&p.type===binding.equipmentType):-1;
+   input.value=binding&&index>=0?'equipment:'+index:f.pointLocks?.[key]?'world':'free';
+ }
  syncContactSurfaces();
+}
+// Only an explicit binding action gives a legacy object an identity, on a
+// candidate copy. Failed actions and opening old poses do not mutate data.
+function identifySupport(frame,index){
+ const prop=frame.equipment?.[index];
+ if(!prop||!POSITIONABLE.includes(prop.type))return false;
+ prop.id??=MozduljRig.newEquipmentId(pose.frames);
+ return true;
+}
+function changePointLock(input){
+ closeGesture();stopPreview();
+ const candidate=clone(current()),key=input.dataset.lockPoint,value=input.value;
+ if(value==='free'||value==='world')MozduljRig.setPointLock(candidate,key,value==='world');
+ else {
+   const index=Number(value.slice('equipment:'.length));
+   if(!value.startsWith('equipment:')||!Number.isInteger(index)||!identifySupport(candidate,index)||!MozduljRig.setEquipmentPointLock(candidate,key,index)){
+     syncLocks();msg('A testpont nem rögzíthető a kiválasztott eszközhöz.');return;
+   }
+ }
+ tracked(()=>{pose.frames[frameIndex]=candidate;});sync();
 }
 function syncContactSurfaces(){
  const type=$('contactAction').value;
@@ -125,6 +158,9 @@ function syncContactSurfaces(){
  surface.replaceChildren();
  const needs=type==='wall'?'wall':type==='seat'?'chair':null;
  $('contactSurfaceRow').hidden=!needs;
+ const relative=$('contactLockMode').querySelector('option[value="equipment"]');
+ relative.disabled=!needs;
+ if(!needs&&$('contactLockMode').value==='equipment')$('contactLockMode').value='world';
  $('contactSideRow').hidden=type==='seat';
  $('contactAlign').disabled=type==='seat';
  if(needs){
@@ -150,7 +186,10 @@ function fitContact(){
  const sides=$('contactSide').value==='both'?['left','right']:[$('contactSide').value];
  const keys=type==='seat'?['root']:sides.map(side=>side+(action==='feet'?'Foot':'Hand'));
  const index=$('contactSurface').value===''?null:Number($('contactSurface').value);
- const result=MozduljRig.fitSupport(current(),type,keys,index,$('contactLock').checked,$('contactAlign').checked&&type!=='seat');
+ const lockMode=$('contactLockMode').value,relative=lockMode==='equipment';
+ const candidate=clone(current());
+ if(relative&&!identifySupport(candidate,index)){msg('A testpont nem rögzíthető a kiválasztott eszközhöz.');return;}
+ const result=MozduljRig.fitSupport(candidate,type,keys,index,lockMode!=='free',$('contactAlign').checked&&type!=='seat',relative);
  const status=$('contactStatus');
  if(!result.ok){
    const explanations={alignment:'A tenyér vagy talp nem igazítható a felülethez a jelenlegi ízületi korlátok mellett.',target:'Nem megfelelő testpont.',locked:'A testpont már rögzítve van. Előbb oldd fel a rögzítést.',mode:'A jelenlegi végtagállás nem alakítható át ugrásmentesen.',orientation:'Ehhez közel függőleges törzsű kiinduló póz szükséges.',surface:'Nincs megfelelő támaszfelület.',reach:'A támaszfelület nem érhető el ebben a testhelyzetben.',outside:'A testpont a támaszfelület szélén kívülre kerülne.'};
@@ -160,7 +199,7 @@ function fitContact(){
    show();return;
  }
  tracked(()=>{pose.frames[frameIndex]=result.frame;});sync();
- status.textContent=window.rigText($('contactLock').checked?'Illesztés kész, a testpontok rögzítve.':'Illesztés kész.');
+ status.textContent=window.rigText(relative?'Illesztés kész, a testpontok az eszközhöz rögzítve.':lockMode!=='free'?'Illesztés kész, a testpontok rögzítve.':'Illesztés kész.');
 }
 function discreteEdit(build,validate,insert=false){
  activeIssue=null;
@@ -640,9 +679,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  const endControl=e=>{if(controlGesture===e.pointerId&&gesture!==canvas)closeGesture();};
  window.addEventListener('pointerup',endControl);
  window.addEventListener('pointercancel',endControl);
- for(const input of document.querySelectorAll('[data-lock-point]'))input.onchange=()=>{
-   closeGesture();tracked(()=>MozduljRig.setPointLock(current(),input.dataset.lockPoint,input.checked));sync();
- };
+ for(const input of document.querySelectorAll('[data-lock-point]'))input.onchange=()=>changePointLock(input);
  $('clearPointLocks').onclick=()=>{closeGesture();tracked(()=>{delete current().pointLocks;delete current().equipmentPointLocks;});sync();};
  $('rootHeight').onchange=e=>{
    const value=e.target.valueAsNumber/100;
@@ -792,7 +829,8 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  };
  $('deleteProp').onclick=()=>{
    stopPreview();closeGesture();const locations=propLocations();
-   if(locations.some(({frame,index})=>{const f=pose.frames[frame],prop=f.equipment[index];return prop.locked||Object.values(f.equipmentPointLocks||{}).some(b=>b.equipmentId===prop.id);})){msg('Előbb oldd fel az eszköz rögzítését.');return;}
+   if(locations.some(({frame,index})=>{const f=pose.frames[frame],prop=f.equipment[index];return Object.values(f.equipmentPointLocks||{}).some(b=>b.equipmentId===prop.id);})){msg('Előbb oldd fel az eszközhöz kötött testpontokat.');return;}
+    if(locations.some(({frame,index})=>pose.frames[frame].equipment[index].locked)){msg('Előbb oldd fel az eszköz rögzítését.');return;}
    tracked(()=>{for(const {frame,index} of locations)pose.frames[frame].equipment.splice(index,1);});selectedEquipment=null;
    sync();msg('Kijelölt eszköz eltávolítva.');
  };
