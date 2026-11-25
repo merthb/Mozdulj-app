@@ -26,12 +26,14 @@ function restoreHistory(state){
 function undoPose(){stopPreview();closeGesture();restoreHistory(history.undo(snapshot()));}
 function redoPose(){stopPreview();closeGesture();restoreHistory(history.redo(snapshot()));}
 window.resetRigHistory=()=>{history.clear();gesture=null;controlGesture=null;syncHistory();return true;};
-const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej',leftKnee:'Bal térd',rightKnee:'Jobb térd',leftElbow:'Bal könyök',rightElbow:'Jobb könyök'};
-function targetKey(sel){return sel?.kind==='root'?'root':sel?sel.side+(sel.kind==='hands'?'Hand':'Foot'):null;}
+const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej',leftKnee:'Bal térd',rightKnee:'Jobb térd',leftElbow:'Bal könyök',rightElbow:'Jobb könyök',head:'Fej',neck:'Nyak',chest:'Mellkas',waist:'Derék',leftShoulder:'Bal váll',rightShoulder:'Jobb váll',leftHip:'Bal csípő',rightHip:'Jobb csípő',leftToe:'Bal lábujjrész',rightToe:'Jobb lábujjrész'};
+function targetKey(sel){return sel?.key||null;}
 function bodyFocusFor(key){
  if(key==='root')return 'root';
  if(!key)return 'all';
- return (key.startsWith('left')?'left':'right')+(/Hand|Elbow/.test(key)?'Arm':'Leg');
+ if(['head','neck'].includes(key))return 'head';
+ if(['chest','waist'].includes(key))return 'trunk';
+ return (key.startsWith('left')?'left':'right')+(/Hand|Elbow|Shoulder/.test(key)?'Arm':'Leg');
 }
 function selectTab(name){
  const alreadyActive=$('tab-'+name).getAttribute('aria-selected')==='true';
@@ -63,11 +65,7 @@ function chooseTarget(key){
  if(selectedTarget){focusBody(bodyFocusFor(selectedTarget));setMode('move');}
  else show();
 }
-function explicitTarget(key){
- if(key==='root')return {kind:'root'};
- if(!key||key==='auto')return null;
- return {side:key.startsWith('left')?'left':'right',kind:key.endsWith('Hand')?'hands':'feet'};
-}
+function explicitTarget(key){return MozduljRig.bodyTarget(key);}
 function setMode(m){
  mode=m;
  for(const b of ['orbit','move','pan'])$(b).classList.toggle('active',m===b);
@@ -78,7 +76,7 @@ function current(){return pose.frames[frameIndex];}
 function msg(s){$('status').textContent=window.rigText(s);}
 // All pose-affecting controls share the same swept 3D collision guard.
 // Camera operations are intentionally excluded: orbit/pan never move the body.
-function guardedEdit(change,prepare=null){
+function guardedEdit(change,prepare=null,adapt=false){
  stopPreview();
  const original=snapshot();
  const before=clone(current());
@@ -86,8 +84,9 @@ function guardedEdit(change,prepare=null){
    sync();msg('A jelenlegi póz ebben a vezérlési módban nem adható meg pontosan. A póz változatlan maradt.');
    return {limited:true,issue:'mode',fraction:0};
  }
+ if(adapt)MozduljRig.prepareSupportEdit(before);
  const candidate=clone(before);change(candidate);
- const result=MozduljRig.Collision.transition(before,candidate);
+ const result=MozduljRig.Collision.transition(before,candidate,28,adapt);
  if(result.fraction>0)pose.frames[frameIndex]=result.frame;
  history.record(original,snapshot());syncHistory();
  if(result.limited){
@@ -147,7 +146,7 @@ function updatePhaseControls(){
  $('phasePrev').setAttribute('aria-disabled',String(frameIndex===0));
  $('phaseNext').setAttribute('aria-disabled',String(frameIndex>=n-1));
 }
-function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
+function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='inspect'?window.rigText('Ez a pont kijelölhető; a hozzá tartozó vezérlőkkel módosítható.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
 function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number((f.root[1]*100).toFixed(1));$('upperYaw').value=Math.round(deg(f.upperYaw||0));$('spineBend').value=Math.round(deg(f.spineBend||0));
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||MozduljRig.inferAngles(f,'leg',side)?.angles||{};
@@ -387,6 +386,8 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    focusBody(value,false);show();
  };
  $('quickPreview').onclick=playPreview;
+ $('showAllTargets').onchange=show;
+ $('overlapTargets').onchange=e=>{if(!e.target.value)return;$('targetSelect').value=e.target.value;chooseTarget(e.target.value);$('overlapTargets').hidden=true;};
  $('runReview').onclick=()=>reviewPose();
  $('undoPose').onclick=undoPose;
  $('redoPose').onclick=redoPose;
@@ -408,7 +409,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('rootHeight').onchange=e=>{
    const value=e.target.valueAsNumber/100;
    if(!Number.isFinite(value)||value<0||value>3){sync();msg('Érvénytelen medencemagasság.');return;}
-   guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]));sync();
+   guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]),null,true);sync();
  };
  $('playPreview').onclick=playPreview;
  $('previewSpeed').onchange=stopPreview;
@@ -469,12 +470,12 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('cancelPreset').onclick=()=>{pendingPreset=null;$('presetConfirm').hidden=true;};
  $('yaw').oninput=e=>guardedEdit(f=>{f.headYaw=rad(+e.target.value);});
  $('pitch').oninput=e=>guardedEdit(f=>{f.headPitch=rad(+e.target.value);});
- $('torso').oninput=e=>guardedEdit(f=>{f.euler[0]=rad(+e.target.value);});
+ $('torso').oninput=e=>guardedEdit(f=>{f.euler[0]=rad(+e.target.value);},null,true);
  $('roll').oninput=e=>guardedEdit(f=>{f.headRoll=rad(+e.target.value);});
- $('shoulderLift').oninput=e=>guardedEdit(f=>{f.shoulderLift=+e.target.value/100;});
- $('pelvicTilt').oninput=e=>guardedEdit(f=>{f.pelvicTilt=rad(+e.target.value);});
- $('upperYaw').oninput=e=>guardedEdit(f=>{f.upperYaw=rad(+e.target.value);});
- $('spineBend').oninput=e=>guardedEdit(f=>{f.spineBend=rad(+e.target.value);});
+ $('shoulderLift').oninput=e=>guardedEdit(f=>{f.shoulderLift=+e.target.value/100;},null,true);
+ $('pelvicTilt').oninput=e=>guardedEdit(f=>{f.pelvicTilt=rad(+e.target.value);},null,true);
+ $('upperYaw').oninput=e=>guardedEdit(f=>{f.upperYaw=rad(+e.target.value);},null,true);
+ $('spineBend').oninput=e=>guardedEdit(f=>{f.spineBend=rad(+e.target.value);},null,true);
  $('armSide').onchange=()=>focusBody($('armSide').value+'Arm',false);
  function editArm(field,value){const side=$('armSide').value;
    const symmetric=$('symmetricEdit').checked,other=side==='left'?'right':'left';
@@ -569,11 +570,28 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(!studio||drag||!e.isPrimary)return;
    if(mode==='move')stopPreview();
    canvas.setPointerCapture(e.pointerId);let p=loc(e);
-   let sel=mode==='move'?(explicitTarget($('targetSelect').value)||studio.pick(p.x,p.y)):null;
-   if(mode==='move'){selectedTarget=targetKey(sel);if(sel){focusBody(bodyFocusFor(selectedTarget));beginGesture(canvas);}show();}
+   let sel=null;
+   if(mode==='move'){
+     const explicit=explicitTarget($('targetSelect').value),hits=explicit?[explicit]:studio.pickAll(p.x,p.y,$('showAllTargets').checked);
+     const chooser=$('overlapTargets');chooser.replaceChildren();chooser.hidden=hits.length<2;
+     if(hits.length>1){
+       const blank=document.createElement('option');blank.value='';blank.textContent='Átfedő pontok – válassz';chooser.appendChild(blank);
+       for(const t of hits){const option=document.createElement('option');option.value=t.key;option.textContent=window.rigText(targetLabels[t.key]);chooser.appendChild(option);}
+       selectTab('body');
+     }else sel=hits[0]||null;
+     selectedTarget=targetKey(sel);
+     if(sel){focusBody(bodyFocusFor(selectedTarget));if(sel.kind!=='inspect')beginGesture(canvas);else sel=null;}
+     show();
+   }
    drag={id:e.pointerId,x:p.x,y:p.y,sel,button:e.button};
  });
- canvas.addEventListener('pointermove',e=>{if(!drag||!studio||drag.id!==e.pointerId)return;let p=loc(e),dx=p.x-drag.x,dy=p.y-drag.y,c=studio.getCamera();if(mode==='move'){if(drag.sel){const sel=drag.sel,symmetric=$('symmetricEdit').checked&&sel.kind!=='root',kind=sel.kind==='hands'?'arm':'leg',other=sel.side==='left'?'right':'left';guardedEdit(f=>{const before=clone(f);studio.dragTarget(f,sel,dx,dy,e.shiftKey,$('moveAxis').value);if(symmetric)MozduljRig.mirrorTargetDelta(f,before,sel.kind,sel.side);},f=>sel.kind==='root'||(MozduljRig.prepareTargetMode(f,kind,sel.side)&&(!symmetric||MozduljRig.prepareTargetMode(f,kind,other))));}}else if(mode==='pan'||drag.button===2){let right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)];let scale=c.distance/300;c.target=c.target.map((v,i)=>v-right[i]*dx*scale +(i===1?dy*scale:0));}else{c.azimuth-=dx*.012;c.elevation=Math.max(-1.25,Math.min(1.25,c.elevation+dy*.008));}drag.x=p.x;drag.y=p.y;show();});
+ canvas.addEventListener('pointermove',e=>{if(!drag||!studio||drag.id!==e.pointerId)return;let p=loc(e),dx=p.x-drag.x,dy=p.y-drag.y,c=studio.getCamera();if(mode==='move'){
+   if(drag.sel){
+     const sel=drag.sel,central=sel.kind==='root',middle=['elbow','knee'].includes(sel.kind),symmetric=$('symmetricEdit').checked&&!central;
+     const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg',other=sel.side==='left'?'right':'left';
+     guardedEdit(f=>{const before=clone(f);studio.dragTarget(f,sel,dx,dy,e.shiftKey,$('moveAxis').value);if(symmetric){if(middle)MozduljRig.mirrorBendDelta(f,before,sel.kind,sel.side);else MozduljRig.mirrorTargetDelta(f,before,sel.kind,sel.side);}},f=>central||(MozduljRig.prepareTargetMode(f,kind,sel.side)&&(!symmetric||MozduljRig.prepareTargetMode(f,kind,other))),central);
+   }
+ }else if(mode==='pan'||drag.button===2){let right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)];let scale=c.distance/300;c.target=c.target.map((v,i)=>v-right[i]*dx*scale +(i===1?dy*scale:0));}else{c.azimuth-=dx*.012;c.elevation=Math.max(-1.25,Math.min(1.25,c.elevation+dy*.008));}drag.x=p.x;drag.y=p.y;show();});
  ['pointerup','pointercancel','lostpointercapture'].forEach(n=>canvas.addEventListener(n,e=>{if(drag?.id!==e.pointerId)return;drag=null;if(gesture===canvas)closeGesture();sync();}));canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('wheel',e=>{e.preventDefault();let c=studio.getCamera();c.distance=Math.max(1.8,Math.min(6.5,c.distance+Math.sign(e.deltaY)*.22));$('zoom').value=c.distance;show();},{passive:false});
  window.addEventListener('resize',show);const observer=new ResizeObserver(()=>show());observer.observe(canvas);

@@ -257,3 +257,25 @@ test('editor markup preserves panel boundaries and valid nesting',()=>{
  assert.equal(stack.length,0);
  assert.match(html,/<\/div>\s*<\/div><div id="status"/);
 });
+
+test('19 selectable anatomy points have finite world coordinates',()=>{
+ const rig=loadRig(),j=rig.joints(rig.baseFrame('stand'));
+ assert.equal(rig.BODY_TARGETS.length,19);
+ assert.equal(new Set(rig.BODY_TARGETS.map(x=>x.key)).size,19);
+ for(const t of rig.BODY_TARGETS){assert.equal(rig.bodyTarget(t.key).kind,t.kind);assert.ok(rig.bodyPoint(j,t.key).every(Number.isFinite));}
+});
+test('direct bend-plane edit keeps bone lengths and endpoint unchanged',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math,a=rig.joints(f);
+ assert.equal(rig.moveBendPoint(f,'elbow','left',[.01,0,.01]),true);
+ const b=rig.joints(f);
+ assert.ok(m.len(m.sub(a.hands.left,b.hands.left))<1e-8);
+ assert.ok(Math.abs(m.len(m.sub(b.shoulder.left,b.elbow.left))-.31)<1e-8);
+ assert.ok(Math.abs(m.len(m.sub(b.elbow.left,b.hands.left))-.28)<1e-8);
+});
+test('support adaptation preserves reachable endpoint and lock coordinates',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math;
+ rig.setPointLock(f,'leftHand',true);const locked=JSON.stringify(f.pointLocks.leftHand);
+ rig.prepareSupportEdit(f);rig.moveRoot(f,[0,-.02,0]);rig.adaptSupportPoints(f,f.pointLocks);
+ assert.equal(JSON.stringify(f.pointLocks.leftHand),locked);
+ assert.ok(m.len(m.sub(rig.joints(f).hands.left,f.pointLocks.leftHand))<=.005);
+});

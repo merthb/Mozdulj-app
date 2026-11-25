@@ -530,7 +530,7 @@ const Collision3D=(()=>{
    }
    return b;
  }
- function transition(before,after,steps=28){
+ function transition(before,after,steps=28,adapt=false){
    const from=joints(before),to=joints(after);
    const baseline=overlaps(before,from);
    const locks=before.pointLocks||{},baseLockErrors=lockErrors(from,locks);
@@ -548,7 +548,7 @@ const Collision3D=(()=>{
    // A swept edit is never allowed to jump through solid surfaces even if its
    // final location is beyond them. Cumulative stepping is robust on mobile.
    for(let i=1;i<=steps;i++){
-     const f=interpolate(before,after,i/steps),j=joints(f);
+     const f=interpolate(before,after,i/steps);if(adapt)adaptSupportPoints(f,locks);const j=joints(f);
      let err=worse(overlaps(f,j),baseline);
      if(!err)for(const [key,depth] of lockErrors(j,locks)){
        if(depth>Math.max(.005,baseLockErrors.get(key)||0)+1e-7){err={id:'lock:'+key,depth};break;}
@@ -600,6 +600,53 @@ function sphereM(pos,size){return model(pos,[size[0],0,0],[0,size[1],0],[0,0,siz
 const BAND_ANCHORS=['leftHand','rightHand','leftAnkle','rightAnkle','leftKnee','rightKnee','leftToe','rightToe','floorLeft','floorRight','fixed'];
 // Move the root in world coordinates. IK endpoints retain their positions;
 // FK limbs follow the root. The swept collision guard owns final acceptance.
+const BODY_TARGETS=[
+ {key:'root',kind:'root'},{key:'head',kind:'inspect'},{key:'neck',kind:'inspect'},{key:'chest',kind:'inspect'},{key:'waist',kind:'inspect'},
+ ...['left','right'].flatMap(side=>[{key:side+'Shoulder',kind:'inspect',side},{key:side+'Hip',kind:'inspect',side},{key:side+'Elbow',kind:'elbow',side},{key:side+'Hand',kind:'hands',side},{key:side+'Knee',kind:'knee',side},{key:side+'Foot',kind:'feet',side},{key:side+'Toe',kind:'inspect',side}])];
+function bodyTarget(key){return BODY_TARGETS.find(t=>t.key===key)||null;}
+function bodyPoint(j,key){
+ const central={root:'root',head:'head',neck:'neck',chest:'spineUpper',waist:'spineMid'};
+ if(central[key])return j[central[key]];
+ const side=key.startsWith('left')?'left':'right',name={Shoulder:'shoulder',Hip:'hip',Elbow:'elbow',Hand:'hands',Knee:'knee',Foot:'feet',Toe:'toes'}[key.slice(side.length)];
+ return name?j[name][side]:null;
+}
+// Keep the endpoint and bone lengths; change the bend plane within the
+// existing anatomical pole restrictions.
+function moveBendPoint(frame,kind,side,delta){
+ const j=joints(frame),arm=kind==='elbow',anchor=arm?j.shoulder[side]:j.hip[side];
+ const end=arm?j.hands[side]:j.feet[side],mid=j[kind][side],axis=norm(sub(end,anchor));
+ const perpendicular=v=>sub(v,mul(axis,dot(v,axis)));
+ const desired=perpendicular(sub(add(mid,delta),anchor));
+ if(len(desired)<1e-6)return false;
+ const pole=kind+(side==='left'?'Left':'Right'),along=dot(sub(mid,anchor),axis);
+ frame.poles[pole]=add(anchor,add(mul(axis,along),mul(norm(desired),len(perpendicular(sub(mid,anchor))))));
+ return true;
+}
+function mirrorBendDelta(frame,before,kind,side){
+ const other=swapSide(side),key=kind+(side==='left'?'Left':'Right'),dest=kind+(other==='left'?'Left':'Right');
+ if(!frame.poles[key]||!before.poles[key]||!before.poles[dest])return;
+ const delta=sub(frame.poles[key],before.poles[key]);
+ frame.poles[dest]=add(before.poles[dest],rotate(reflectX(unrotate(delta,before.euler)),before.euler));
+}
+// Prepare equivalent IK representations only for locked support endpoints.
+function prepareSupportEdit(frame){
+ for(const side of ['left','right'])for(const [kind,key] of [['arm','Hand'],['leg','Foot']]){
+   const point=frame.pointLocks?.[side+key];if(!point)continue;
+   if(!prepareTargetMode(frame,kind,side))continue;
+   const target=kind==='arm'?'hands':'feet',original=cloneFrame(frame),j=joints(frame);
+   frame[target][side]=[...point];
+   if(limbError(j,joints(frame),kind,side)>1e-5)frame[target]=original[target];
+ }
+}
+function adaptSupportPoints(frame,locks){
+ for(const side of ['left','right'])for(const [kind,target,middle,cap] of [['arm','hands','elbow','Hand'],['leg','feet','knee','Foot']]){
+   if(frame[modeKeys[kind]]?.[side])continue;
+   const endpoint=locks?.[side+cap],mid=locks?.[side+(kind==='arm'?'Elbow':'Knee')];
+   if(endpoint)frame[target][side]=[...endpoint];
+   if(mid&&len(sub(joints(frame)[middle][side],mid))>.005)frame.poles[middle+(side==='left'?'Left':'Right')]=[...mid];
+ }
+ return frame;
+}
 function moveRoot(frame,delta){
  frame.root=frame.root.map((v,i)=>clamp(v+delta[i],i===1?0:-3,3));
  return frame;
@@ -732,7 +779,7 @@ function shaded3D(canvas){
   }
   if(type==='dumbbell'){for(let s of ['left','right']){let p=j.hands[s];limb(add(p,[-.10,0,0]),add(p,[.10,0,0]),.025,'metal');ell(add(p,[-.12,0,0]),[.035,.06,.06],'metal');ell(add(p,[.12,0,0]),[.035,.06,.06],'metal');}}
  }}
- function draw(frame,{edit=true,selected=null}={}){let eye=setup();gl.clearColor(.985,.978,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null,showAll=false}={}){let eye=setup();gl.clearColor(.985,.978,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],'floor');
@@ -770,18 +817,26 @@ function shaded3D(canvas){
  ell(add(head,add(mul(faceForward,.129),mul(headUp,-.035))),[.022,.018,.025],'skin');
  if(edit){
    const handle=(pos,key)=>{const r=key===selected? .068:.045;ell(pos,[r,r,r],key===selected?[.15,.8,.48]:'handle');};
-   handle(j.root,'root');
-   for(let s of ['left','right']){handle(j.hands[s],s+'Hand');handle(j.feet[s],s+'Foot');}
+   for(const target of BODY_TARGETS){if(target.kind==='inspect'&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
    for(const key of Object.keys(frame.pointLocks||{})){
      if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
    }
  }
  return j;}
  function project(p){let q=[p[0],p[1],p[2],1],r=[];for(let i=0;i<4;i++)r.push(viewproj[i]*q[0]+viewproj[4+i]*q[1]+viewproj[8+i]*q[2]+viewproj[12+i]*q[3]);if(r[3]<=.001)return null;return [(r[0]/r[3]*.5+.5)*dims.w,(-r[1]/r[3]*.5+.5)*dims.h];}
- function pick(x,y){let best=null,dist=32;const root=project(lastJoints?.root||[999,999,999]);if(root){const d=Math.hypot(x-root[0],y-root[1]);if(d<dist){dist=d;best={kind:'root'};}}for(let side of ['left','right'])for(let kind of ['hands','feet']){let screen=project(lastJoints?.[kind]?.[side]||[999,999,999]);if(!screen)continue;let d=Math.hypot(x-screen[0],y-screen[1]);if(d<dist){dist=d;best={kind,side};}}return best;}
+ function pickAll(x,y,showAll=false){
+ if(!lastJoints)return [];
+ return BODY_TARGETS.filter(t=>showAll||t.kind!=='inspect').map(t=>{
+   const screen=project(bodyPoint(lastJoints,t.key));
+   return {target:t,distance:screen?Math.hypot(x-screen[0],y-screen[1]):Infinity};
+ }).filter(x=>x.distance<=28).sort((a,b)=>a.distance-b.distance).map(x=>x.target);
+ }
+ function pick(x,y,showAll=false){return pickAll(x,y,showAll)[0]||null;}
  function dragTarget(frame,sel,dx,dy,depth=false,axis='free'){const c=camera,right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)],up=[-Math.sin(c.azimuth)*Math.sin(c.elevation),Math.cos(c.elevation),-Math.cos(c.azimuth)*Math.sin(c.elevation)],forward=[Math.sin(c.azimuth),0,Math.cos(c.azimuth)];let size=c.distance/Math.max(280,dims.h)*1.55;let delta=depth||axis==='depth'?mul(forward,-dy*size):add(mul(right,dx*size),mul(up,-dy*size));
  if(axis==='x')delta=[dx*size,0,0];else if(axis==='y')delta=[0,-dy*size,0];else if(axis==='z')delta=[0,0,-dy*size];
  if(sel.kind==='root'){moveRoot(frame,delta);return joints(frame).clamped;}
+ if(sel.kind==='elbow'||sel.kind==='knee'){moveBendPoint(frame,sel.kind,sel.side,delta);return joints(frame).clamped;}
+ if(sel.kind==='inspect')return null;
  let key=sel.kind==='hands'?'hands':'feet';let origin=frame[key][sel.side];
  // The studio prepares an equivalent target-mode frame before interpolation.
  if((key==='feet'&&frame.legAngles?.[sel.side])||(key==='hands'&&frame.armAngles?.[sel.side]))return null;
@@ -789,7 +844,7 @@ function shaded3D(canvas){
  let point=add(origin,delta);
  if(key==='feet')point[1]=Math.max(.05,point[1]);
  frame[key][sel.side]=point;return joints(frame).clamped;}
- return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,pick,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
+ return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,pick,pickAll,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
 function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
 if(f.pointLocks!=null){
@@ -823,5 +878,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

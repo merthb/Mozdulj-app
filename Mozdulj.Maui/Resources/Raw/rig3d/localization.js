@@ -1,6 +1,20 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Minden testpont megjelenítése":"Show all body points",
+  "Átfedő pontok":"Overlapping points",
+  "Átfedő pontok – válassz":"Overlapping points – select one",
+  "Ez a pont kijelölhető; a hozzá tartozó vezérlőkkel módosítható.":"This point can be selected and edited using its controls.",
+  "A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.":"Dragging changes the bending plane without changing limb length.",
+  "Nyak":"Neck",
+  "Mellkas":"Chest",
+  "Derék":"Waist",
+  "Bal váll":"Left shoulder",
+  "Jobb váll":"Right shoulder",
+  "Bal csípő":"Left hip",
+  "Jobb csípő":"Right hip",
+  "Bal lábujjrész":"Left toe area",
+  "Jobb lábujjrész":"Right toe area",
   "Növelés egy egységgel":"Increase by one unit",
   "Csökkentés egy egységgel":"Decrease by one unit",
   "Szerkesztési területek": "Editing areas",
