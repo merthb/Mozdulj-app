@@ -729,4 +729,5 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="RigInvalidFourthBandPoint" xml:space="preserve"><value>Invalid fourth band point.</value></data>
   <data name="RigInvalidArticulation" xml:space="preserve"><value>Invalid local spine or pelvis rotation.</value></data>
   <data name="RigInvalidHandPose" xml:space="preserve"><value>Invalid hand pose.</value></data>
+  <data name="OwnExerciseUnreviewed" xml:space="preserve"><value>Custom exercise – not professionally reviewed.</value></data>
 </root>
