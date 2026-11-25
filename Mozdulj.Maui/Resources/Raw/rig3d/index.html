@@ -16,6 +16,15 @@
 <label class="target-toggle"><input type="checkbox" id="showAllTargets"> Minden testpont megjelenítése</label><select id="overlapTargets" aria-label="Átfedő pontok" hidden></select><div class="hint" id="targetHelp"></div><label for="moveAxis">Mozgatási tengely</label>
 <select id="moveAxis"><option value="free">Szabad mozgatás</option><option value="x">X – oldalirány</option><option value="y">Y – függőleges</option><option value="z">Z – mélység</option><option value="depth">Kamera mélységi iránya</option></select>
 <div class="hint" id="activeTarget" aria-live="polite">Nincs kiválasztott testpont</div>
+<details class="edit-group" id="contactTools"><summary>Automatikus támaszfelületi illesztés</summary>
+<div class="line"><label for="contactAction">Illesztési művelet</label><select id="contactAction"><option value="feet">Lábfejek a talajra</option><option value="hands">Kezek a talajra</option><option value="wall">Kezek a falhoz</option><option value="seat">Medence az ülőfelületre</option></select></div>
+<div class="line" id="contactSideRow"><label for="contactSide">Érintett oldal</label><select id="contactSide"><option value="both">Mindkét oldal</option><option value="left">Bal oldal</option><option value="right">Jobb oldal</option></select></div>
+<div class="line" id="contactSurfaceRow" hidden><label for="contactSurface">Támaszfelület</label><select id="contactSurface"></select></div>
+<label class="target-toggle"><input type="checkbox" id="contactLock"> Sikeres illesztés után rögzítés</label>
+<button type="button" id="fitContact">Illesztés végrehajtása</button>
+<div class="hint" id="contactStatus" role="status" aria-live="polite"></div>
+<div class="hint">A közelítő geometriai illesztés a meglévő testhelyzethez igazodik. Nem változtatja meg automatikusan az egész pózt vagy a tenyér és talp irányát.</div>
+</details>
 <details class="edit-group"><summary>Támaszpontok rögzítése</summary>
 <div class="hint">A kijelölt pontok maradnak a jelenlegi térbeli helyükön. A kék jelölés a rögzített pontokat mutatja. Ha a póz így nem megoldható, a mozgatás megáll.</div>
 <div class="lock-grid" role="group" aria-label="Rögzített testpontok">

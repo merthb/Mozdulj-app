@@ -304,3 +304,36 @@ test('diagnostic geometry uses actual body, support and surface probe positions'
  assert.equal(JSON.stringify(rig.issueGeometry(f,j,probe.id+'@padló')[0].a),JSON.stringify(probe.p));
  assert.equal(rig.issueGeometry(f,j,'unknown').length,0);
 });
+
+test('support planes use equipment orientation and finite bounds',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math;
+ f.equipment=[{type:'wall',position:[0,1,-1],yaw:Math.PI/2},{type:'chair',position:[0,.3,0]}];
+ const wall=rig.contactSurface(f,'rightHand','wall',0);
+ assert.ok(Math.abs(wall.normal[0]-1)<1e-8);
+ assert.ok(Math.abs(wall.origin[0]-.025)<1e-8);
+ const seat=rig.contactSurface(f,'root','seat',1);
+ assert.equal(seat.origin[1],.375);
+ assert.equal(rig.contactSurface(f,'root','seat',0),null);
+ const j=rig.joints(f);assert.equal(rig.contactInside(j,'root',seat),true);
+ j.root=[2,1,0];assert.equal(rig.contactInside(j,'root',seat),false);
+});
+test('support fitting failures are atomic and existing locks are respected',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');rig.setPointLock(f,'leftFoot',true);
+ const before=JSON.stringify(f);
+ assert.equal(rig.fitSupport(f,'floor',['leftFoot','rightFoot'],null,true).issue,'locked');
+ assert.equal(rig.fitSupport(f,'wall',['rightHand'],0).issue,'surface');
+ assert.equal(JSON.stringify(f),before);
+});
+test('already aligned hand can be fitted and locked without moving the source',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ const j=rig.joints(f),envelope=rig.contactEnvelope(j,'rightHand');
+ // Place a wall so its front face is tangent to the hand envelope plus gap.
+ const z=Math.min(...envelope.map(x=>x.p[2]-x.r))-.027;
+ f.equipment=[{type:'wall',position:[j.hands.right[0],j.hands.right[1],z],yaw:0}];
+ const before=JSON.stringify(f),result=rig.fitSupport(f,'wall',['rightHand'],0,true);
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal(JSON.stringify(f),before);
+ const final=rig.joints(result.frame),surface=rig.contactSurface(result.frame,'rightHand','wall',0);
+ assert.ok(Math.abs(rig.contactDistance(final,'rightHand',surface)-.002)<=.005);
+ assert.ok(result.frame.pointLocks.rightHand);
+});

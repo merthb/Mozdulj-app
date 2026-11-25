@@ -681,6 +681,98 @@ function adaptSupportPoints(frame,locks){
  }
  return frame;
 }
+// Contact fitting operates on the actual rendered endpoint chain and the
+// same conservative collision volumes as the editor. It is not a balance or
+// clinical posture solver. All changes are transactional.
+const CONTACT_GAP=.002,CONTACT_TOLERANCE=.005;
+function contactEnvelope(j,key){
+ if(key==='root')return [{p:j.root,r:.135}];
+ const side=key.startsWith('left')?'left':'right';
+ if(key.endsWith('Foot'))return [{p:j.feet[side],r:.067},{p:j.toes[side],r:.067}];
+ if(key.endsWith('Hand'))return [{p:j.hands[side],r:.055},{p:j.palms[side],r:.046},{p:j.thumbs[side],r:.018}];
+ return [];
+}
+function contactDistance(j,key,surface){
+ return Math.min(...contactEnvelope(j,key).map(({p,r})=>dot(sub(p,surface.origin),surface.normal)-r));
+}
+function contactSurface(frame,key,type,index){
+ const j=joints(frame);
+ if(type==='floor')return {origin:[0,0,0],normal:[0,1,0]};
+ const prop=frame.equipment?.[index];
+ if(type==='wall'&&prop?.type==='wall'){
+   const centre=propPosition(prop),yaw=propYaw(prop),axis=rotY([0,0,1],yaw);
+   const sign=dot(sub(lockPoint(j,key),centre),axis)>=0?1:-1;
+   return {origin:add(centre,mul(axis,sign*.025)),normal:mul(axis,sign),centre,yaw,half:[1.24,1.1,.025],type};
+ }
+ if(type==='seat'&&prop?.type==='chair'){
+   const centre=propPosition(prop);return {origin:add(centre,[0,.075,0]),normal:[0,1,0],centre,yaw:propYaw(prop),half:[.43,.075,.42],type};
+ }
+ return null;
+}
+function contactInside(j,key,surface){
+ if(!surface.type)return true;
+ // Ensure the contact proxy lies on the finite support face, not the plane
+ // extended beyond a wall or chair. Other body collisions are swept separately.
+ const near=contactEnvelope(j,key).reduce((a,b)=>dot(sub(a.p,surface.origin),surface.normal)-a.r<=dot(sub(b.p,surface.origin),surface.normal)-b.r?a:b);
+ const q=rotY(sub(near.p,surface.centre),-surface.yaw);
+ return Math.abs(q[0])+near.r<=surface.half[0]+CONTACT_TOLERANCE &&
+   (surface.type==='wall'?Math.abs(q[1])+near.r<=surface.half[1]+CONTACT_TOLERANCE:Math.abs(q[2])+near.r<=surface.half[2]+CONTACT_TOLERANCE);
+}
+function fitSupport(frame,type,keys,index=null,lock=false){
+ const fail=(issue,key=null)=>({ok:false,issue,key});
+ const allowed=type==='floor'?['leftHand','rightHand','leftFoot','rightFoot']:type==='wall'?['leftHand','rightHand']:type==='seat'?['root']:[];
+ if(!keys?.length||keys.some(k=>!allowed.includes(k))||new Set(keys).size!==keys.length)return fail('target');
+ const before=cloneFrame(frame);
+ // Conversion must preserve the original rendered pose before starting.
+ for(const key of keys){
+   if(before.pointLocks?.[key])return fail('locked',key);
+   if(key==='root')continue;
+   const side=key.startsWith('left')?'left':'right',kind=key.endsWith('Hand')?'arm':'leg';
+   if(!prepareTargetMode(before,kind,side))return fail('mode',key);
+ }
+ if(type==='seat'){
+   // A horizontal or upside-down torso must not be treated as a seated pose.
+   if(dot(rotate([0,1,0],before.euler),[0,1,0])<.7)return fail('orientation','root');
+   prepareSupportEdit(before);
+ }
+ const candidate=cloneFrame(before);
+ const surfaces=new Map(keys.map(key=>[key,contactSurface(before,key,type,index)]));
+ if([...surfaces.values()].some(s=>!s))return fail('surface');
+ for(const key of keys){
+   const surface=surfaces.get(key);
+   if(key==='root'){
+     const local=rotY(sub(candidate.root,surface.centre),-surface.yaw);
+     // The front half of the seat provides room away from the backrest.
+     const x=clamp(local[0],-.29,.29),z=clamp(local[2],-.08,.27);
+     const target=add(surface.centre,rotY([x,.075+.135+CONTACT_GAP,z],surface.yaw));
+     moveRoot(candidate,sub(target,candidate.root));adaptSupportPoints(candidate,before.pointLocks);
+     continue;
+   }
+   const side=key.startsWith('left')?'left':'right',kind=key.endsWith('Hand')?'hands':'feet';
+   // Start from the actual endpoint, not a possibly unreachable raw target.
+   candidate[kind][side]=[...joints(candidate)[kind][side]];
+   for(let i=0;i<24;i++){
+     const j=joints(candidate),distance=contactDistance(j,key,surface),error=CONTACT_GAP-distance;
+     if(Math.abs(error)<=.001)break;
+     candidate[kind][side]=add(candidate[kind][side],mul(surface.normal,clamp(error,-.12,.12)));
+   }
+ }
+ const final=joints(candidate);
+ for(const key of keys){
+   const surface=surfaces.get(key);
+   if(Math.abs(contactDistance(final,key,surface)-CONTACT_GAP)>CONTACT_TOLERANCE)return fail('reach',key);
+   if(!contactInside(final,key,surface))return fail('outside',key);
+ }
+ const checked=Collision3D.transition(before,candidate,28,type==='seat');
+ if(checked.limited)return fail(checked.issue||'collision');
+ const accepted=checked.frame,rendered=joints(accepted);
+ for(const key of keys){
+   const surface=surfaces.get(key);
+   if(Math.abs(contactDistance(rendered,key,surface)-CONTACT_GAP)>CONTACT_TOLERANCE||!contactInside(rendered,key,surface))return fail('reach',key);
+ }
+ if(lock)for(const key of keys)setPointLock(accepted,key,true);
+ return {ok:true,frame:accepted};
+}
 function moveRoot(frame,delta){
  frame.root=frame.root.map((v,i)=>clamp(v+delta[i],i===1?0:-3,3));
  return frame;
@@ -931,5 +1023,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

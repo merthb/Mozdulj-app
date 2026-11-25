@@ -113,6 +113,45 @@ function bodyPartLabel(id){
 function syncLocks(){
  const active=current().pointLocks||{};
  for(const input of document.querySelectorAll('[data-lock-point]'))input.checked=Object.hasOwn(active,input.dataset.lockPoint);
+ syncContactSurfaces();
+}
+function syncContactSurfaces(){
+ const type=$('contactAction').value;
+ const surface=$('contactSurface'),prior=surface.value;
+ surface.replaceChildren();
+ const needs=type==='wall'?'wall':type==='seat'?'chair':null;
+ $('contactSurfaceRow').hidden=!needs;
+ $('contactSideRow').hidden=type==='seat';
+ if(needs){
+   for(const [i,prop] of (current().equipment||[]).entries()){
+     if(prop.type!==needs)continue;
+     const option=document.createElement('option');option.value=String(i);
+     option.textContent=window.rigText(needs==='wall'?'Fal':'Szék')+' '+(i+1);surface.appendChild(option);
+   }
+   if(!surface.options.length){
+     const option=document.createElement('option');option.value='';option.textContent=window.rigText('Nincs megfelelő eszköz a fázisban');surface.appendChild(option);
+   }
+   if([...surface.options].some(o=>o.value===prior))surface.value=prior;
+ }
+ $('fitContact').disabled=!!needs&&surface.value==='';
+}
+function fitContact(){
+ stopPreview();closeGesture();
+ const action=$('contactAction').value,type=action==='feet'||action==='hands'?'floor':action;
+ const sides=$('contactSide').value==='both'?['left','right']:[$('contactSide').value];
+ const keys=type==='seat'?['root']:sides.map(side=>side+(action==='feet'?'Foot':'Hand'));
+ const index=$('contactSurface').value===''?null:Number($('contactSurface').value);
+ const result=MozduljRig.fitSupport(current(),type,keys,index,$('contactLock').checked);
+ const status=$('contactStatus');
+ if(!result.ok){
+   const explanations={target:'Nem megfelelő testpont.',locked:'A testpont már rögzítve van. Előbb oldd fel a rögzítést.',mode:'A jelenlegi végtagállás nem alakítható át ugrásmentesen.',orientation:'Ehhez közel függőleges törzsű kiinduló póz szükséges.',surface:'Nincs megfelelő támaszfelület.',reach:'A támaszfelület nem érhető el ebben a testhelyzetben.',outside:'A testpont a támaszfelület szélén kívülre kerülne.'};
+   const id=result.issue;
+   activeIssue=id.startsWith('body:')||id.startsWith('lock:')||id.includes('@')?id:null;
+   status.textContent=window.rigText('Az illesztés nem sikerült. A póz változatlan maradt.')+' '+window.rigText(explanations[id]||'Ütközés vagy rögzítés akadályozza a mozdulatot.')+(result.key?' '+window.rigText(targetLabels[result.key]):'');
+   show();return;
+ }
+ tracked(()=>{pose.frames[frameIndex]=result.frame;});sync();
+ status.textContent=window.rigText($('contactLock').checked?'Illesztés kész, a testpontok rögzítve.':'Illesztés kész.');
 }
 function discreteEdit(build,validate,insert=false){
  activeIssue=null;
@@ -219,7 +258,7 @@ function fillSelectedBand(){
  $('bandAnchorB').value=obj.anchorB||({knees:'rightKnee',ankle:'rightAnkle',hands:'rightHand'}[legacy]||'leftHand');
  $('bandRoute').value=obj.route||'auto';$('bandAnchorC').value=obj.anchorC||'none';setFixedInputs('A',obj.position);setFixedInputs('B',obj.positionB);setFixedInputs('C',obj.positionC||[0,.35,.45]);updateFixedAnchorInputs();
 }
-function switchFrame(i){activeIssue=null;stopPreview();closeGesture();frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
+function switchFrame(i){$('contactStatus').textContent='';activeIssue=null;stopPreview();closeGesture();frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
 function setPreset(name){activeIssue=null;pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();const apply=()=>{const camera=pose?studio.getCamera():null;pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(camera||pose.camera);sync();};if(pose){closeGesture();tracked(apply);}else apply();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
 function load(p,track=false){activeIssue=null;pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();MozduljRig.checkPose(p);const apply=()=>{const camera=track?studio.getCamera():null;pose=clone(p);frameIndex=0;studio.setCamera(camera||pose.camera||MozduljRig.initialPose().camera);sync();};closeGesture();if(track)tracked(apply);else{apply();window.resetRigHistory();}msg('A 3D testhelyzet betöltve.');}
 function b64toStr(s){return decodeURIComponent(escape(atob(s)));}function strtoB64(s){return btoa(unescape(encodeURIComponent(s)));}
@@ -392,6 +431,8 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  };
  $('quickPreview').onclick=playPreview;
  $('showAllTargets').onchange=show;
+ $('contactAction').onchange=()=>{syncContactSurfaces();$('contactStatus').textContent='';};
+ $('fitContact').onclick=fitContact;
  $('overlapTargets').onchange=e=>{if(!e.target.value)return;$('targetSelect').value=e.target.value;chooseTarget(e.target.value);$('overlapTargets').hidden=true;};
  $('runReview').onclick=()=>reviewPose();
  $('undoPose').onclick=undoPose;
