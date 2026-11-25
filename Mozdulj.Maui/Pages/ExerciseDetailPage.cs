@@ -20,7 +20,9 @@ public sealed class ExerciseDetailPage : ContentPage
         _content.Children.Clear();
         var e=_state.FindExercise(_exercise.Id) ?? _exercise;
         var localized = e.DisplayText;
+        var isCustom = _state.CustomExercises.Any(x => x.Exercise.Id == e.Id);
         _content.Children.Add(UI.Label(e.DisplayName,26,true));
+        if(isCustom) _content.Children.Add(UI.Label(AppLocalization.Text("OwnExerciseUnreviewed"),13,true,color:UI.Muted));
         _content.Children.Add(UI.Label($"{PresentationText.Known(e.Category)} · {e.TargetLabel}",14,color:UI.Muted));
         _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Body areas: " : "Testtájak: ") + e.RegionAreaLabel, 14, true));
         _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Detailed body parts: " : "Részletes testrészek: ") + e.RegionLabel, 13, color:UI.Muted));
@@ -62,7 +64,7 @@ public sealed class ExerciseDetailPage : ContentPage
                     };
                     refreshedPose = () => (_state.FindExercise(e.Id) ?? e).Pose;
                 }
-                await Navigation.PushAsync(new Rig3DViewerPage(e.Pose, e.Name, edit3d, refreshedPose));
+                await Navigation.PushAsync(new Rig3DViewerPage(e.Pose, e.Name, edit3d, refreshedPose, isCustom));
             };
             _content.Children.Add(open3d);
         }
