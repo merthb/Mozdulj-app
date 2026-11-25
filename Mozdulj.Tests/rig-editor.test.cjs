@@ -1009,3 +1009,33 @@ test('impossible floor correction preserves lengths without pretending the floor
  assert.ok(Math.abs(m.len(m.sub(fixed.mid,fixed.end))-.28)<1e-8);
  assert.deepEqual(fixed.end,s.end);
 });
+
+test('body endpoint links follow a leader without stretching and survive mirroring',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math;
+ assert.ok(rig.setBodyLink(f,'rightHand','leftHand'));
+ const j=rig.joints(f),b=JSON.parse(JSON.stringify(f));b.hands.left[2]+=.025;
+ const moved=rig.Collision.transition(f,b);
+ assert.equal(moved.limited,false);
+ const end=rig.joints(moved.frame);
+ assert.ok((rig.bodyLinkErrors(end,moved.frame).get('rightHand')||0)<.005);
+ assert.ok(m.len(m.sub(end.hands.right,j.hands.right))>.01);
+ assert.ok(Math.abs(m.len(m.sub(end.elbow.right,end.hands.right))-.28)<1e-8);
+ const mirror=rig.mirrorFrame(moved.frame);
+ assert.ok(rig.validBodyLinks(mirror));assert.equal(mirror.bodyPointLinks.leftHand.leader,'rightHand');
+ assert.ok((rig.bodyLinkErrors(rig.joints(mirror),mirror).get('leftHand')||0)<.005);
+ assert.ok(rig.Collision.previewTransition(f,moved.frame).ok);
+ assert.ok(rig.removeBodyLink(mirror,'leftHand'));assert.equal(mirror.bodyPointLinks,undefined);
+});
+test('body links reject cycles, conflicting locks and independent follower edits',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ rig.setPointLock(f,'rightHand',true);assert.equal(rig.setBodyLink(f,'rightHand','leftHand'),false);
+ rig.setPointLock(f,'rightHand',false);assert.ok(rig.setBodyLink(f,'rightHand','leftHand'));
+ const before=JSON.stringify(f);
+ assert.equal(rig.setBodyLink(f,'leftHand','rightHand'),false);
+ assert.equal(rig.setPointLock(f,'rightHand',true),false);
+ assert.equal(JSON.stringify(f),before);
+ const b=JSON.parse(before);b.hands.right[2]+=.1;
+ assert.ok(rig.Collision.transition(f,b).limited);
+ const pose=rig.initialPose('stand');pose.frames[0]=b;b.bodyPointLinks.leftHand={leader:'rightHand',offset:[0,0,0]};
+ assert.throws(()=>rig.checkPose(pose));
+});
