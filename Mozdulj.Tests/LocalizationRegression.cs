@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Resources;
+using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Text.Json;
 using Mozdulj.Core;
@@ -23,6 +26,7 @@ internal static class LocalizationRegression
         var current = JsonSerializer.Deserialize<FullBackup>(BackupIntegrity.Sign(restored, key), CatalogCodec.JsonOptions)!;
         BackupIntegrity.Verify(current, key);
         Check(current.Data.ApplicationLanguage == "en" && current.Data.RewardProgress.LifetimeXp == 123, "signed roundtrip retains language and XP");
+        VerifyResourceCoverage();
         var culture = CultureInfo.CurrentCulture;
         try
         {
@@ -37,6 +41,27 @@ internal static class LocalizationRegression
         finally { AppLocalization.Apply("hu"); }
         Console.WriteLine("PASS language preference, upgrade, backup and resource regressions");
     }
+    private static void VerifyResourceCoverage()
+    {
+        var resources = new ResourceManager("Mozdulj.Core.Resources.AppStrings", typeof(AppLocalization).Assembly);
+        var hu = resources.GetResourceSet(CultureInfo.InvariantCulture, true, false);
+        var en = resources.GetResourceSet(CultureInfo.GetCultureInfo("en"), true, false);
+        Check(hu is not null && en is not null, "both actual resource sets exist (not fallback)");
+        var hungarian = hu!.Cast<DictionaryEntry>().ToDictionary(x => (string)x.Key, x => (string)x.Value!);
+        var english = en!.Cast<DictionaryEntry>().ToDictionary(x => (string)x.Key, x => (string)x.Value!);
+        Check(hungarian.Keys.ToHashSet().SetEquals(english.Keys), "resource key sets match");
+        foreach (var (key, value) in hungarian)
+        {
+            Check(!string.IsNullOrWhiteSpace(value) && !string.IsNullOrWhiteSpace(english[key]), "nonempty resource: " + key);
+            var expected = Regex.Matches(value, @"\{(\d+)(?:[^}]*)\}").Select(m=>m.Groups[1].Value).ToHashSet();
+            var actual = Regex.Matches(english[key], @"\{(\d+)(?:[^}]*)\}").Select(m=>m.Groups[1].Value).ToHashSet();
+            Check(expected.SetEquals(actual), "matching format parameters: " + key);
+        }
+        Check(AppLocalization.TextFor("en","Language") == "Language", "explicit background language");
+        Check(AppLocalization.TextFor("de","Language") == "Nyelv", "unsupported explicit language fallback");
+        Console.WriteLine($"PASS {hungarian.Count} paired localization resources and format placeholders");
+    }
+
     private static void Check(bool condition, string message)
     {
         if (!condition) throw new Exception("TEST FAIL: localization: " + message);
