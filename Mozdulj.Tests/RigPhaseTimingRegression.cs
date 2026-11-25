@@ -29,6 +29,18 @@ internal static class RigPhaseTimingRegression
         frame.Equipment.Add(new Rig3DEquipment{Type="block",Id="eq-1"});Reject(pose);
         frame.Equipment[2].Id="bad id";Reject(pose);
         frame.Equipment[2].Id="eq-2";Rig3DValidator.Validate(pose);
+        Check(!eqJson.Contains("equipmentPointLocks"),"legacy relative lock omission");
+        frame.EquipmentPointLocks=new(){["rightHand"]=new(){EquipmentId="eq-1",EquipmentType="block",Local=[.1f,.2f,.3f]}};
+        Rig3DValidator.Validate(pose);
+        var bound=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
+        Rig3DValidator.Validate(bound);
+        Check(bound.Frames[0].EquipmentPointLocks!["rightHand"].Local![1]==.2f,"relative lock round trip");
+        var binding=frame.EquipmentPointLocks["rightHand"];
+        binding.EquipmentId="missing";Reject(pose);binding.EquipmentId="eq-1";
+        binding.EquipmentType="wall";Reject(pose);binding.EquipmentType="block";
+        binding.Local=[float.NaN,0,0];Reject(pose);binding.Local=[.1f,.2f,.3f];
+        frame.PointLocks=new(){["rightHand"]=[0,0,0]};Reject(pose);frame.PointLocks=null;
+        frame.EquipmentPointLocks=null;
         var band=new Rig3DEquipment{Type="band",AnchorA="leftHand",AnchorB="rightHand",AnchorC="leftToe"};
         frame.Equipment=[band];Rig3DValidator.Validate(pose);
         var oldBand=JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions);
