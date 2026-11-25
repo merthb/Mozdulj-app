@@ -91,9 +91,11 @@ function editProps(frames,locations,position,yaw){
    if(old.locked)return {ok:false,frame,issue:'propLocked'};
    const start=cloneFrame(next[frame]);start.equipment[index].position=[...propPosition(old)];start.equipment[index].yaw=propYaw(old);
    const end=cloneFrame(start);end.equipment[index].position=[...position];end.equipment[index].yaw=yaw;
-   const result=Collision3D.transition(start,end);
+   const relative=Object.keys(start.equipmentPointLocks||{}).length>0;
+   if(relative)prepareSupportEdit(start);
+   const result=Collision3D.transition(start,end,28,relative?'equipment':false);
    if(result.limited)return {ok:false,frame,issue:result.issue};
-   next[frame]=end;
+   next[frame]=relative?result.frame:end;
  }
  return {ok:true,frames:next};
 }
@@ -551,6 +553,7 @@ function mirrorFrame(frame){
  for(const key of ['hands','feet','poles','pointLocks']){
    if(f[key]!=null)f[key]=Object.fromEntries(Object.entries(f[key]).map(([name,pos])=>[swapSide(name),reflectX(pos)]));
  }
+ if(f.equipmentPointLocks!=null)f.equipmentPointLocks=Object.fromEntries(Object.entries(f.equipmentPointLocks).map(([key,binding])=>[swapSide(key),mirrorEquipmentSupport(binding)]));
  if(f.footPitch!=null)f.footPitch=Object.fromEntries(Object.entries(f.footPitch).map(([side,value])=>[swapSide(side),value]));
  for(const suffix of [...SIDE_ARTICULATION.arm,...SIDE_ARTICULATION.leg]){
    for(const side of ['left','right']){
@@ -690,7 +693,8 @@ function movePhase(frames,from,to){
 function copyIssue(source,result){
  const collision=Collision3D.worse(Collision3D.overlaps(result),Collision3D.overlaps(source),1e-6);
  if(collision)return collision;
- const before=lockErrors(joints(source),source.pointLocks),after=lockErrors(joints(result),source.pointLocks);
+ if(!validEquipmentPointLocks(result))return {id:'lock:equipment',depth:1};
+ const before=lockErrors(joints(source),effectiveLocks(source)),after=lockErrors(joints(result),effectiveLocks(result,source));
  for(const [key,d] of after)if(d>Math.max(.005,before.get(key)||0)+1e-7)return {id:'lock:'+key,depth:d};
  return null;
 }
@@ -732,8 +736,29 @@ function lockPoint(j,key){
  const kind=key.endsWith('Hand')?'hands':key.endsWith('Foot')?'feet':key.endsWith('Knee')?'knee':'elbow';
  return j[kind][side];
 }
+function effectiveLocks(frame,source=frame){
+ const locks={...source.pointLocks};
+ for(const [key,binding] of Object.entries(source.equipmentPointLocks||{})){
+   const position=resolveEquipmentSupport(frame,binding);
+   if(position)locks[key]=position;
+ }
+ return locks;
+}
+function validEquipmentPointLocks(frame){
+ const bindings=frame.equipmentPointLocks;
+ if(bindings==null)return true;
+ return typeof bindings==='object'&&!Array.isArray(bindings)&&Object.entries(bindings).every(([key,binding])=>
+   LOCK_KEYS.includes(key)&&!Object.hasOwn(frame.pointLocks||{},key)&&resolveEquipmentSupport(frame,binding)!=null);
+}
+function setEquipmentPointLock(frame,key,index){
+ const binding=captureEquipmentSupport(frame,key,index);
+ if(!binding)return false;
+ setPointLock(frame,key,false);
+ frame.equipmentPointLocks??={};frame.equipmentPointLocks[key]=binding;return true;
+}
 function setPointLock(frame,key,enabled){
  if(!LOCK_KEYS.includes(key))throw Error('Érvénytelen rögzítési pont.');
+ if(frame.equipmentPointLocks){delete frame.equipmentPointLocks[key];if(!Object.keys(frame.equipmentPointLocks).length)delete frame.equipmentPointLocks;}
  if(enabled){frame.pointLocks??={};frame.pointLocks[key]=[...lockPoint(joints(frame),key)];}
  else if(frame.pointLocks){delete frame.pointLocks[key];if(!Object.keys(frame.pointLocks).length)delete frame.pointLocks;}
 }
@@ -907,7 +932,8 @@ const Collision3D=(()=>{
  function transition(before,after,steps=28,adapt=false,original=before){
    const from=joints(before),to=joints(after),originalJoints=original===before?from:joints(original);
    const baseline=overlaps(original,originalJoints);
-   const locks=original.pointLocks||{},baseLockErrors=lockErrors(originalJoints,locks);
+   const baseLocks=effectiveLocks(original),baseLockErrors=lockErrors(originalJoints,baseLocks);
+    if(!validEquipmentPointLocks(original)||!validEquipmentPointLocks(after))return {frame:before,fraction:0,limited:true,issue:'lock:equipment'};
    let travel=0;
    const keys=['root','neck','head','spineUpper'];
    for(const key of keys)travel=Math.max(travel,len(sub(from[key],to[key])));
@@ -922,7 +948,9 @@ const Collision3D=(()=>{
    // A swept edit is never allowed to jump through solid surfaces even if its
    // final location is beyond them. Cumulative stepping is robust on mobile.
    for(let i=1;i<=steps;i++){
-     const f=interpolate(before,after,i/steps);if(adapt)adaptSupportPoints(f,locks,{reference:accepted,source:before,projectRoot:adapt==='root'});const j=joints(f);
+     const f=interpolate(before,after,i/steps),locks=effectiveLocks(f,original);
+      if(adapt==='equipment'&&original.equipmentPointLocks?.root&&locks.root)moveRoot(f,sub(locks.root,f.root));
+      if(adapt)adaptSupportPoints(f,locks,{reference:accepted,source:before,projectRoot:adapt==='root'});const j=joints(f);
      let err=worse(overlaps(f,j),baseline);
      if(!err)for(const [key,depth] of lockErrors(j,locks)){
        if(depth>Math.max(.005,baseLockErrors.get(key)||0)+1e-7){err={id:'lock:'+key,depth};break;}
@@ -983,7 +1011,7 @@ const Collision3D=(()=>{
  function previewCompatible(a,b){
    for(const key of ['armAngles','legAngles','footPitch','poles','equipment'])
      if(JSON.stringify(shape(a[key]??{}))!==JSON.stringify(shape(b[key]??{})))return false;
-   return JSON.stringify(a.pointLocks??{})===JSON.stringify(b.pointLocks??{});
+   return JSON.stringify(a.pointLocks??{})===JSON.stringify(b.pointLocks??{})&&JSON.stringify(a.equipmentPointLocks??{})===JSON.stringify(b.equipmentPointLocks??{});
  }
  function previewTransition(a,b){
    const normalized=previewCompatible(a,b)?[a,b]:normalizePreview(a,b);
@@ -991,13 +1019,15 @@ const Collision3D=(()=>{
    const [from,to]=normalized;
    const baseline=overlaps(a);
    for(const [id,depth] of overlaps(b))baseline.set(id,Math.max(depth,baseline.get(id)||0));
-   const locks=a.pointLocks||{},start=lockErrors(joints(a),locks),end=lockErrors(joints(b),locks);
+   if(!validEquipmentPointLocks(a)||!validEquipmentPointLocks(b))return {ok:false,issue:'lock:equipment'};
+    const start=lockErrors(joints(a),effectiveLocks(a)),end=lockErrors(joints(b),effectiveLocks(b));
    const samples=[];
    // Precompute the exact samples that will be displayed. Never render unchecked
    // intermediate poses. Fixed sampling is approximate, not continuous proof.
    for(let i=0;i<=48;i++){
      const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(from,to,i/48);
-     if(i>0&&i<48&&Object.keys(locks).length)adaptSupportPoints(frame,locks,{reference:samples.at(-1)});
+     const locks=effectiveLocks(frame,a);
+      if(i>0&&i<48&&Object.keys(locks).length){if(a.equipmentPointLocks?.root&&locks.root)moveRoot(frame,sub(locks.root,frame.root));adaptSupportPoints(frame,locks,{reference:samples.at(-1)});}
      const j=joints(frame);
      const err=worse(overlaps(frame,j),baseline);
      if(err)return {ok:false,issue:err.id};
@@ -1161,8 +1191,9 @@ function projectSupportRoot(frame,locks,source,maxCorrection=.08){
  frame.root=add(desired,best);return frame;
 }
 function prepareSupportEdit(frame){
+ const locks=effectiveLocks(frame);
  for(const side of ['left','right'])for(const chain of SUPPORT_CHAINS){
-   const point=frame.pointLocks?.[side+chain.endKey],mid=frame.pointLocks?.[side+chain.midKey];
+   const point=locks[side+chain.endKey],mid=locks[side+chain.midKey];
    if(!point&&!mid)continue;
    // Keep FK if conversion cannot preserve the original rendered geometry.
    if(!prepareTargetMode(frame,chain.kind,side))continue;
@@ -1298,14 +1329,14 @@ function alignSupport(frame,key,surface){
  Object.assign(frame,best);
  return supportAlignment(joints(frame),key,surface)>=Math.cos(Math.PI/12);
 }
-function fitSupport(frame,type,keys,index=null,lock=false,align=false){
+function fitSupport(frame,type,keys,index=null,lock=false,align=false,relative=false){
  const fail=(issue,key=null)=>({ok:false,issue,key});
  const allowed=type==='floor'?['leftHand','rightHand','leftFoot','rightFoot']:type==='wall'?['leftHand','rightHand']:type==='seat'?['root']:[];
  if(!keys?.length||keys.some(k=>!allowed.includes(k))||new Set(keys).size!==keys.length)return fail('target');
  const before=cloneFrame(frame);
  // Conversion must preserve the original rendered pose before starting.
  for(const key of keys){
-   if(before.pointLocks?.[key])return fail('locked',key);
+   if(before.pointLocks?.[key]||before.equipmentPointLocks?.[key])return fail('locked',key);
    if(key==='root')continue;
    const side=key.startsWith('left')?'left':'right',kind=key.endsWith('Hand')?'arm':'leg';
    if(!prepareTargetMode(before,kind,side))return fail('mode',key);
@@ -1325,7 +1356,7 @@ function fitSupport(frame,type,keys,index=null,lock=false,align=false){
      // The front half of the seat provides room away from the backrest.
      const x=clamp(local[0],-.29,.29),z=clamp(local[2],-.08,.27);
      const target=add(surface.centre,rotY([x,.075+.135+CONTACT_GAP,z],surface.yaw));
-     moveRoot(candidate,sub(target,candidate.root));adaptSupportPoints(candidate,before.pointLocks);
+     moveRoot(candidate,sub(target,candidate.root));adaptSupportPoints(candidate,effectiveLocks(candidate,before));
      continue;
    }
    const side=key.startsWith('left')?'left':'right',kind=key.endsWith('Hand')?'hands':'feet';
@@ -1376,7 +1407,10 @@ function fitSupport(frame,type,keys,index=null,lock=false,align=false){
    if(Math.abs(contactDistance(rendered,key,surface)-CONTACT_GAP)>CONTACT_TOLERANCE||!contactInside(rendered,key,surface))return fail('reach',key);
    if(align&&supportAlignment(rendered,key,surface)<Math.cos(Math.PI/12))return fail('alignment',key);
  }
- if(lock)for(const key of keys)setPointLock(accepted,key,true);
+ if(lock)for(const key of keys){
+   if(relative&&type!=='floor'){if(!setEquipmentPointLock(accepted,key,index))return fail('surface',key);}
+   else setPointLock(accepted,key,true);
+ }
  return {ok:true,frame:accepted};
 }
  function bandAnchorPoint(anchor,frame,j,prop,which){
@@ -1754,7 +1788,7 @@ function shaded3D(canvas){
    if(ghost||skeleton)gl.disable(gl.DEPTH_TEST);
    try{
      if(!equipmentMode)for(const target of BODY_TARGETS){if(target.secondary&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
-     for(const key of Object.keys(frame.pointLocks||{})){
+     for(const key of Object.keys(effectiveLocks(frame))){
        if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
      }
    }finally{if(ghost||skeleton)gl.enable(gl.DEPTH_TEST);}
@@ -1825,6 +1859,7 @@ function shaded3D(canvas){
  return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,pickEquipment,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
 function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');if(!validEquipmentIds(p.frames))throw Error('Érvénytelen eszközazonosító.');for(let f of p.frames){if(!validHandCurl(f))throw Error('Érvénytelen kéztartás.');if(!validArticulation(f))throw Error('Érvénytelen helyi gerinc- vagy medenceforgatás.');if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
+if(!validEquipmentPointLocks(f))throw Error('Érvénytelen rögzítési pont.');
 if(f.pointLocks!=null){
  if(typeof f.pointLocks!=='object'||Array.isArray(f.pointLocks))throw Error('Érvénytelen rögzítési pont.');
  for(const [key,pos] of Object.entries(f.pointLocks))if(!LOCK_KEYS.includes(key)||!Array.isArray(pos)||pos.length!==3||pos.some(x=>!Number.isFinite(x)||Math.abs(x)>10))throw Error('Érvénytelen rögzítési pont.');
@@ -1859,5 +1894,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
