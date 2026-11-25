@@ -876,10 +876,10 @@ const Collision3D=(()=>{
    }
    return b;
  }
- function transition(before,after,steps=28,adapt=false){
-   const from=joints(before),to=joints(after);
-   const baseline=overlaps(before,from);
-   const locks=before.pointLocks||{},baseLockErrors=lockErrors(from,locks);
+ function transition(before,after,steps=28,adapt=false,original=before){
+   const from=joints(before),to=joints(after),originalJoints=original===before?from:joints(original);
+   const baseline=overlaps(original,originalJoints);
+   const locks=original.pointLocks||{},baseLockErrors=lockErrors(originalJoints,locks);
    let travel=0;
    const keys=['root','neck','head','spineUpper'];
    for(const key of keys)travel=Math.max(travel,len(sub(from[key],to[key])));
@@ -1317,7 +1317,30 @@ function fitSupport(frame,type,keys,index=null,lock=false,align=false){
    if(!contactInside(final,key,surface))return fail('outside',key);
    if(align&&supportAlignment(final,key,surface)<Math.cos(Math.PI/12))return fail('alignment',key);
  }
- const checked=Collision3D.transition(before,candidate,28,type==='seat');
+ let checked=Collision3D.transition(before,candidate,28,type==='seat');
+ if(checked.limited&&align&&type!=='seat'){
+   // Opening and rotating a hand at a support can clip the plane midway.
+   // Try a bounded lift-away / orient / return route. All three legs are
+   // swept using the unchanged collision and lock guards; no partial commit.
+   for(const lift of [.03,.06,.09,.12]){
+     const up=cloneFrame(before),oriented=cloneFrame(candidate);
+     for(const key of keys){
+       const side=key.startsWith('left')?'left':'right',target=key.endsWith('Hand')?'hands':'feet';
+       const offset=mul(surfaces.get(key).normal,lift);
+       up[target][side]=add(up[target][side],offset);
+       oriented[target][side]=add(oriented[target][side],offset);
+     }
+     const first=Collision3D.transition(before,up,28);
+     if(first.limited)continue;
+     const second=Collision3D.transition(first.frame,oriented,28,false,before);
+     if(second.limited)continue;
+     const third=Collision3D.transition(second.frame,candidate,28,false,before);
+     if(third.limited)continue;
+     // Never allow the staged path to accumulate penetration or lock drift.
+     if(copyIssue(before,third.frame)||Collision3D.worse(Collision3D.overlaps(third.frame),Collision3D.overlaps(before),1e-6))continue;
+     checked=third;break;
+   }
+ }
  if(checked.limited)return fail(checked.issue||'collision');
  const accepted=checked.frame,rendered=joints(accepted);
  for(const key of keys){

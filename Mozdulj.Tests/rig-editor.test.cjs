@@ -769,3 +769,21 @@ test('alignment requests preserve the source on success or failure',()=>{
    assert.ok(rig.supportAlignment(j,key,surface)>=Math.cos(Math.PI/12));assert.ok(result.frame.pointLocks[key]);
  }}else assert.ok(result.issue);
 });
+
+test('standing soles and tabletop palms align atomically with the floor',()=>{
+ const rig=loadRig();
+ for(const [name,keys] of [['stand',['leftFoot','rightFoot']],['tabletop',['leftHand','rightHand']]]){
+   const f=rig.baseFrame(name),before=JSON.stringify(f);
+   const result=rig.fitSupport(f,'floor',keys,null,true,true);
+   assert.equal(result.ok,true,name+' '+result.issue);
+   assert.equal(JSON.stringify(f),before);
+   const j=rig.joints(result.frame);
+   for(const key of keys){
+     const surface=rig.contactSurface(result.frame,key,'floor');
+     assert.ok(rig.supportAlignment(j,key,surface)>=Math.cos(Math.PI/12),key);
+     assert.ok(Math.abs(rig.contactDistance(j,key,surface)-.002)<=.005,key);
+     assert.ok(result.frame.pointLocks[key]);
+   }
+   assert.equal(rig.Collision.report(result.frame).count,0,name);
+ }
+});
