@@ -833,3 +833,29 @@ test('relative support follows a swept equipment move and rejects unreachable mo
  assert.equal(rig.validEquipmentPointLocks(conflict),false);
  rig.setPointLock(g,'rightHand',false);assert.equal(g.equipmentPointLocks,undefined);
 });
+
+
+test('support mode selectors cover all lock keys and preserve relative identity across list reordering',()=>{
+ const rig=loadRig(),html=fs.readFileSync(path.join(root,'index.html'),'utf8'),source=fs.readFileSync(path.join(root,'studio.js'),'utf8');
+ const keys=[...html.matchAll(/<select data-lock-point="([^"]+)"/g)].map(x=>x[1]);
+ assert.equal(JSON.stringify(keys),JSON.stringify(rig.LOCK_KEYS));
+ assert.ok(html.includes('id="contactLockMode"'));assert.ok(!source.includes("$('contactLock')"));
+ const mk=key=>({dataset:{lockPoint:key},options:[],value:'',appendChild(o){this.options.push(o)},replaceChildren(){this.options=[]}});
+ const selects=keys.map(mk),pose={frames:[rig.baseFrame('stand')]},frameIndex=0,current=()=>pose.frames[0];
+ current().equipment=[{type:'wall'},{type:'chair',id:'eq-1'}];
+ const environment={MozduljRig:rig,document:{createElement:()=>({}),querySelectorAll:()=>selects},POSITIONABLE:Object.keys(rig.PROP_POSITIONS),current,pose,frameIndex,
+ clone:o=>JSON.parse(JSON.stringify(o)),equipmentLabel:(p,i)=>p.type+' '+(i+1),syncContactSurfaces:()=>{},closeGesture:()=>{},stopPreview:()=>{},tracked:f=>f(),sync:()=>{},msg:()=>{}};
+ const code=source.slice(source.indexOf('function lockOption('),source.indexOf('function syncContactSurfaces('));
+ const fns=new Function(...Object.keys(environment),code+';return {syncLocks,changePointLock};')(...Object.values(environment));
+ fns.syncLocks();assert.equal(selects[0].options.length,4);assert.equal(selects[0].value,'free');
+ const hand=selects.find(s=>s.dataset.lockPoint==='rightHand');
+ hand.value='equipment:0';fns.changePointLock(hand);
+ assert.equal(current().equipment[0].id,'eq-2');assert.equal(current().equipmentPointLocks.rightHand.equipmentId,'eq-2');
+ fns.syncLocks();assert.equal(hand.value,'equipment:0');
+ current().equipment.reverse();fns.syncLocks();assert.equal(hand.value,'equipment:1');
+ hand.value='world';fns.changePointLock(hand);assert.ok(current().pointLocks.rightHand);assert.equal(current().equipmentPointLocks,undefined);
+ hand.value='free';fns.changePointLock(hand);assert.equal(current().pointLocks,undefined);
+ const localization=fs.readFileSync(path.join(root,'localization.js'),'utf8');
+ for(const key of ['Szabad','Térben rögzített ●','Eszközhöz rögzített ✚','Rögzítés sikeres illesztés után'])
+   assert.ok(localization.includes(JSON.stringify(key)+':'));
+});
