@@ -90,9 +90,9 @@ function editProps(frames,locations,position,yaw){
    const old=next[frame].equipment[index];
    if(old.locked)return {ok:false,frame,issue:'propLocked'};
    const start=cloneFrame(next[frame]);start.equipment[index].position=[...propPosition(old)];start.equipment[index].yaw=propYaw(old);
-   const end=cloneFrame(start);end.equipment[index].position=[...position];end.equipment[index].yaw=yaw;
    const relative=Object.keys(start.equipmentPointLocks||{}).length>0;
    if(relative)prepareSupportEdit(start);
+   const end=cloneFrame(start);end.equipment[index].position=[...position];end.equipment[index].yaw=yaw;
    const result=Collision3D.transition(start,end,28,relative?'equipment':false);
    if(result.limited)return {ok:false,frame,issue:result.issue};
    next[frame]=relative?result.frame:end;
