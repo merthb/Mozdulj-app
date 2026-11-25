@@ -93,6 +93,8 @@ const dictionary={
   "Ujjak együttes behajlítása (%)":"Combined finger curl (%)",
   "A kéztartás a szalag és a kézisúlyzó fogási pontját is módosítja. Az ujjak együtt mozgathatók.":"Hand pose also changes the band and dumbbell grasp point. Fingers move together.",
   "Érvénytelen kéztartás.":"Invalid hand pose.",
+  "Vállöv és hát összehangolt mozgatása": "Coordinated shoulder girdle and back movement",
+  "A lapocka a vállal együtt mozog; a háti gerinc finoman követheti. Kikapcsolva a lapocka és a váll külön finomhangolható, a váll geometriai követése megmarad.": "The shoulder follows the scapula; the thoracic spine can follow gently. Turn off to fine-tune separately while retaining geometric shoulder following.",
   "Lapocka emelése / süllyesztése": "Scapular elevation / depression",
   "Lapocka távolítása / közelítése a gerinchez": "Scapular protraction / retraction",
   "Lapocka felfelé / lefelé forgatása": "Scapular upward / downward rotation",
