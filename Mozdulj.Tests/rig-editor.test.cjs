@@ -741,3 +741,31 @@ test('direction probes do not mutate the frame and respect locks',()=>{
  const free=rig.baseFrame('stand'),raw=JSON.stringify(free);
  assert.ok(rig.probeTargetDirections(free,rig.bodyTarget('leftHand'),c,'world').some(h=>h.allowed));assert.equal(JSON.stringify(free),raw);
 });
+
+test('natural contact reporting distinguishes near contact and penetration',()=>{
+ const rig=loadRig(),a={id:'hand-left',a:[0,0,0],b:[0,.1,0],r:.04},b={id:'thigh-right',a:[.107,0,0],b:[.107,.1,0],r:.08};
+ assert.equal(rig.Collision.naturalContacts([a,b]).length,1);
+ assert.equal(rig.Collision.selfOverlaps([a,b]).size,0);
+ b.a[0]=b.b[0]=.06;
+ assert.equal(rig.Collision.naturalContacts([a,b]).length,0);
+ assert.equal(rig.Collision.selfOverlaps([a,b]).size,1);
+});
+test('optional wrist orientation works in target mode and preserves wrist position',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math,before=rig.joints(f);
+ f.leftWristPitch=.5;f.leftPalmTurn=.7;
+ const after=rig.joints(f);assert.equal(JSON.stringify(after.hands),JSON.stringify(before.hands));
+ assert.ok(m.len(m.sub(after.palmNormals.left,before.palmNormals.left))>.1);
+ assert.ok(Math.abs(m.len(after.palmNormals.left)-1)<1e-8);
+ assert.equal(rig.mirrorFrame(f).rightPalmTurn,.7);
+ const pose=rig.initialPose();pose.frames[0]=f;assert.doesNotThrow(()=>rig.checkPose(pose));
+ f.leftWristPitch=2;assert.throws(()=>rig.checkPose(pose));
+});
+test('alignment requests preserve the source on success or failure',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),before=JSON.stringify(f);
+ const result=rig.fitSupport(f,'floor',['leftFoot','rightFoot'],null,true,true);
+ assert.equal(JSON.stringify(f),before);
+ if(result.ok){for(const key of ['leftFoot','rightFoot']){
+   const j=rig.joints(result.frame),surface=rig.contactSurface(result.frame,key,'floor');
+   assert.ok(rig.supportAlignment(j,key,surface)>=Math.cos(Math.PI/12));assert.ok(result.frame.pointLocks[key]);
+ }}else assert.ok(result.issue);
+});

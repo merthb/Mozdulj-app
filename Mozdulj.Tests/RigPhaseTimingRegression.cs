@@ -61,7 +61,12 @@ internal static class RigPhaseTimingRegression
         var handPose=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
         Check(handPose.Frames[0].LeftHandCurl==0&&handPose.Frames[0].RightHandCurl==.78f,"hand pose round trip");
         frame.RightHandCurl=1.01f;Reject(pose);frame.RightHandCurl=float.NaN;Reject(pose);
-        Console.WriteLine("PASS 3D timing, equipment, bands, articulation and hand compatibility");
+        frame.RightHandCurl=null;frame.LeftWristPitch=.5f;frame.RightPalmTurn=.8f;
+        Rig3DValidator.Validate(pose);
+        var oriented=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
+        Check(oriented.Frames[0].LeftWristPitch==.5f&&oriented.Frames[0].RightPalmTurn==.8f,"support orientation round trip");
+        frame.LeftWristPitch=2;Reject(pose);
+        Console.WriteLine("PASS 3D timing, equipment, bands, articulation, hand and support compatibility");
     }
     private static void Reject(Rig3DPose p){try{Rig3DValidator.Validate(p);}catch(InvalidDataException){return;}throw new Exception("TEST FAIL: invalid 3D phase timing accepted");}
     private static void Check(bool ok,string label){if(!ok)throw new Exception("TEST FAIL: "+label);}

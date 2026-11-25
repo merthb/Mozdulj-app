@@ -126,6 +126,7 @@ function syncContactSurfaces(){
  const needs=type==='wall'?'wall':type==='seat'?'chair':null;
  $('contactSurfaceRow').hidden=!needs;
  $('contactSideRow').hidden=type==='seat';
+ $('contactAlign').disabled=type==='seat';
  if(needs){
    for(const [i,prop] of (current().equipment||[]).entries()){
      if(prop.type!==needs)continue;
@@ -139,16 +140,20 @@ function syncContactSurfaces(){
  }
  $('fitContact').disabled=!!needs&&surface.value==='';
 }
+function inspectContacts(){
+ const contacts=MozduljRig.Collision.naturalContacts(MozduljRig.Collision.bodySegments(MozduljRig.joints(current())));
+ $('naturalContactStatus').textContent=contacts.length?contacts.map(c=>c.name.slice(5).split('/').map(bodyPartLabel).join(' – ')).join(' · '):window.rigText('Nincs közeli, áthatolásmentes testkontaktus.');
+}
 function fitContact(){
  stopPreview();closeGesture();
  const action=$('contactAction').value,type=action==='feet'||action==='hands'?'floor':action;
  const sides=$('contactSide').value==='both'?['left','right']:[$('contactSide').value];
  const keys=type==='seat'?['root']:sides.map(side=>side+(action==='feet'?'Foot':'Hand'));
  const index=$('contactSurface').value===''?null:Number($('contactSurface').value);
- const result=MozduljRig.fitSupport(current(),type,keys,index,$('contactLock').checked);
+ const result=MozduljRig.fitSupport(current(),type,keys,index,$('contactLock').checked,$('contactAlign').checked&&type!=='seat');
  const status=$('contactStatus');
  if(!result.ok){
-   const explanations={target:'Nem megfelelő testpont.',locked:'A testpont már rögzítve van. Előbb oldd fel a rögzítést.',mode:'A jelenlegi végtagállás nem alakítható át ugrásmentesen.',orientation:'Ehhez közel függőleges törzsű kiinduló póz szükséges.',surface:'Nincs megfelelő támaszfelület.',reach:'A támaszfelület nem érhető el ebben a testhelyzetben.',outside:'A testpont a támaszfelület szélén kívülre kerülne.'};
+   const explanations={alignment:'A tenyér vagy talp nem igazítható a felülethez a jelenlegi ízületi korlátok mellett.',target:'Nem megfelelő testpont.',locked:'A testpont már rögzítve van. Előbb oldd fel a rögzítést.',mode:'A jelenlegi végtagállás nem alakítható át ugrásmentesen.',orientation:'Ehhez közel függőleges törzsű kiinduló póz szükséges.',surface:'Nincs megfelelő támaszfelület.',reach:'A támaszfelület nem érhető el ebben a testhelyzetben.',outside:'A testpont a támaszfelület szélén kívülre kerülne.'};
    const id=result.issue;
    activeIssue=id.startsWith('body:')||id.startsWith('lock:')||id.includes('@')?id:null;
    status.textContent=window.rigText('Az illesztés nem sikerült. A póz változatlan maradt.')+' '+window.rigText(explanations[id]||'Ütközés vagy rögzítés akadályozza a mozdulatot.')+(result.key?' '+window.rigText(targetLabels[result.key]):'');
@@ -236,7 +241,7 @@ function drawEquipmentLabels(frame,j){
    label.style.left=point[0]+'px';label.style.top=point[1]+'px';overlay.appendChild(label);
  }
 }
-function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked,issue:activeIssue,dark:document.documentElement.classList.contains('dark'),equipmentMode:mode==='editEquipment',equipmentSelection:selectedEquipment,displayMode:$('modelDisplay').value,highContrast:document.documentElement.classList.contains('high-contrast'),axisSpace:$('axisSpace').value,moveAxis:$('moveAxis').value,directionHints:currentDirectionHints()});syncViewCube();syncPointCoordinates(false,animation?null:j);drawEquipmentLabels(f,j);$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='articulate'?window.rigText('A húzás a kapcsolódó ízületi szögeket módosítja; a pont nem mozgatható tetszőlegesen.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
+function show(){if(!studio)return;$('naturalContactStatus').textContent='';let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked,issue:activeIssue,dark:document.documentElement.classList.contains('dark'),equipmentMode:mode==='editEquipment',equipmentSelection:selectedEquipment,displayMode:$('modelDisplay').value,highContrast:document.documentElement.classList.contains('high-contrast'),axisSpace:$('axisSpace').value,moveAxis:$('moveAxis').value,directionHints:currentDirectionHints()});syncViewCube();syncPointCoordinates(false,animation?null:j);drawEquipmentLabels(f,j);$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='articulate'?window.rigText('A húzás a kapcsolódó ízületi szögeket módosítja; a pont nem mozgatható tetszőlegesen.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
 function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number((f.root[1]*100).toFixed(1));$('upperYaw').value=Math.round(deg(f.upperYaw||0));$('spineBend').value=Math.round(deg(f.spineBend||0));
  for(const id of Object.keys(MozduljRig.ARTICULATION_LIMITS))if($(id))$(id).value=Math.round(deg(f[id]||0));
@@ -619,6 +624,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('showAllTargets').onchange=show;
  $('contactAction').onchange=()=>{syncContactSurfaces();$('contactStatus').textContent='';};
  $('fitContact').onclick=fitContact;
+ $('inspectContacts').onclick=inspectContacts;
  $('overlapTargets').onchange=e=>{if(!e.target.value)return;$('targetSelect').value=e.target.value;chooseTarget(e.target.value);$('overlapTargets').hidden=true;};
  $('runReview').onclick=()=>reviewPose();
  $('undoPose').onclick=undoPose;

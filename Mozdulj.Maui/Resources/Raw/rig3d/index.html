@@ -20,10 +20,10 @@
 <div class="line"><label for="contactAction">Illesztési művelet</label><select id="contactAction"><option value="feet">Lábfejek a talajra</option><option value="hands">Kezek a talajra</option><option value="wall">Kezek a falhoz</option><option value="seat">Medence az ülőfelületre</option></select></div>
 <div class="line" id="contactSideRow"><label for="contactSide">Érintett oldal</label><select id="contactSide"><option value="both">Mindkét oldal</option><option value="left">Bal oldal</option><option value="right">Jobb oldal</option></select></div>
 <div class="line" id="contactSurfaceRow" hidden><label for="contactSurface">Támaszfelület</label><select id="contactSurface"></select></div>
-<label class="target-toggle"><input type="checkbox" id="contactLock"> Sikeres illesztés után rögzítés</label>
+<label class="target-toggle"><input type="checkbox" id="contactAlign"> Tenyér / talp irányának igazítása</label><label class="target-toggle"><input type="checkbox" id="contactLock"> Sikeres illesztés után rögzítés</label>
 <button type="button" id="fitContact">Illesztés végrehajtása</button>
-<div class="hint" id="contactStatus" role="status" aria-live="polite"></div>
-<div class="hint">A közelítő geometriai illesztés a meglévő testhelyzethez igazodik. Nem változtatja meg automatikusan az egész pózt vagy a tenyér és talp irányát.</div>
+<div class="hint" id="contactStatus" role="status" aria-live="polite"></div><button type="button" id="inspectContacts">Természetes testkontaktusok keresése</button><div class="hint" id="naturalContactStatus" role="status"></div>
+<div class="hint">Az irányillesztés opcionális: a tenyér vagy talp normálisa legfeljebb 15°-kal térhet el a támasz irányától. Kéznél nyitott tenyérre vált. Ha nincs megfelelő megoldás, a póz változatlan.</div>
 </details>
 <details class="edit-group"><summary>Támaszpontok rögzítése</summary>
 <div class="hint">A kijelölt pontok maradnak a jelenlegi térbeli helyükön. A kék jelölés a rögzített pontokat mutatja. Ha a póz így nem megoldható, a mozgatás megáll.</div>
@@ -45,7 +45,7 @@
 <button type="button" id="copyArm">A kiválasztott kar másolása a másik oldalra</button><label for="sideShoulderElevation">Váll önálló emelése / süllyesztése</label><input id="sideShoulderElevation" type="range" min="-20" max="20" value="0"><label for="sideShoulderProtraction">Váll előretolása / hátrahúzása</label><input id="sideShoulderProtraction" type="range" min="-25" max="25" value="0"><label for="armFlex">Kar előreemelése</label><input id="armFlex" type="range" min="-29" max="174" value="0">
 <label for="armAbduct">Kar oldalra emelése</label><input id="armAbduct" type="range" min="0" max="154" value="0">
 <label for="armRotation">Felkar befelé / kifelé forgatása</label><input id="armRotation" type="range" min="-90" max="90" value="0"><label for="elbowFlex">Könyökhajlítás (0–150°)</label><input id="elbowFlex" type="range" min="0" max="150" value="0">
-<label for="wristFlex">Csukló hajlítása</label><input id="wristFlex" type="range" min="-59" max="59" value="0"><label for="sideWristDeviation">Csukló oldalirányú hajlítása</label><input id="sideWristDeviation" type="range" min="-25" max="25" value="0">
+<label for="wristFlex">Csukló hajlítása</label><input id="wristFlex" type="range" min="-59" max="59" value="0"><label for="sideWristDeviation">Csukló oldalirányú hajlítása</label><input id="sideWristDeviation" type="range" min="-25" max="25" value="0"><label for="sideWristPitch">Csukló kiegészítő hajlítása</label><input id="sideWristPitch" type="range" min="-59" max="59" value="0"><label for="sidePalmTurn">Tenyér kiegészítő forgatása</label><input id="sidePalmTurn" type="range" min="-90" max="90" value="0">
 <label for="handShape">Kéztartás</label><select id="handShape"><option value="legacy">Régi egyszerűsített kéz</option><option value="open">Nyitott tenyér</option><option value="relaxed">Laza kéz</option><option value="grip">Eszközfogás</option><option value="fist">Ököl</option><option value="custom" disabled>Egyéni ujjbehajlítás</option></select>
 <label for="handCurl">Ujjak együttes behajlítása (%)</label><input id="handCurl" type="range" min="0" max="100" step="1" value="0" disabled>
 <div class="hint">A kéztartás a szalag és a kézisúlyzó fogási pontját is módosítja. Az ujjak együtt mozgathatók.</div>

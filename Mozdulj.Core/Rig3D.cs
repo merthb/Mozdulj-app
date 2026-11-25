@@ -71,6 +71,14 @@ public sealed class Rig3DFrame
     public float? RightAnkleYaw { get; set; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public float? RightAnkleRoll { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LeftWristPitch { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? RightWristPitch { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LeftPalmTurn { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? RightPalmTurn { get; set; }
     // Null preserves the legacy hand; 0 = open, 1 = fully curled.
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public float? LeftHandCurl { get; set; }
@@ -177,7 +185,7 @@ public static class Rig3DValidator
             foreach(var curl in new[]{f.LeftHandCurl,f.RightHandCurl})
                 if(curl is float amount && (!float.IsFinite(amount)||amount<0||amount>1))
                     throw new InvalidDataException(AppLocalization.Text("RigInvalidHandPose"));
-            foreach(var (angle,degrees) in new (float? Angle,int Degrees)[]{(f.PelvisPitch,30),(f.PelvisYaw,35),(f.PelvisRoll,25),(f.LumbarBend,30),(f.LumbarSideBend,25),(f.ThoracicBend,35),(f.ThoracicSideBend,25),(f.LeftShoulderElevation,20),(f.LeftShoulderProtraction,25),(f.LeftWristDeviation,25),(f.LeftAnkleYaw,30),(f.LeftAnkleRoll,25),(f.RightShoulderElevation,20),(f.RightShoulderProtraction,25),(f.RightWristDeviation,25),(f.RightAnkleYaw,30),(f.RightAnkleRoll,25)})
+            foreach(var (angle,degrees) in new (float? Angle,int Degrees)[]{(f.PelvisPitch,30),(f.PelvisYaw,35),(f.PelvisRoll,25),(f.LumbarBend,30),(f.LumbarSideBend,25),(f.ThoracicBend,35),(f.ThoracicSideBend,25),(f.LeftShoulderElevation,20),(f.LeftShoulderProtraction,25),(f.LeftWristDeviation,25),(f.LeftAnkleYaw,30),(f.LeftAnkleRoll,25),(f.RightShoulderElevation,20),(f.RightShoulderProtraction,25),(f.RightWristDeviation,25),(f.RightAnkleYaw,30),(f.RightAnkleRoll,25),(f.LeftWristPitch,59),(f.RightWristPitch,59),(f.LeftPalmTurn,90),(f.RightPalmTurn,90)})
                 if(angle is float value && (!float.IsFinite(value)||Math.Abs(value)>degrees*Math.PI/180+1e-6))
                     throw new InvalidDataException(AppLocalization.Text("RigInvalidArticulation"));
             if(f.PointLocks is not null)

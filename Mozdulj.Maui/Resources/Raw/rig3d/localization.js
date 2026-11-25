@@ -1,6 +1,13 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Tenyér / talp irányának igazítása":"Align palm / sole orientation",
+  "Az irányillesztés opcionális: a tenyér vagy talp normálisa legfeljebb 15°-kal térhet el a támasz irányától. Kéznél nyitott tenyérre vált. Ha nincs megfelelő megoldás, a póz változatlan.":"Optional orientation fitting: the palm or sole normal may differ by at most 15° from the support direction. Hands switch to an open palm. If no solution is found, the pose remains unchanged.",
+  "A tenyér vagy talp nem igazítható a felülethez a jelenlegi ízületi korlátok mellett.":"The palm or sole cannot be aligned with the surface within the current joint limits.",
+  "Csukló kiegészítő hajlítása":"Additional wrist flexion",
+  "Tenyér kiegészítő forgatása":"Additional palm rotation",
+  "Természetes testkontaktusok keresése":"Find natural body contacts",
+  "Nincs közeli, áthatolásmentes testkontaktus.":"No nearby non-penetrating body contacts.",
   "A húzás a kapcsolódó ízületi szögeket módosítja; a pont nem mozgatható tetszőlegesen.":"Dragging changes the connected joint angles; this point cannot move arbitrarily.",
   "Lehetséges mozgásirányok ellenőrzése":"Check possible movement directions",
   "1 cm-es próba – elérhető: ":"1 cm trial – reachable: ",
