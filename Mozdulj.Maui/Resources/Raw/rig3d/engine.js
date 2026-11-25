@@ -1642,6 +1642,24 @@ function resetBodyPart(frame,reference,group){
  }
  return out;
 }
+// References are view-only and never enter the serialized pose or picking.
+function phaseReferences(frames,index,mode){
+ if(!Number.isInteger(index)||index<0||index>=frames.length)return [];
+ const refs=[];
+ if((mode==='previous'||mode==='both')&&index>0)refs.push({kind:'previous',frame:frames[index-1]});
+ if((mode==='next'||mode==='both')&&index+1<frames.length)refs.push({kind:'next',frame:frames[index+1]});
+ return refs;
+}
+function copyPhaseBodyPart(frame,reference,group){
+ const candidate=resetBodyPart(frame,reference,group);
+ if(!candidate)return {ok:false,issue:'target'};
+ const problem=copyIssue(frame,candidate);
+ if(problem)return {ok:false,issue:problem.id};
+ const prior=new Set(joints(frame).clamped);
+ const unreachable=joints(candidate).clamped.find(key=>!prior.has(key));
+ if(unreachable)return {ok:false,issue:'reach:'+unreachable};
+ return {ok:true,frame:candidate};
+}
 function moveRoot(frame,delta){
  frame.root=frame.root.map((v,i)=>clamp(v+delta[i],i===1?0:-3,3));
  return frame;
@@ -1756,7 +1774,7 @@ function shaded3D(canvas){
     for(const sign of [-1,1])ell(add(p,mul(axis,sign*.12)),[.035,.06,.06],'metal');
   }}
  }}
- function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false,axisSpace='world',moveAxis='free',directionHints=[]}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false,axisSpace='world',moveAxis='free',directionHints=[],referenceFrames=[]}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],dark?[.26,.23,.34]:'floor');
@@ -1815,6 +1833,23 @@ function shaded3D(canvas){
      for(const [a,b] of skeletonSegments(j))limb(a,b,.016,bone);
      for(const target of BODY_TARGETS){const pos=bodyPoint(j,target.key);ell(pos,[.025,.025,.025],bone);}
    }finally{gl.enable(gl.DEPTH_TEST);}
+ }
+ if(edit&&referenceFrames.length){
+   // Overlay only the reference skeletons, without equipment, depth writes
+   // or picking targets. Next uses dashed bones, previous continuous bones.
+   gl.enable(gl.BLEND);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);
+   characterOpacity=highContrast?.85:.48;
+   try{
+     for(const {kind,frame:reference} of referenceFrames){
+       const refJoints=joints(reference),next=kind==='next';
+       const color=next?(dark?[1,.74,.28]:[.65,.33,.04]):(dark?[.39,.85,1]:[.09,.35,.72]);
+       for(const [a,b] of skeletonSegments(refJoints)){
+         if(next){for(let i=0;i<3;i++)limb(add(a,mul(sub(b,a),i/3)),add(a,mul(sub(b,a),(i+.60)/3)),.012,color);}
+         else limb(a,b,.012,color);
+       }
+       ell(refJoints.head,[.047,.047,.047],color);
+     }
+   }finally{characterOpacity=1;gl.depthMask(true);gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);}
  }
  if(edit){
    const handle=(pos,key)=>{const r=key===selected? .068:.045;ell(pos,[r,r,r],key===selected?[.15,.8,.48]:'handle');};
@@ -1935,5 +1970,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
