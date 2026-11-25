@@ -950,3 +950,16 @@ test('workout guide refuses unchecked transitions and provides a still fallback'
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  assert.ok(html.includes('id="workoutGuideStatus"'));
 });
+
+test('repetition guide loops authored holds instead of stopping at the first hold',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
+ b.direction='left';b.phaseType='hold';b.headYaw=.2;
+ const before=JSON.stringify([a,b]);
+ const timed=rig.workoutGuidePlan([a,b],'left');
+ const reps=rig.workoutGuidePlan([a,b],'left',true);
+ assert.equal(timed.kind,'hold');assert.equal(reps.kind,'loop');
+ assert.equal(rig.workoutGuideAt(reps,reps.plan.duration).headYaw,0);
+ assert.equal(rig.workoutGuideAt(timed,30000).headYaw,.2);
+ assert.equal(rig.workoutGuidePlan([a,b],'right',true).kind,'unassigned');
+ assert.equal(JSON.stringify([a,b]),before);
+});

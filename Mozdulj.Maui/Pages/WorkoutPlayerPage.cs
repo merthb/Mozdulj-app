@@ -41,6 +41,12 @@ public sealed class WorkoutPlayerPage : ContentPage
     private WebView? _guideWeb;
     private bool _guideOpen,_guideReady,_guideUpdating,_guidePending;
     private string? _guideLoadedItem;
+    private string? _repGuideItem;
+    private List<RepGuideTarget> _repGuideTargets=[];
+    private int _repGuideIndex,_repGuideStartedAt;
+    private bool _syncingRepGuide;
+    private readonly Picker _repGuidePicker=new(){IsVisible=false,Title=AppLocalization.IsEnglish?"Demonstration direction":"Bemutatás iránya"};
+    private readonly Label _repGuideNote=UI.Label("",12,color:UI.Muted);
 
     // Ends local audio and pauses the YouTube Music session (if selected).
     // Pausing is idempotent: it never starts an already paused track.
@@ -96,6 +102,16 @@ public sealed class WorkoutPlayerPage : ContentPage
         content.Children.Add(_equipmentCue);
         _guideToggle.Clicked+=(_,_)=>ToggleGuide();
         content.Children.Add(_guideToggle);
+        _repGuidePicker.SelectedIndexChanged+=(_,_)=>{
+            if(_syncingRepGuide||_repGuidePicker.SelectedIndex<0||_repGuidePicker.SelectedIndex>=_repGuideTargets.Count)return;
+            if(_index<0||_index>=_workout.Items.Count||_repGuideItem!=_workout.Items[_index].Id)return;
+            _repGuideIndex=_repGuidePicker.SelectedIndex;
+            _repGuideStartedAt=_workout.Items[_index].ActiveSeconds;
+            RefreshGuide();
+        };
+        _guideHost.Children.Add(_repGuidePicker);
+        _guideHost.Children.Add(_repGuideNote);
+        _repGuideNote.IsVisible=false;
         content.Children.Add(_guideHost);
         if (_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
             _state.Preferences.RelaxationMusicSource=="youtube_music" &&
@@ -325,6 +341,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             }
             Refresh();
         }
+        else if(_guideOpen) RefreshGuide();
     }
     private async Task FinishCurrentAsync(bool skip)
     {
@@ -401,10 +418,30 @@ public sealed class WorkoutPlayerPage : ContentPage
         _guideWeb=null;_guideHost.IsVisible=false;
         _guideToggle.Text=AppLocalization.IsEnglish?"Retry 3D guide":"3D útmutató újrapróbálása";
     }
+    private WorkoutGuideTiming? GuideTiming(WorkoutItem? item)
+    {
+        if(item is null)return null;
+        if(item.Measure!="reps")return Rig3DMovement.ForTimedWorkout(_workout,item,_paused);
+        if(_repGuideItem!=item.Id)
+        {
+            _repGuideItem=item.Id;
+            _repGuideTargets=Rig3DMovement.RepetitionGuideTargets(item);
+            _repGuideIndex=0;_repGuideStartedAt=item.ActiveSeconds;
+            _syncingRepGuide=true;
+            try
+            {
+                _repGuidePicker.ItemsSource=_repGuideTargets.Select(t=>$"{t.Count} {TimedTargets.Direction(t.Direction)}").ToList();
+                _repGuidePicker.SelectedIndex=_repGuideTargets.Count>0?0:-1;
+            }
+            finally{_syncingRepGuide=false;}
+        }
+        var target=_repGuideTargets.Count>0?_repGuideTargets[_repGuideIndex]:null;
+        return Rig3DMovement.ForRepetitionWorkout(_workout,item,target,_repGuideStartedAt,_paused);
+    }
     private void RefreshGuide()
     {
         var item=_index>=0&&_index<_workout.Items.Count?_workout.Items[_index]:null;
-        var timing=item is null?null:Rig3DMovement.ForTimedWorkout(_workout,item,_paused);
+        var timing=GuideTiming(item);
         var hasRig=item is not null&&_state.FindExercise(item.ExerciseId)?.Pose.Rig3D is not null;
         var available=!_finished&&timing is not null&&hasRig;
         _guideToggle.IsVisible=available;
@@ -412,6 +449,10 @@ public sealed class WorkoutPlayerPage : ContentPage
             ? (AppLocalization.IsEnglish?"Hide 3D guide":"3D útmutató elrejtése")
             : (AppLocalization.IsEnglish?"Show 3D guide":"3D útmutató megjelenítése");
         _guideHost.IsVisible=available&&_guideOpen;
+        var repetition=timing?.Repetitions==true;
+        _repGuidePicker.IsVisible=repetition;
+        _repGuideNote.IsVisible=repetition;
+        _repGuideNote.Text=repetition?(AppLocalization.IsEnglish?"Choose the direction manually. The animation does not count completed repetitions.":"Az irányt kézzel válaszd ki. Az animáció nem számolja az elvégzett ismétléseket."):"";
         if(!_guideReady||_guideWeb is null)return;
         _guidePending=true;
         if(!_guideUpdating)_=UpdateGuideAsync();
@@ -425,7 +466,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             {
                 _guidePending=false;
                 var item=_index>=0&&_index<_workout.Items.Count?_workout.Items[_index]:null;
-                var timing=item is null?null:Rig3DMovement.ForTimedWorkout(_workout,item,_paused);
+                var timing=GuideTiming(item);
                 var rig=item is null?null:_state.FindExercise(item.ExerciseId)?.Pose.Rig3D;
                 if(!_guideOpen||_finished||timing is null||rig is null)
                 {
