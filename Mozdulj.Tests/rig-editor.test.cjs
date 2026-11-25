@@ -977,12 +977,35 @@ test('bend plane guard identifies abrupt elbow and knee reversal, not unchanged 
    assert.ok(rig.issueGeometry(rig.baseFrame('stand'),j,'bend:'+key).length);
  }
 });
-test('supine IK elbow jump is not allowed in a checked preview or swept edit',()=>{
+test('supine IK floor correction preserves continuous bend in checked preview and swept edit',()=>{
  const rig=loadRig(),a=rig.baseFrame('supine'),b=JSON.parse(JSON.stringify(a));
  a.hands.left[1]+=.195;b.hands.left[1]+=.200;
- assert.equal(rig.bendFlip(rig.joints(a),rig.joints(b)),'leftElbow');
+ assert.equal(rig.bendFlip(rig.joints(a),rig.joints(b)),null);
  const before=JSON.stringify(a),after=JSON.stringify(b);
- assert.equal(rig.Collision.previewTransition(a,b).ok,false);
- assert.equal(rig.Collision.transition(a,b).limited,true);
+ assert.equal(rig.Collision.previewTransition(a,b).ok,true);
+ assert.equal(rig.Collision.transition(a,b).limited,false);
  assert.equal(JSON.stringify(a),before);assert.equal(JSON.stringify(b),after);
+});
+
+test('floor hinge projection preserves bones, endpoint and reflection symmetry',()=>{
+ const rig=loadRig(),m=rig.math,dist=(a,b)=>m.len(m.sub(a,b)),mirror=p=>[-p[0],p[1],p[2]];
+ for(const target of [[0,.12,.44],[.44,.12,0]]){
+  const a=[0,.12,0],pole=[0,-.5,0],s=rig.solve2(a,target,.31,.28,pole);
+  const fixed=rig.fitHingeFloor(a,s,'left');
+  assert.ok(fixed.mid[1]>=.075-1e-8);
+  assert.ok(Math.abs(dist(a,fixed.mid)-.31)<1e-8);
+  assert.ok(Math.abs(dist(fixed.mid,fixed.end)-.28)<1e-8);
+  assert.deepEqual(fixed.end,s.end);
+  const reflected=rig.fitHingeFloor(mirror(a),{...s,mid:mirror(s.mid),end:mirror(s.end)},'right');
+  assert.ok(dist(reflected.mid,mirror(fixed.mid))<1e-8);
+  assert.equal(rig.fitHingeFloor(a,fixed,'left'),fixed);
+ }
+});
+test('impossible floor correction preserves lengths without pretending the floor is reachable',()=>{
+ const rig=loadRig(),m=rig.math,a=[0,-.5,0],s=rig.solve2(a,[0,-.5,.44],.31,.28,[0,-1,0]);
+ const fixed=rig.fitHingeFloor(a,s,'left');
+ assert.ok(fixed.mid[1]<.075);
+ assert.ok(Math.abs(m.len(m.sub(a,fixed.mid))-.31)<1e-8);
+ assert.ok(Math.abs(m.len(m.sub(fixed.mid,fixed.end))-.28)<1e-8);
+ assert.deepEqual(fixed.end,s.end);
 });
