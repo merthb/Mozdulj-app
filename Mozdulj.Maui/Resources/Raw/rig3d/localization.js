@@ -1,6 +1,15 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Szabad":"Free",
+  "Térben rögzített ●":"World lock ●",
+  "Eszközhöz rögzített ◆":"Equipment lock ◆",
+  "Eszközkapcsolat":"Equipment attachment",
+  "Rögzítés sikeres illesztés után":"Lock after successful alignment",
+  "Válassz szabad, térbeli vagy eszközhöz viszonyított rögzítést. A térbeli pont helyben marad (●), az eszközhöz kötött pont követi az eszközt (◆). Ha a póz nem megoldható, a mozgatás megáll.":"Choose free, world or equipment-relative locking. World locks stay in place (●), equipment locks follow their object (◆). Motion stops if the constraints cannot be satisfied.",
+  "A testpont nem rögzíthető a kiválasztott eszközhöz.":"The body point cannot be attached to the selected equipment.",
+  "Illesztés kész, a testpontok az eszközhöz rögzítve.":"Alignment complete, points attached to the equipment.",
+  "Előbb oldd fel az eszközhöz kötött testpontokat.":"Unlock the body points attached to the equipment first.",
   "Tenyér / talp irányának igazítása":"Align palm / sole orientation",
   "Az irányillesztés opcionális: a tenyér vagy talp normálisa legfeljebb 15°-kal térhet el a támasz irányától. Kéznél nyitott tenyérre vált. Ha nincs megfelelő megoldás, a póz változatlan.":"Optional orientation fitting: the palm or sole normal may differ by at most 15° from the support direction. Hands switch to an open palm. If no solution is found, the pose remains unchanged.",
   "A tenyér vagy talp nem igazítható a felülethez a jelenlegi ízületi korlátok mellett.":"The palm or sole cannot be aligned with the surface within the current joint limits.",
