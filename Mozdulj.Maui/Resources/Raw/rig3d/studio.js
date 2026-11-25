@@ -619,7 +619,7 @@ function syncViewCube(){
 }
 function directionKey(){
  const c=studio.getCamera(),space=$('axisSpace').value;
- return JSON.stringify([current(),selectedTarget,space,$('symmetricEdit').checked,space==='camera'?[c.azimuth,c.elevation]:null]);
+ return JSON.stringify([current(),selectedTarget,space,$('symmetricEdit').checked,$('coupledGirdle').checked,space==='camera'?[c.azimuth,c.elevation]:null]);
 }
 function currentDirectionHints(){
  if(!directionHints.length||mode!=='move'||animation||directionSignature!==directionKey()){
@@ -629,7 +629,7 @@ function currentDirectionHints(){
 }
 function checkDirections(){
  if(!pose||!selectedTarget||animation||mode!=='move')return;
- directionHints=MozduljRig.probeTargetDirections(current(),MozduljRig.bodyTarget(selectedTarget),studio.getCamera(),$('axisSpace').value,$('symmetricEdit').checked);
+ directionHints=MozduljRig.probeTargetDirections(current(),MozduljRig.bodyTarget(selectedTarget),studio.getCamera(),$('axisSpace').value,$('symmetricEdit').checked,$('coupledGirdle').checked);
  directionSignature=directionKey();
  const label=h=>(h.sign>0?'+':'−')+h.axis;
  const allowed=directionHints.filter(h=>h.allowed).map(label).join(', '),blocked=directionHints.filter(h=>!h.allowed).map(label).join(', ');
@@ -655,7 +655,7 @@ function applyPointCoordinates(){
  const desired=['pointX','pointY','pointZ'].map(id=>$(id).valueAsNumber/100);
  if(desired.some(v=>!Number.isFinite(v)||Math.abs(v)>3)){msg('Érvénytelen testpont-koordináta.');return;}
  closeGesture();
- const opts=MozduljRig.targetEditOptions(sel,$('symmetricEdit').checked,$('adaptRootPath').checked),m=MozduljRig.math;
+ const opts=MozduljRig.targetEditOptions(sel,$('symmetricEdit').checked,$('adaptRootPath').checked,$('coupledGirdle').checked),m=MozduljRig.math;
  const result=guardedEdit(f=>opts.move(f,m.sub(desired,MozduljRig.bodyPoint(MozduljRig.joints(f),sel.key))),opts.prepare,opts.adapt);
  if(result.limited)checkDirections();
  syncPointCoordinates(true);
@@ -835,7 +835,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  for(const [kind,selector] of [['arm','armSide'],['leg','legSide']])
    for(const suffix of MozduljRig.SIDE_ARTICULATION[kind])$('side'+suffix).oninput=e=>{
      const selected=$(selector).value,value=rad(+e.target.value),symmetric=$('symmetricEdit').checked;
-     guardedEdit(f=>MozduljRig.editSideArticulation(f,selected,suffix,value,symmetric),null,/^(Shoulder|Scapula)/.test(suffix));
+     guardedEdit(f=>MozduljRig.editSideArticulation(f,selected,suffix,value,symmetric,$('coupledGirdle').checked),null,/^(Shoulder|Scapula)/.test(suffix));
    };
  $('handShape').onchange=e=>{
    const selected=$('armSide').value,symmetric=$('symmetricEdit').checked;
@@ -1003,7 +1003,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(multiGesture||!drag||drag.id!==e.pointerId)return;
    let dx=p.x-drag.x,dy=p.y-drag.y,c=studio.getCamera();if(mode==='move'){
    if(drag.sel){
-     const sel=drag.sel,opts=MozduljRig.targetEditOptions(sel,$('symmetricEdit').checked,$('adaptRootPath').checked);
+     const sel=drag.sel,opts=MozduljRig.targetEditOptions(sel,$('symmetricEdit').checked,$('adaptRootPath').checked,$('coupledGirdle').checked);
      const result=guardedEdit(f=>opts.move(f,MozduljRig.pointDragDelta(f,sel,c,canvas.clientHeight,dx,dy,e.shiftKey?'depth':$('moveAxis').value,$('axisSpace').value)),opts.prepare,opts.adapt);
      drag.blocked=result.limited;
    }
