@@ -258,10 +258,10 @@ test('editor markup preserves panel boundaries and valid nesting',()=>{
  assert.match(html,/<\/div>\s*<\/div><div id="status"/);
 });
 
-test('19 selectable anatomy points have finite world coordinates',()=>{
+test('21 selectable anatomy points have finite world coordinates',()=>{
  const rig=loadRig(),j=rig.joints(rig.baseFrame('stand'));
- assert.equal(rig.BODY_TARGETS.length,19);
- assert.equal(new Set(rig.BODY_TARGETS.map(x=>x.key)).size,19);
+ assert.equal(rig.BODY_TARGETS.length,21);
+ assert.equal(new Set(rig.BODY_TARGETS.map(x=>x.key)).size,21);
  for(const t of rig.BODY_TARGETS){assert.equal(rig.bodyTarget(t.key).kind,t.kind);assert.ok(rig.bodyPoint(j,t.key).every(Number.isFinite));}
 });
 test('direct bend-plane edit keeps bone lengths and endpoint unchanged',()=>{
@@ -1062,4 +1062,32 @@ test('segmental spine twists preserve hip and clavicle distances and mirror dire
  const restored=rig.resetBodyPart(next,f,'trunk');assert.equal(restored.thoracicYaw,undefined);
  const half=rig.Collision.interpolate(next,f,.5);assert.equal(half.thoracicYaw,.15);
  assert.equal(rig.validArticulation({...f,lumbarYaw:.5}),false);
+});
+
+test('scapular articulation moves its own shoulder while preserving bones and opposite side',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),j=rig.joints(f);
+ const next={...f,leftScapulaElevation:.12,leftScapulaProtraction:.2,leftScapulaRotation:.3},q=rig.joints(next);
+ const d=(a,b)=>m.len(m.sub(a,b));
+ assert.ok(d(q.scapula.left.inferior,j.scapula.left.inferior)>.01);
+ assert.ok(d(q.shoulder.left,j.shoulder.left)>.01);
+ for(const key of ['root','hip','head','neck'])assert.deepEqual(q[key],j[key]);
+ assert.deepEqual(q.scapula.right,j.scapula.right);assert.deepEqual(q.shoulder.right,j.shoulder.right);
+ assert.ok(Math.abs(d(q.shoulder.left,q.elbow.left)-.31)<1e-8);
+ assert.ok(Math.abs(d(q.elbow.left,q.hands.left)-.28)<1e-8);
+ for(const [a,b] of [['superior','medial'],['medial','inferior'],['inferior','superior']])assert.ok(Math.abs(d(q.scapula.left[a],q.scapula.left[b])-d(j.scapula.left[a],j.scapula.left[b]))<1e-8);
+ const mirror=rig.mirrorFrame(next),r=rig.joints(mirror);
+ assert.equal(mirror.rightScapulaRotation,.3);
+ assert.ok(d(r.scapula.right.inferior,[-q.scapula.left.inferior[0],q.scapula.left.inferior[1],q.scapula.left.inferior[2]])<1e-8);
+ assert.equal(rig.resetBodyPart(next,f,'leftArm').leftScapulaElevation,undefined);
+ assert.equal(rig.Collision.interpolate(next,f,.5).leftScapulaProtraction,.1);
+ assert.equal(rig.validArticulation({...f,leftScapulaRotation:2}),false);
+ assert.deepEqual(rig.bodyPoint(q,'leftScapula'),q.scapula.left.inferior);
+});
+test('scapula control supports symmetry and direct body-point editing',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ assert.ok(rig.editSideArticulation(f,'left','ScapulaProtraction',.1,true));
+ assert.equal(f.rightScapulaProtraction,.1);
+ const sel=rig.bodyTarget('leftScapula');assert.ok(sel);
+ assert.ok(rig.moveTargetBy(f,sel,[0,.01,0]));
+ assert.ok(rig.validArticulation(f));
 });
