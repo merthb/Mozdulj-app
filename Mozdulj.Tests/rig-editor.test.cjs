@@ -805,3 +805,31 @@ test('equipment-relative support coordinates follow stable identity, translation
  assert.equal(rig.captureEquipmentSupport(rig.baseFrame('chair'),'root',0),null);
  assert.equal(rig.resolveEquipmentSupport(f,{...binding,local:[NaN,0,0]}),null);
 });
+
+
+test('relative support follows a swept equipment move and rejects unreachable movement atomically',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),j=rig.joints(f);
+ const z=Math.min(...rig.contactEnvelope(j,'rightHand').map(x=>x.p[2]-x.r))-.027;
+ f.equipment=[{type:'wall',id:'eq-1',position:[j.hands.right[0],j.hands.right[1],z],yaw:0}];
+ const fit=rig.fitSupport(f,'wall',['rightHand'],0,true,false,true);
+ assert.equal(fit.ok,true,fit.issue);
+ const base=fit.frame,before=JSON.stringify(base),p=base.equipment[0].position;
+ assert.equal(base.pointLocks?.rightHand,undefined);
+ assert.equal(base.equipmentPointLocks.rightHand.equipmentId,'eq-1');
+ const moved=rig.editProps([base],[{frame:0,index:0}],[p[0]+.015,p[1],p[2]],0);
+ assert.equal(moved.ok,true,moved.issue);
+ const g=moved.frames[0],locks=rig.effectiveLocks(g);
+ assert.ok(m.len(m.sub(rig.joints(g).hands.right,locks.rightHand))<=.005);
+ assert.equal(JSON.stringify(base),before);
+ assert.equal(rig.editProps([base],[{frame:0,index:0}],[p[0]+2,p[1],p[2]],0).ok,false);
+ assert.equal(JSON.stringify(base),before);
+ assert.equal(rig.Collision.previewTransition(base,g).ok,true);
+ const pose=rig.initialPose('stand');pose.frames=[g];rig.checkPose(pose);
+ assert.equal(rig.validEquipmentPointLocks(rig.mirrorFrame(g)),true);
+ const orphan=JSON.parse(JSON.stringify(g));orphan.equipment=[];
+ assert.equal(rig.validEquipmentPointLocks(orphan),false);
+ pose.frames=[orphan];assert.throws(()=>rig.checkPose(pose));
+ const conflict=JSON.parse(JSON.stringify(g));conflict.pointLocks={rightHand:[0,0,0]};
+ assert.equal(rig.validEquipmentPointLocks(conflict),false);
+ rig.setPointLock(g,'rightHand',false);assert.equal(g.equipmentPointLocks,undefined);
+});
