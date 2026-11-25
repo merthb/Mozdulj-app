@@ -24,7 +24,21 @@ internal static class TimedTargetsRegression
         Check(Rig3DMovement.ForTimedWorkout(workout,item,true) is {Playing:false},"guide pauses with workout");
         workout.PlaybackPhase="transition";
         Check(Rig3DMovement.ForTimedWorkout(workout,item,false) is null,"no active guide during transition");
+        var upcoming=new WorkoutItem{Measure="reps",RepTargets=[RepetitionDirections.Create("each_side",6)]};
+        workout.Items.Add(upcoming);item.TransitionAfterSeconds=8;workout.RemainingSeconds=6;
+        var snapshot=JsonSerializer.Serialize(workout,CatalogCodec.JsonOptions);
+        Check(Rig3DMovement.GuideItemIndex(workout,0)==1,"transition displays next item");
+        Check(Rig3DMovement.ForWorkoutPreview(workout,0,false) is {Direction:"left",ElapsedSeconds:2,TotalSeconds:8,Playing:true,Repetitions:true},"upcoming exercise preview");
+        Check(Rig3DMovement.ForWorkoutPreview(workout,0,true) is {Playing:false},"preview pauses");
+        Check(Rig3DMovement.ForWorkoutPreview(workout,1,false) is null,"no next item");
+        Check(JsonSerializer.Serialize(workout,CatalogCodec.JsonOptions)==snapshot,"preview never advances workout");
+        workout.Items.RemoveAt(1);
+        workout.PlaybackPhase="preparation";workout.RemainingSeconds=4;
+        Check(Rig3DMovement.GuideItemIndex(workout,0)==0,"preparation displays first item");
+        Check(Rig3DMovement.ForWorkoutPreview(workout,0,false) is {Direction:"left",ElapsedSeconds:1,TotalSeconds:5},"preview uses first authored direction, not stale active side");
         workout.PlaybackPhase="exercise";workout.RemainingSeconds=25;
+        Check(Rig3DMovement.ForWorkoutPreview(workout,0,false) is null,"active guide uses active timer");
+        Check(Rig3DMovement.ForTimedWorkout(workout,item,false) is {Direction:"right",ElapsedSeconds:0},"active side unaffected by preview");
 
         var copy=JsonSerializer.Deserialize<Workout>(JsonSerializer.Serialize(workout,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
         Check(copy.RemainingSeconds==25 && TimedTargets.Index(copy.Items[0])==1,"resume interval retained");

@@ -15,6 +15,34 @@ public static class Rig3DMovement
         return new WorkoutGuideTiming(direction,Math.Clamp(total-workout.RemainingSeconds,0,total),total,!paused);
     }
 
+    // Select the upcoming item during preparation/transition, without advancing the workout.
+    public static int GuideItemIndex(Workout workout,int currentIndex)
+    {
+        if(workout.Kind=="recovery" || currentIndex<0 || currentIndex>=workout.Items.Count)return -1;
+        return workout.PlaybackPhase switch
+        {
+            "preparation" or "exercise"=>currentIndex,
+            "transition" when currentIndex+1<workout.Items.Count=>currentIndex+1,
+            _=>-1
+        };
+    }
+
+    public static WorkoutGuideTiming? ForWorkoutPreview(Workout workout,int currentIndex,bool paused)
+    {
+        if(workout.PlaybackPhase is not ("preparation" or "transition"))return null;
+        var index=GuideItemIndex(workout,currentIndex);
+        if(index<0)return null;
+        var item=workout.Items[index];
+        var direction=item.Measure=="reps"
+            ? RepetitionGuideTargets(item).FirstOrDefault()?.Direction
+            : item.Measure=="time" ? item.TimeTargets?.FirstOrDefault()?.Code ?? "all" : null;
+        if(direction is null)return null;
+        var total=workout.PlaybackPhase=="preparation"?5:Math.Clamp(workout.Items[currentIndex].TransitionAfterSeconds,5,10);
+        // The preview is illustrative: loop the authored motion (including holds).
+        // Never use the upcoming item's active timer or alter its progress.
+        return new WorkoutGuideTiming(direction,Math.Clamp(total-workout.RemainingSeconds,0,total),total,!paused,true);
+    }
+
     // Display-only directions; no repetitions are counted or credited here.
     public static List<RepGuideTarget> RepetitionGuideTargets(WorkoutItem item)
     {

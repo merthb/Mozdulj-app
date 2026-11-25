@@ -39,7 +39,9 @@ public sealed class WorkoutPlayerPage : ContentPage
     private readonly Button _guideToggle=UI.Button(AppLocalization.IsEnglish?"Show 3D guide":"3D útmutató megjelenítése",false);
     private readonly VerticalStackLayout _guideHost=new(){IsVisible=false,Spacing=4};
     private WebView? _guideWeb;
-    private bool _guideOpen,_guideReady,_guideUpdating,_guidePending;
+    private bool _guideOpen=true,_guideReady,_guideUpdating,_guidePending;
+    private bool _pageActive;
+    private string? _descriptionItem;
     private string? _guideLoadedItem;
     private string? _repGuideItem;
     private List<RepGuideTarget> _repGuideTargets=[];
@@ -121,7 +123,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
             content.Children.Add(_musicPanel);
         }
-        // Compact, internally scrollable step-by-step preview in the transition.
+        // One compact scrollable instruction panel follows the displayed guide item.
         _nextGuideBlock.Content=new VerticalStackLayout{Spacing=5,Children={
             _nextGuideTitle,
             new ScrollView{HeightRequest=128,Content=_nextGuideText}
@@ -180,6 +182,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             DeviceDisplay.Current.KeepScreenOn=true;
             if (_workout.Kind == "recovery")
                 _recoveryStartTicks = Stopwatch.GetTimestamp();
+            _pageActive=true;
             _timer.Start();
             RefreshGuide();
             _musicPanel?.Start();
@@ -218,6 +221,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             _lifecycleWindow.Resumed -= OnWindowResumed;
             _lifecycleWindow = null;
         }
+        _pageActive=false;
         _paused=true;
         _timer.Stop();
         RefreshGuide();
@@ -388,7 +392,11 @@ public sealed class WorkoutPlayerPage : ContentPage
     private void ToggleGuide()
     {
         _guideOpen=!_guideOpen;
-        if(_guideOpen && _guideWeb is null)
+        RefreshGuide();
+    }
+    private void EnsureGuide()
+    {
+        if(_guideWeb is null)
         {
             var web=new WebView{HeightRequest=260,HorizontalOptions=LayoutOptions.Fill};
             _guideWeb=web;
@@ -408,7 +416,6 @@ public sealed class WorkoutPlayerPage : ContentPage
             };
             web.Source="rig3d/index.html";
         }
-        RefreshGuide();
     }
     private static bool JsTrue(string? value)=>value?.Trim().Trim('"')=="true";
     private void GuideFailed()
@@ -421,6 +428,8 @@ public sealed class WorkoutPlayerPage : ContentPage
     private WorkoutGuideTiming? GuideTiming(WorkoutItem? item)
     {
         if(item is null)return null;
+        if(_workout.PlaybackPhase is "preparation" or "transition")
+            return Rig3DMovement.ForWorkoutPreview(_workout,_index,_paused);
         if(item.Measure!="reps")return Rig3DMovement.ForTimedWorkout(_workout,item,_paused);
         if(_repGuideItem!=item.Id)
         {
@@ -438,9 +447,14 @@ public sealed class WorkoutPlayerPage : ContentPage
         var target=_repGuideTargets.Count>0?_repGuideTargets[_repGuideIndex]:null;
         return Rig3DMovement.ForRepetitionWorkout(_workout,item,target,_repGuideStartedAt,_paused);
     }
+    private WorkoutItem? DisplayGuideItem()
+    {
+        var index=Rig3DMovement.GuideItemIndex(_workout,_index);
+        return index<0?null:_workout.Items[index];
+    }
     private void RefreshGuide()
     {
-        var item=_index>=0&&_index<_workout.Items.Count?_workout.Items[_index]:null;
+        var item=DisplayGuideItem();
         var timing=GuideTiming(item);
         var hasRig=item is not null&&_state.FindExercise(item.ExerciseId)?.Pose.Rig3D is not null;
         var available=!_finished&&timing is not null&&hasRig;
@@ -449,10 +463,11 @@ public sealed class WorkoutPlayerPage : ContentPage
             ? (AppLocalization.IsEnglish?"Hide 3D guide":"3D útmutató elrejtése")
             : (AppLocalization.IsEnglish?"Show 3D guide":"3D útmutató megjelenítése");
         _guideHost.IsVisible=available&&_guideOpen;
-        var repetition=timing?.Repetitions==true;
+        var repetition=_workout.PlaybackPhase=="exercise"&&timing?.Repetitions==true;
         _repGuidePicker.IsVisible=repetition;
         _repGuideNote.IsVisible=repetition;
         _repGuideNote.Text=repetition?(AppLocalization.IsEnglish?"Choose the direction manually. The animation does not count completed repetitions.":"Az irányt kézzel válaszd ki. Az animáció nem számolja az elvégzett ismétléseket."):"";
+        if(_pageActive&&available&&_guideOpen)EnsureGuide();
         if(!_guideReady||_guideWeb is null)return;
         _guidePending=true;
         if(!_guideUpdating)_=UpdateGuideAsync();
@@ -465,10 +480,10 @@ public sealed class WorkoutPlayerPage : ContentPage
             while(_guidePending&&_guideReady&&_guideWeb is { } web)
             {
                 _guidePending=false;
-                var item=_index>=0&&_index<_workout.Items.Count?_workout.Items[_index]:null;
+                var item=DisplayGuideItem();
                 var timing=GuideTiming(item);
                 var rig=item is null?null:_state.FindExercise(item.ExerciseId)?.Pose.Rig3D;
-                if(!_guideOpen||_finished||timing is null||rig is null)
+                if(!_pageActive||!_guideOpen||_finished||timing is null||rig is null)
                 {
                     await web.EvaluateJavaScriptAsync("window.clearWorkoutGuide()");
                     continue;
@@ -523,20 +538,26 @@ public sealed class WorkoutPlayerPage : ContentPage
         _equipmentCue.Text=requiredEquipment?.Equipment.Count>0
             ? AppLocalization.Text("WorkoutUi180") + requiredEquipment.EquipmentLabel : "";
         _equipmentCue.IsVisible=!string.IsNullOrWhiteSpace(_equipmentCue.Text) && (transition||preparing||!_paused);
-        bool showPreview=transition && _index+1<_workout.Items.Count && _workout.Kind!="recovery";
-        _nextGuideBlock.IsVisible=showPreview;
-        if(showPreview)
+        var displayed=DisplayGuideItem();
+        _nextGuideBlock.IsVisible=displayed is not null&&!_finished;
+        if(displayed is not null)
         {
-            var next=_workout.Items[_index+1];
-            var definition=_state.FindExercise(next.ExerciseId);
-            _nextGuideTitle.Text=AppLocalization.Text("WorkoutUi181");
-            if(definition is null) _nextGuideText.Text=next.Instruction;
-            else
+            _nextGuideTitle.Text=transition||preparing
+                ? AppLocalization.Text("WorkoutUi181")
+                : (AppLocalization.IsEnglish?"Exercise instructions":"Gyakorlat leírása");
+            if(_descriptionItem!=displayed.Id)
             {
-                var steps=ExerciseText.DeduplicateStartingPosition(definition.DisplayText.StartingPosition,definition.DisplayText.Steps);
-                _nextGuideText.Text=(string.IsNullOrWhiteSpace(definition.DisplayText.StartingPosition)?"":
-                    AppLocalization.Text("WorkoutUi182")+definition.DisplayText.StartingPosition+"\n\n") +
-                    string.Join("\n",steps.Select((step,i)=>$"{i+1}. {step}"));
+                _descriptionItem=displayed.Id;
+                var definition=_state.FindExercise(displayed.ExerciseId);
+                if(definition is null) _nextGuideText.Text=displayed.Instruction;
+                else
+                {
+                    var steps=ExerciseText.DeduplicateStartingPosition(definition.DisplayText.StartingPosition,definition.DisplayText.Steps);
+                    var description=(string.IsNullOrWhiteSpace(definition.DisplayText.StartingPosition)?"":
+                        AppLocalization.Text("WorkoutUi182")+definition.DisplayText.StartingPosition+"\n\n") +
+                        string.Join("\n",steps.Select((step,i)=>$"{i+1}. {step}"));
+                    _nextGuideText.Text=string.IsNullOrWhiteSpace(description)?displayed.Instruction:description;
+                }
             }
         }
         _action.IsVisible=!transition && !preparing && item.Measure=="reps";
