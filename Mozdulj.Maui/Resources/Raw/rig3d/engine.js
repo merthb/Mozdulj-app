@@ -322,7 +322,7 @@ function auditPreset(name){
 function axisRotate(v,axis,angle){return add(add(mul(v,Math.cos(angle)),mul(cross(axis,v),Math.sin(angle))),mul(axis,dot(axis,v)*(1-Math.cos(angle))));}
 // Additive local articulations. Missing fields are exactly neutral: existing
 // catalog poses retain their original geometry and serialized representation.
-const ARTICULATION_LIMITS={pelvisPitch:30*Math.PI/180,pelvisYaw:35*Math.PI/180,pelvisRoll:25*Math.PI/180,lumbarBend:30*Math.PI/180,lumbarSideBend:25*Math.PI/180,thoracicBend:35*Math.PI/180,thoracicSideBend:25*Math.PI/180,leftShoulderElevation:20*Math.PI/180,leftShoulderProtraction:25*Math.PI/180,leftWristDeviation:25*Math.PI/180,leftAnkleYaw:30*Math.PI/180,leftAnkleRoll:25*Math.PI/180,rightShoulderElevation:20*Math.PI/180,rightShoulderProtraction:25*Math.PI/180,rightWristDeviation:25*Math.PI/180,rightAnkleYaw:30*Math.PI/180,rightAnkleRoll:25*Math.PI/180,leftWristPitch:59*Math.PI/180,rightWristPitch:59*Math.PI/180,leftPalmTurn:90*Math.PI/180,rightPalmTurn:90*Math.PI/180};
+const ARTICULATION_LIMITS={lumbarYaw:10*Math.PI/180,thoracicYaw:30*Math.PI/180,cervicalPitch:30*Math.PI/180,cervicalYaw:35*Math.PI/180,cervicalRoll:25*Math.PI/180,pelvisPitch:30*Math.PI/180,pelvisYaw:35*Math.PI/180,pelvisRoll:25*Math.PI/180,lumbarBend:30*Math.PI/180,lumbarSideBend:25*Math.PI/180,thoracicBend:35*Math.PI/180,thoracicSideBend:25*Math.PI/180,leftShoulderElevation:20*Math.PI/180,leftShoulderProtraction:25*Math.PI/180,leftWristDeviation:25*Math.PI/180,leftAnkleYaw:30*Math.PI/180,leftAnkleRoll:25*Math.PI/180,rightShoulderElevation:20*Math.PI/180,rightShoulderProtraction:25*Math.PI/180,rightWristDeviation:25*Math.PI/180,rightAnkleYaw:30*Math.PI/180,rightAnkleRoll:25*Math.PI/180,leftWristPitch:59*Math.PI/180,rightWristPitch:59*Math.PI/180,leftPalmTurn:90*Math.PI/180,rightPalmTurn:90*Math.PI/180};
 const SIDE_ARTICULATION={arm:['ShoulderElevation','ShoulderProtraction','WristDeviation','WristPitch','PalmTurn'],leg:['AnkleYaw','AnkleRoll']};
 function sideAngle(frame,side,field){
  const key=side+field,limit=ARTICULATION_LIMITS[key];
@@ -387,15 +387,17 @@ function validArticulation(frame){
 function articulationAxes(frame){
  const angle=key=>clamp(frame[key]||0,-ARTICULATION_LIMITS[key],ARTICULATION_LIMITS[key]);
  const p=[angle('pelvisPitch'),angle('pelvisYaw'),angle('pelvisRoll')];
- const l=[angle('lumbarBend'),0,angle('lumbarSideBend')];
- const t=[angle('thoracicBend'),0,angle('thoracicSideBend')];
+ const l=[angle('lumbarBend'),angle('lumbarYaw'),angle('lumbarSideBend')];
+ const t=[angle('thoracicBend'),angle('thoracicYaw'),angle('thoracicSideBend')];
+ const n=[angle('cervicalPitch'),angle('cervicalYaw'),angle('cervicalRoll')];
  const e=frame.euler;
  const pelvis=v=>rotate(rotate(v,p),e);
  const lower=v=>rotate(rotate(v,l),e);
  const upper=v=>lower(rotate(v,t));
  const legLocal=v=>unrotate(unrotate(v,e),p);
  const armLocal=v=>unrotate(unrotate(unrotate(v,e),l),t);
- return {pelvis,lower,upper,legLocal,armLocal,p,l,t};
+ const cervical=v=>upper(rotate(v,n));
+ return {pelvis,lower,upper,cervical,legLocal,armLocal,p,l,t,n};
 }
 function joints(frame){
  const root=frame.root,e=frame.euler, world=p=>add(root,rotate(p,e));
@@ -416,8 +418,9 @@ function joints(frame){
  };
  const hip={left:add(root,axes.pelvis([-.13,0,0])),right:add(root,axes.pelvis([.13,0,0]))};
  const shoulder={left:upperPoint(shoulderLocal('left')),right:upperPoint(shoulderLocal('right'))};
- const neck=upperPoint(spineLocal(.70));
- const head=add(neck,axes.upper(rotate([0,.21,.015],[frame.headPitch||0,frame.headYaw||0,frame.headRoll||0])));
+ const neutralNeck=upperPoint(spineLocal(.70)),neckBase=upperPoint(spineLocal(.63));
+ const neck=axes.n.some(Boolean)?add(neckBase,axes.cervical(sub(spineLocal(.70),spineLocal(.63)))):neutralNeck;
+ const head=add(neck,axes.cervical(rotate([0,.21,.015],[frame.headPitch||0,frame.headYaw||0,frame.headRoll||0])));
  const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},palmNormals:{},handDetails:{},hingePoles:{arm:{},leg:{}},clamped:[]};
  for(const side of ['left','right']){
   let s=side==='left'?-1:1;
@@ -602,7 +605,7 @@ function mirrorFrame(frame){
  else if(f.direction==='clockwise')f.direction='counterclockwise';
  else if(f.direction==='counterclockwise')f.direction='clockwise';
  f.root=reflectX(f.root);f.euler=[f.euler[0],-f.euler[1],-f.euler[2]];
- for(const key of ['headYaw','headRoll','upperYaw','pelvisYaw','pelvisRoll','lumbarSideBend','thoracicSideBend'])if(f[key]!=null)f[key]=-f[key];
+ for(const key of ['headYaw','headRoll','upperYaw','pelvisYaw','pelvisRoll','lumbarSideBend','thoracicSideBend','lumbarYaw','thoracicYaw','cervicalYaw','cervicalRoll'])if(f[key]!=null)f[key]=-f[key];
  for(const key of ['hands','feet','poles','pointLocks']){
    if(f[key]!=null)f[key]=Object.fromEntries(Object.entries(f[key]).map(([name,pos])=>[swapSide(name),reflectX(pos)]));
  }
@@ -1670,8 +1673,9 @@ function articulationControls(sel){
  const spec=(key,lo,hi,side=null)=>({key,lo,hi,side});
  const limited=key=>spec(key,-ARTICULATION_LIMITS[key],ARTICULATION_LIMITS[key]);
  if(k==='head')return [spec('headPitch',-Math.PI/2,Math.PI/2),spec('headRoll',-Math.PI/3,Math.PI/3),spec('headYaw',-Math.PI/2,Math.PI/2)];
- if(k==='waist')return ['lumbarBend','lumbarSideBend'].map(limited);
- if(k==='neck'||k==='chest')return ['thoracicBend','thoracicSideBend','lumbarBend','lumbarSideBend'].map(limited);
+ if(k==='neck')return ['cervicalPitch','cervicalRoll','cervicalYaw'].map(limited);
+ if(k==='waist')return ['lumbarBend','lumbarSideBend','lumbarYaw'].map(limited);
+ if(k==='chest')return ['thoracicBend','thoracicSideBend','thoracicYaw','lumbarBend','lumbarSideBend','lumbarYaw'].map(limited);
  if(k.endsWith('Shoulder'))return ['ShoulderElevation','ShoulderProtraction'].map(suffix=>({...limited(s+suffix),suffix}));
  if(k.endsWith('Hip'))return ['pelvisPitch','pelvisYaw','pelvisRoll'].map(limited);
  if(k.endsWith('Toe'))return [spec('footPitch',-.65,.95,s),{...limited(s+'AnkleYaw'),suffix:'AnkleYaw'}];
@@ -1755,7 +1759,7 @@ function resetBodyPart(frame,reference,group){
  if(!reference||!['root','head','trunk','leftArm','rightArm','leftLeg','rightLeg'].includes(group))return null;
  const out=cloneFrame(frame);
  const copy=(to,from,key)=>{if(from?.[key]!=null)to[key]=cloneFrame(from[key]);else delete to[key];};
- const fields={root:['root','pelvicTilt','pelvisPitch','pelvisYaw','pelvisRoll'],head:['headYaw','headPitch','headRoll'],trunk:['shoulderLift','upperYaw','spineBend','lumbarBend','lumbarSideBend','thoracicBend','thoracicSideBend']};
+ const fields={root:['root','pelvicTilt','pelvisPitch','pelvisYaw','pelvisRoll'],head:['headYaw','headPitch','headRoll','cervicalPitch','cervicalYaw','cervicalRoll'],trunk:['shoulderLift','upperYaw','spineBend','lumbarBend','lumbarSideBend','thoracicBend','thoracicSideBend','lumbarYaw','thoracicYaw']};
  if(fields[group]){
    for(const key of fields[group])copy(out,reference,key);
    if(group==='trunk')out.euler=[...reference.euler];
@@ -1955,7 +1959,7 @@ function shaded3D(canvas){
  // Move the head with the neck and look direction; face is on head's local +Z axis.
  const head=j.head,hyaw=frame.headYaw||0,hpitch=frame.headPitch||0,hroll=frame.headRoll||0;
  const headEuler=add(frame.euler,[hpitch,hyaw,hroll]);
- const faceAxis=v=>j.articulatedSpine?axes.upper(unrotate(rotate(v,headEuler),frame.euler)):rotate(v,headEuler);
+ const faceAxis=v=>axes.n.some(Boolean)?axes.cervical(rotate(v,[hpitch,hyaw,hroll])):j.articulatedSpine?axes.upper(unrotate(rotate(v,headEuler),frame.euler)):rotate(v,headEuler);
  const faceForward=faceAxis([0,0,1]);let headUp=faceAxis([0,1,0]),headRight=norm(cross(headUp,faceForward));if(len(headRight)<.01)headRight=[1,0,0];headUp=norm(cross(faceForward,headRight));
  ell(head,[.132,.171,.126],'skin');ell(add(head,add(mul(headUp,.135),mul(faceForward,-.036))),[.137,.068,.117],'hair');ell(add(head,add(mul(headUp,.15),mul(faceForward,-.12))),[.065,.068,.062],'hair');
  for(let s of [-1,1])ell(add(head,add(add(mul(headRight,.052*s),mul(headUp,.016)),mul(faceForward,.117))),[.012,.016,.014],'hair');
