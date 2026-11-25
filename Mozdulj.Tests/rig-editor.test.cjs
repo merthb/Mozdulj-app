@@ -1139,3 +1139,27 @@ test('toe edits participate in swept collision checks and can be symmetric',()=>
  assert.ok(rig.Collision.previewTransition(f,r.frame).ok);
  const m=rig.math;assert.ok(m.len(m.sub(rig.joints(r.frame).toes.left,rig.joints(f).toes.left))>.01);
 });
+
+test('surface links capture grip placement and follow rotation without stretching',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math;
+ rig.setHandCurl(f,'left',.78);rig.setHandCurl(f,'right',.78);
+ assert.ok(rig.setBodyLink(f,'rightHand','leftHand','surface'));
+ assert.ok((rig.bodyLinkErrors(rig.joints(f),f).get('rightHand')||0)<1e-8);
+ const b=JSON.parse(JSON.stringify(f));b.leftWristPitch=.025;
+ const r=rig.Collision.transition(f,b);
+ assert.equal(r.limited,false);
+ assert.ok((rig.bodyLinkErrors(rig.joints(r.frame),r.frame).get('rightHand')||0)<.005);
+ assert.ok(Math.abs(m.len(m.sub(rig.joints(r.frame).hands.right,rig.joints(r.frame).elbow.right))-.28)<1e-8);
+ const mirror=rig.mirrorFrame(r.frame);
+ assert.ok((rig.bodyLinkErrors(rig.joints(mirror),mirror).get('leftHand')||0)<.005);
+});
+test('scapular rhythm is optional and reversible with explicit stored angles',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ f.armAngles.left={flexion:0,abduction:0,elbowFlexion:.1};
+ rig.editLimbAngle(f,'arm','left','flexion',1.4,false,true);
+ assert.ok(f.leftScapulaRotation>.1);assert.equal(f.rightScapulaRotation,undefined);
+ rig.editLimbAngle(f,'arm','left','flexion',0,false,true);
+ assert.ok(Math.abs(f.leftScapulaRotation)<1e-8);
+ rig.editLimbAngle(f,'arm','left','flexion',1.4,false,false);
+ assert.ok(Math.abs(f.leftScapulaRotation)<1e-8);
+});
