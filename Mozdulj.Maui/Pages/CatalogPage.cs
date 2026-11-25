@@ -367,6 +367,7 @@ public sealed class CatalogPage : ContentPage
             UI.Label($"{PresentationText.Known(exercise.Category)} · {exercise.RegionAreaLabel}",12,color:UI.Muted),
             UI.Label($"{(row.BuiltIn?AppLocalization.Text("WorkoutUi017"):AppLocalization.Text("WorkoutUi018"))} · {StatusText(row.Status)} · {exercise.TargetLabel}",11,color:UI.Teal)
         }};
+        if(!row.BuiltIn) description.Children.Add(UI.Label(AppLocalization.Text("OwnExerciseUnreviewed"),12,color:UI.Muted));
         layout.Children.Add(description);
         // Tap anywhere on the card surface to open details. Secondary icon actions
         // are separate native controls and must not navigate to details.
