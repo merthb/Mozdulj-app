@@ -328,7 +328,7 @@ function sideAngle(frame,side,field){
  const key=side+field,limit=ARTICULATION_LIMITS[key];
  return clamp(frame[key]||0,-limit,limit);
 }
-function editSideArticulation(frame,side,field,value,symmetric=false){
+function editSideArticulation(frame,side,field,value,symmetric=false,coupled=false){
  const key=side+field,other=swapSide(side)+field,limit=ARTICULATION_LIMITS[key];
  if(limit==null||!Number.isFinite(value))return false;
  const old=frame[key]||0;let delta=clamp(value,-limit,limit)-old;
@@ -337,7 +337,22 @@ function editSideArticulation(frame,side,field,value,symmetric=false){
    delta=clamp(delta,-limit-opposite,limit-opposite);
    frame[other]=opposite+delta;
  }
- frame[key]=old+delta;return true;
+ frame[key]=old+delta;
+ if(coupled&&/^(Shoulder|Scapula)/.test(field)&&Math.abs(delta)>1e-8){
+   // Editing assistance, not a biomechanical law: the shoulder already follows
+   // the scapular geometry. Shoulder controls also guide scapular glide.
+   // Store ordinary angles so preview, undo and old poses remain compatible.
+   const sides=symmetric?[side,swapSide(side)]:[side];
+   const related=field==='ShoulderElevation'?'ScapulaElevation':field==='ShoulderProtraction'?'ScapulaProtraction':null;
+   if(related)for(const affected of sides){
+     const k=affected+related,limit=ARTICULATION_LIMITS[k];
+     frame[k]=clamp((frame[k]||0)+delta*.35,-limit,limit);
+   }
+   // Modest thoracic participation; shrugging alone need not bend the spine.
+   const bend=field==='ScapulaProtraction'||field==='ShoulderProtraction'?delta*.20:field==='ScapulaRotation'?-delta*.15:0;
+   if(bend)frame.thoracicBend=clamp((frame.thoracicBend||0)+bend*(symmetric?1:.5),-ARTICULATION_LIMITS.thoracicBend,ARTICULATION_LIMITS.thoracicBend);
+ }
+ return true;
 }
 const HAND_PRESETS={open:0,relaxed:.32,grip:.78,fist:1};
 const HAND_KEYS=['leftHandCurl','rightHandCurl'];
@@ -1695,14 +1710,14 @@ function articulationControls(sel){
  if(k.endsWith('Toe'))return [spec('footPitch',-.65,.95,s),{...limited(s+'AnkleYaw'),suffix:'AnkleYaw'}];
  return [];
 }
-function fitArticulatedPoint(frame,sel,delta,symmetric=false){
+function fitArticulatedPoint(frame,sel,delta,symmetric=false,coupled=false){
  const controls=articulationControls(sel),start=bodyPoint(joints(frame),sel.key),goal=add(start,delta);
  if(!controls.length||len(delta)<1e-8)return false;
  const working=cloneFrame(frame);
  const get=(f,c)=>c.side?(f[c.key]?.[c.side]||0):(f[c.key]||0);
  const set=(f,c,value)=>{
    value=clamp(value,c.lo,c.hi);
-   if(c.suffix){editSideArticulation(f,sel.side,c.suffix,value,symmetric);return;}
+   if(c.suffix){editSideArticulation(f,sel.side,c.suffix,value,symmetric,coupled);return;}
    if(c.side){
      f[c.key]??={};const previous=get(f,c);
      if(symmetric){const other=swapSide(c.side),old=f[c.key][other]||0;value=previous+clamp(value-previous,c.lo-old,c.hi-old);f[c.key][other]=old+value-previous;}
@@ -1731,7 +1746,7 @@ function fitArticulatedPoint(frame,sel,delta,symmetric=false){
  if(best>=len(delta)-1e-7)return false;
  Object.assign(frame,working);return true;
 }
-function targetEditOptions(sel,symmetric=false,adaptRoot=false){
+function targetEditOptions(sel,symmetric=false,adaptRoot=false,coupled=false){
  const central=sel.kind==='root',articulated=sel.kind==='articulate';
  const mirror=!central&&!articulated&&symmetric;
  const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg',other=sel.side?swapSide(sel.side):null;
@@ -1739,14 +1754,14 @@ function targetEditOptions(sel,symmetric=false,adaptRoot=false){
    adapt:central?(adaptRoot?'root':true):articulated&&!sel.key.endsWith('Toe')&&sel.key!=='head',
    move:(f,delta)=>{
      const before=cloneFrame(f);
-     if(!moveTargetBy(f,sel,delta,symmetric))return false;
+     if(!moveTargetBy(f,sel,delta,symmetric,coupled))return false;
      if(mirror){if(['elbow','knee'].includes(sel.kind))mirrorBendDelta(f,before,sel.kind,sel.side);else mirrorTargetDelta(f,before,sel.kind,sel.side);}
      return true;
    }};
 }
-function probeTargetDirections(frame,sel,camera,space='world',symmetric=false){
+function probeTargetDirections(frame,sel,camera,space='world',symmetric=false,coupled=false){
  if(!sel||sel.kind==='inspect')return [];
- const opts=targetEditOptions(sel,symmetric,false),base=cloneFrame(frame);
+ const opts=targetEditOptions(sel,symmetric,false,coupled),base=cloneFrame(frame);
  if(!opts.prepare(base))return [];
  if(opts.adapt)prepareSupportEdit(base);
  const point=bodyPoint(joints(base),sel.key),axes=targetAxes(base,sel,camera,space);
@@ -1758,10 +1773,10 @@ function probeTargetDirections(frame,sel,camera,space='world',symmetric=false){
    return {axis:['X','Y','Z'][i],sign,direction,allowed:!!result&&!result.limited&&progress>=.001,progress};
  }));
 }
-function moveTargetBy(frame,sel,delta,symmetric=false){
+function moveTargetBy(frame,sel,delta,symmetric=false,coupled=false){
  if(!sel||sel.kind==='inspect'||!Array.isArray(delta)||delta.length!==3||delta.some(v=>!Number.isFinite(v)))return false;
  if(sel.kind==='root'){moveRoot(frame,delta);return true;}
- if(sel.kind==='articulate')return fitArticulatedPoint(frame,sel,delta,symmetric);
+ if(sel.kind==='articulate')return fitArticulatedPoint(frame,sel,delta,symmetric,coupled);
  const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg';
  if(frame[modeKeys[kind]]?.[sel.side])return false;
  if(sel.kind==='elbow'||sel.kind==='knee')return moveBendPoint(frame,sel.kind,sel.side,delta);
