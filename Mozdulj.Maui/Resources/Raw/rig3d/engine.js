@@ -699,14 +699,14 @@ function previewAt(plan,elapsed){
 }
 // Workout playback uses only explicitly authored direction tags. Never
 // infer an opposite-side movement from an untagged or asymmetric pose.
-function workoutGuidePlan(frames,direction){
+function workoutGuidePlan(frames,direction,repetitions=false){
  const neutral=f=>f.direction==null||f.direction===''||f.direction==='all';
  const exact=direction!=='all'&&frames.some(f=>f.direction===direction);
  const chosen=frames.filter(f=>neutral(f)||(exact&&f.direction===direction));
  if(direction!=='all'&&!exact)return {kind:'unassigned',frame:chosen[0]||null};
  if(!chosen.length)return {kind:'unassigned',frame:null};
  // A timed authored hold stays on that pose until the active interval ends.
- const hold=chosen.findIndex(f=>f.phaseType==='hold'&&
+ const hold=repetitions?-1:chosen.findIndex(f=>f.phaseType==='hold'&&
    (direction==='all'||f.direction===direction));
  const sequence=hold>=0?chosen.slice(0,hold+1):chosen;
  if(sequence.length===1)return {kind:'static',frame:sequence[0]};
