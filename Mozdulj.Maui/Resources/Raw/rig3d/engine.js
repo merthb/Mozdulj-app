@@ -1789,7 +1789,15 @@ function shaded3D(canvas){
    try{
      if(!equipmentMode)for(const target of BODY_TARGETS){if(target.secondary&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
      for(const key of Object.keys(effectiveLocks(frame))){
-       if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
+       if(!LOCK_KEYS.includes(key))continue;
+        const pos=lockPoint(j,key),relative=!!frame.equipmentPointLocks?.[key];
+        if(relative){
+          // A cross of three narrow bars distinguishes equipment locks even
+          // without color; the round world lock remains unchanged.
+          const color=highContrast?(dark?[1,.88,.2]:[.40,.17,.01]):[.94,.61,.12];
+          ell(pos,[.035,.035,.035],color);
+          for(const axis of [[1,0,0],[0,1,0],[0,0,1]])limb(sub(pos,mul(axis,.075)),add(pos,mul(axis,.075)),.015,color);
+        }else ell(pos,[.055,.055,.055],highContrast?(dark?[.45,.85,1]:[.05,.20,.63]):[.19,.49,.92]);
      }
    }finally{if(ghost||skeleton)gl.enable(gl.DEPTH_TEST);}
  }
