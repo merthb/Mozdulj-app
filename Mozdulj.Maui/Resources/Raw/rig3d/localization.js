@@ -3,10 +3,10 @@
 const dictionary={
   "Szabad":"Free",
   "Térben rögzített ●":"World lock ●",
-  "Eszközhöz rögzített ◆":"Equipment lock ◆",
+  "Eszközhöz rögzített ✚":"Equipment lock ✚",
   "Eszközkapcsolat":"Equipment attachment",
   "Rögzítés sikeres illesztés után":"Lock after successful alignment",
-  "Válassz szabad, térbeli vagy eszközhöz viszonyított rögzítést. A térbeli pont helyben marad (●), az eszközhöz kötött pont követi az eszközt (◆). Ha a póz nem megoldható, a mozgatás megáll.":"Choose free, world or equipment-relative locking. World locks stay in place (●), equipment locks follow their object (◆). Motion stops if the constraints cannot be satisfied.",
+  "Válassz szabad, térbeli vagy eszközhöz viszonyított rögzítést. A térbeli pont helyben marad (●), az eszközhöz kötött pont követi az eszközt (✚). Ha a póz nem megoldható, a mozgatás megáll.":"Choose free, world or equipment-relative locking. World locks stay in place (●), equipment locks follow their object (✚). Motion stops if the constraints cannot be satisfied.",
   "A testpont nem rögzíthető a kiválasztott eszközhöz.":"The body point cannot be attached to the selected equipment.",
   "Illesztés kész, a testpontok az eszközhöz rögzítve.":"Alignment complete, points attached to the equipment.",
   "Előbb oldd fel az eszközhöz kötött testpontokat.":"Unlock the body points attached to the equipment first.",
@@ -535,7 +535,7 @@ function localize(root){
  }
  for(const node of root.childNodes)localize(node);
 }
-window.setRigLanguage=code=>{language=code==='en'?'en':'hu';document.documentElement.lang=language;localize(document.documentElement);return true;};
+window.setRigLanguage=code=>{language=code==='en'?'en':'hu';document.documentElement.lang=language;localize(document.documentElement);document.dispatchEvent(new Event('riglanguagechange'));return true;};
 window.rigText=translate;
 const observer=new MutationObserver(records=>{for(const r of records){
  if(r.type==='childList')for(const node of r.addedNodes)localize(node);
