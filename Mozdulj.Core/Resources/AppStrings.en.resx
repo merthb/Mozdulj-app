@@ -126,4 +126,267 @@
   <data name="MonthlyActive" xml:space="preserve"><value>Active days this month: {0}.</value></data>
   <data name="WeeklyProgress" xml:space="preserve"><value>Weekly goal · {0} / {1} active days</value></data>
   <data name="WorkoutCount" xml:space="preserve"><value>{0} exercises · approx. {1} min</value></data>
+  <data name="WorkoutUi001" xml:space="preserve"><value>Exercise or body area…</value></data>
+  <data name="WorkoutUi002" xml:space="preserve"><value>Movement type</value></data>
+  <data name="WorkoutUi003" xml:space="preserve"><value>Source / status</value></data>
+  <data name="WorkoutUi004" xml:space="preserve"><value>Loading exercises…</value></data>
+  <data name="WorkoutUi005" xml:space="preserve"><value>Exercise library</value></data>
+  <data name="WorkoutUi006" xml:space="preserve"><value>All exercises</value></data>
+  <data name="WorkoutUi007" xml:space="preserve"><value>Built-in exercises</value></data>
+  <data name="WorkoutUi008" xml:space="preserve"><value>Custom exercises</value></data>
+  <data name="WorkoutUi009" xml:space="preserve"><value>Drafts</value></data>
+  <data name="WorkoutUi010" xml:space="preserve"><value>Disabled</value></data>
+  <data name="WorkoutUi011" xml:space="preserve"><value>No results. Try another search or change the filters.</value></data>
+  <data name="WorkoutUi012" xml:space="preserve"><value>Search</value></data>
+  <data name="WorkoutUi013" xml:space="preserve"><value>Search exercises or body areas</value></data>
+  <data name="WorkoutUi014" xml:space="preserve"><value>+ New custom exercise</value></data>
+  <data name="WorkoutUi015" xml:space="preserve"><value>⚙ More filters</value></data>
+  <data name="WorkoutUi016" xml:space="preserve"><value>All</value></data>
+  <data name="WorkoutUi017" xml:space="preserve"><value>Built-in</value></data>
+  <data name="WorkoutUi018" xml:space="preserve"><value>Custom</value></data>
+  <data name="WorkoutUi019" xml:space="preserve"><value>Source and status</value></data>
+  <data name="WorkoutUi020" xml:space="preserve"><value>Available equipment</value></data>
+  <data name="WorkoutUi021" xml:space="preserve"><value>Favourite</value></data>
+  <data name="WorkoutUi022" xml:space="preserve"><value>⚙ Close filters</value></data>
+  <data name="WorkoutUi023" xml:space="preserve"><value>↑ Back to top</value></data>
+  <data name="WorkoutUi024" xml:space="preserve"><value>All movement types</value></data>
+  <data name="WorkoutUi025" xml:space="preserve"><value>Unnamed draft</value></data>
+  <data name="WorkoutUi026" xml:space="preserve"><value>Disable</value></data>
+  <data name="WorkoutUi027" xml:space="preserve"><value>Enable</value></data>
+  <data name="WorkoutUi028" xml:space="preserve"><value>Active exercise. Tap to disable.</value></data>
+  <data name="WorkoutUi029" xml:space="preserve"><value>Disabled exercise. Tap to enable.</value></data>
+  <data name="WorkoutUi030" xml:space="preserve"><value>Operation failed</value></data>
+  <data name="WorkoutUi031" xml:space="preserve"><value>Remove favourite</value></data>
+  <data name="WorkoutUi032" xml:space="preserve"><value>Add to favourites</value></data>
+  <data name="WorkoutUi033" xml:space="preserve"><value>Edit description and illustration</value></data>
+  <data name="WorkoutUi034" xml:space="preserve"><value>Edit exercise</value></data>
+  <data name="WorkoutUi035" xml:space="preserve"><value>Archive custom exercise</value></data>
+  <data name="WorkoutUi036" xml:space="preserve"><value>Archive custom exercise?</value></data>
+  <data name="WorkoutUi037" xml:space="preserve"><value>Previous completions are preserved.</value></data>
+  <data name="WorkoutUi038" xml:space="preserve"><value>Archive</value></data>
+  <data name="WorkoutUi039" xml:space="preserve"><value>Active</value></data>
+  <data name="WorkoutUi040" xml:space="preserve"><value>Draft</value></data>
+  <data name="WorkoutUi041" xml:space="preserve"><value>Archived</value></data>
+  <data name="WorkoutUi042" xml:space="preserve"><value>Exercise details</value></data>
+  <data name="WorkoutUi043" xml:space="preserve"><value>✎ Edit exercise</value></data>
+  <data name="WorkoutUi044" xml:space="preserve"><value>View 3D illustration</value></data>
+  <data name="WorkoutUi045" xml:space="preserve"><value>This exercise does not yet have a 3D illustration.</value></data>
+  <data name="WorkoutUi046" xml:space="preserve"><value>✓ No equipment required</value></data>
+  <data name="WorkoutUi047" xml:space="preserve"><value>🎒 Required equipment: </value></data>
+  <data name="WorkoutUi048" xml:space="preserve"><value>Starting position</value></data>
+  <data name="WorkoutUi049" xml:space="preserve"><value>Instructions</value></data>
+  <data name="WorkoutUi050" xml:space="preserve"><value>Common mistakes</value></data>
+  <data name="WorkoutUi051" xml:space="preserve"><value>Important information</value></data>
+  <data name="WorkoutUi052" xml:space="preserve"><value>The 3D illustration is for guidance only. Follow the written instructions and do not force the movement.</value></data>
+  <data name="WorkoutUi053" xml:space="preserve"><value>♥ Remove favourite</value></data>
+  <data name="WorkoutUi054" xml:space="preserve"><value>♡ Add to favourites</value></data>
+  <data name="WorkoutUi055" xml:space="preserve"><value>Workout phase</value></data>
+  <data name="WorkoutUi056" xml:space="preserve"><value>Measurement type</value></data>
+  <data name="WorkoutUi057" xml:space="preserve"><value>Time in seconds</value></data>
+  <data name="WorkoutUi058" xml:space="preserve"><value>4 forward; 4 backward</value></data>
+  <data name="WorkoutUi059" xml:space="preserve"><value>Estimated time in seconds</value></data>
+  <data name="WorkoutUi060" xml:space="preserve"><value>Equipment, comma-separated (or empty)</value></data>
+  <data name="WorkoutUi061" xml:space="preserve"><value>Built-in exercise cannot be edited here.</value></data>
+  <data name="WorkoutUi062" xml:space="preserve"><value>New exercise</value></data>
+  <data name="WorkoutUi063" xml:space="preserve"><value>Edit custom exercise</value></data>
+  <data name="WorkoutUi064" xml:space="preserve"><value>Warm-up</value></data>
+  <data name="WorkoutUi065" xml:space="preserve"><value>Main section</value></data>
+  <data name="WorkoutUi066" xml:space="preserve"><value>Cool-down</value></data>
+  <data name="WorkoutUi067" xml:space="preserve"><value>Repetitions</value></data>
+  <data name="WorkoutUi068" xml:space="preserve"><value>Time</value></data>
+  <data name="WorkoutUi069" xml:space="preserve"><value>Custom exercise</value></data>
+  <data name="WorkoutUi070" xml:space="preserve"><value>You can save incomplete exercises as drafts. Only complete, active exercises are used to generate workouts.</value></data>
+  <data name="WorkoutUi071" xml:space="preserve"><value>Movement type *</value></data>
+  <data name="WorkoutUi072" xml:space="preserve"><value>Workout phase *</value></data>
+  <data name="WorkoutUi073" xml:space="preserve"><value>Difficulty *</value></data>
+  <data name="WorkoutUi074" xml:space="preserve"><value>Measurement type *</value></data>
+  <data name="WorkoutUi075" xml:space="preserve"><value>Duration (for timed exercises) *</value></data>
+  <data name="WorkoutUi076" xml:space="preserve"><value>Repetition targets (e.g. 4 forward; 4 backward) *</value></data>
+  <data name="WorkoutUi077" xml:space="preserve"><value>Estimated time in seconds *</value></data>
+  <data name="WorkoutUi078" xml:space="preserve"><value>Required equipment (empty if none)</value></data>
+  <data name="WorkoutUi079" xml:space="preserve"><value>Illustration (optional)</value></data>
+  <data name="WorkoutUi080" xml:space="preserve"><value>✎ Edit 3D skeleton and equipment</value></data>
+  <data name="WorkoutUi081" xml:space="preserve"><value>Save draft</value></data>
+  <data name="WorkoutUi082" xml:space="preserve"><value>Activate and save</value></data>
+  <data name="WorkoutUi083" xml:space="preserve"><value>No 3D illustration; activation is still possible.</value></data>
+  <data name="WorkoutUi084" xml:space="preserve"><value>Some information is missing</value></data>
+  <data name="WorkoutUi085" xml:space="preserve"><value>Save correction</value></data>
+  <data name="WorkoutUi086" xml:space="preserve"><value>Edit built-in exercise content</value></data>
+  <data name="WorkoutUi087" xml:space="preserve"><value>The name, body areas, difficulty, category, phase, equipment and targets are protected. Only the description and illustration can be edited.</value></data>
+  <data name="WorkoutUi088" xml:space="preserve"><value>Summary *</value></data>
+  <data name="WorkoutUi089" xml:space="preserve"><value>Starting position *</value></data>
+  <data name="WorkoutUi090" xml:space="preserve"><value>Instructions (one step per line) *</value></data>
+  <data name="WorkoutUi091" xml:space="preserve"><value>Safety note *</value></data>
+  <data name="WorkoutUi092" xml:space="preserve"><value>Illustration</value></data>
+  <data name="WorkoutUi093" xml:space="preserve"><value>Restore original description and illustration</value></data>
+  <data name="WorkoutUi094" xml:space="preserve"><value>Restore original content?</value></data>
+  <data name="WorkoutUi095" xml:space="preserve"><value>The local correction will be removed. The original exercise text and illustration will be restored.</value></data>
+  <data name="WorkoutUi096" xml:space="preserve"><value>Restore</value></data>
+  <data name="WorkoutUi097" xml:space="preserve"><value>No 3D illustration. This is allowed.</value></data>
+  <data name="WorkoutUi098" xml:space="preserve"><value>Could not save</value></data>
+  <data name="WorkoutUi099" xml:space="preserve"><value>Replace exercise</value></data>
+  <data name="WorkoutUi100" xml:space="preserve"><value>The replacement must match the affected body area and the other exercises. Time, difficulty and equipment also apply.</value></data>
+  <data name="WorkoutUi101" xml:space="preserve"><value>No suitable replacement. You may omit the exercise if the workout remains coherent.</value></data>
+  <data name="WorkoutUi102" xml:space="preserve"><value>Replace with this</value></data>
+  <data name="WorkoutUi103" xml:space="preserve"><value>Replace exercise</value></data>
+  <data name="WorkoutUi104" xml:space="preserve"><value>Replacement failed</value></data>
+  <data name="WorkoutUi105" xml:space="preserve"><value>Omit exercise?</value></data>
+  <data name="WorkoutUi106" xml:space="preserve"><value>Omitting earns no XP; paired sides are removed together when needed. Warm-up and cool-down remain coherent.</value></data>
+  <data name="WorkoutUi107" xml:space="preserve"><value>Skip</value></data>
+  <data name="WorkoutUi108" xml:space="preserve"><value>Cannot omit</value></data>
+  <data name="WorkoutUi109" xml:space="preserve"><value>Required exercises</value></data>
+  <data name="WorkoutUi110" xml:space="preserve"><value>Plan your own workout</value></data>
+  <data name="WorkoutUi111" xml:space="preserve"><value>Choose exercises that must be included!</value></data>
+  <data name="WorkoutUi112" xml:space="preserve"><value>Starred exercises are guaranteed to be included in the unstarted workout. Other exercises are arranged around them while preserving the warm-up, main section and cool-down order.</value></data>
+  <data name="WorkoutUi113" xml:space="preserve"><value>Search exercises</value></data>
+  <data name="WorkoutUi114" xml:space="preserve"><value>Filter by workout phase</value></data>
+  <data name="WorkoutUi115" xml:space="preserve"><value>All phases</value></data>
+  <data name="WorkoutUi116" xml:space="preserve"><value>Filter exercises</value></data>
+  <data name="WorkoutUi117" xml:space="preserve"><value>Rebuild around selected exercises</value></data>
+  <data name="WorkoutUi118" xml:space="preserve"><value>Locked</value></data>
+  <data name="WorkoutUi119" xml:space="preserve"><value>The plan can only be edited before starting.</value></data>
+  <data name="WorkoutUi120" xml:space="preserve"><value>Nothing selected</value></data>
+  <data name="WorkoutUi121" xml:space="preserve"><value>Select at least one required exercise.</value></data>
+  <data name="WorkoutUi122" xml:space="preserve"><value>Cannot build a coherent workout</value></data>
+  <data name="WorkoutUi123" xml:space="preserve"><value>Limit reached</value></data>
+  <data name="WorkoutUi124" xml:space="preserve"><value>No matching exercises.</value></data>
+  <data name="WorkoutUi125" xml:space="preserve"><value>Workout</value></data>
+  <data name="WorkoutUi126" xml:space="preserve"><value>10 min · continuous relaxation</value></data>
+  <data name="WorkoutUi127" xml:space="preserve"><value>🌿 Relaxation</value></data>
+  <data name="WorkoutUi128" xml:space="preserve"><value>Preserves your streak after 10 minutes · 0 XP</value></data>
+  <data name="WorkoutUi129" xml:space="preserve"><value>Cannot be paused. If you leave early, you must restart.</value></data>
+  <data name="WorkoutUi130" xml:space="preserve"><value>Open YouTube Music</value></data>
+  <data name="WorkoutUi131" xml:space="preserve"><value>The saved playlist opens in YouTube Music. </value></data>
+  <data name="WorkoutUi132" xml:space="preserve"><value>Start the music, then return to Mozdulj! to start relaxation.</value></data>
+  <data name="WorkoutUi133" xml:space="preserve"><value>Tap the exercise name for instructions. Use the ↑ and ↓ buttons on the left to reorder exercises within their section.</value></data>
+  <data name="WorkoutUi134" xml:space="preserve"><value>Tap the exercise name to open its details.</value></data>
+  <data name="WorkoutUi135" xml:space="preserve"><value>🔒 This workout has already started, so exercises cannot be changed.</value></data>
+  <data name="WorkoutUi136" xml:space="preserve"><value>Required exercises: choose exercises that must appear in today's workout. The rest is rebuilt within the time limit and workout phases. Only available before starting.</value></data>
+  <data name="WorkoutUi137" xml:space="preserve"><value>★ Select required exercises ›</value></data>
+  <data name="WorkoutUi138" xml:space="preserve"><value>Previous exercise</value></data>
+  <data name="WorkoutUi139" xml:space="preserve"><value>This exercise is not in the current library.</value></data>
+  <data name="WorkoutUi140" xml:space="preserve"><value>1. Warm-up</value></data>
+  <data name="WorkoutUi141" xml:space="preserve"><value>2. Main section</value></data>
+  <data name="WorkoutUi142" xml:space="preserve"><value>3. Cool-down</value></data>
+  <data name="WorkoutUi143" xml:space="preserve"><value>Relaxation phases</value></data>
+  <data name="WorkoutUi144" xml:space="preserve"><value>Exercises</value></data>
+  <data name="WorkoutUi145" xml:space="preserve"><value> ★ Required</value></data>
+  <data name="WorkoutUi146" xml:space="preserve"><value>Relaxation</value></data>
+  <data name="WorkoutUi147" xml:space="preserve"><value>Unknown phase</value></data>
+  <data name="WorkoutUi148" xml:space="preserve"><value>🎒 Required: </value></data>
+  <data name="WorkoutUi149" xml:space="preserve"><value>▶ Start relaxation</value></data>
+  <data name="WorkoutUi150" xml:space="preserve"><value>▶ Resume</value></data>
+  <data name="WorkoutUi151" xml:space="preserve"><value>▶ Start</value></data>
+  <data name="WorkoutUi152" xml:space="preserve"><value>Invalid workout</value></data>
+  <data name="WorkoutUi153" xml:space="preserve"><value>The workout failed validation and cannot be started.</value></data>
+  <data name="WorkoutUi154" xml:space="preserve"><value>Cannot reorder</value></data>
+  <data name="WorkoutUi155" xml:space="preserve"><value>Done</value></data>
+  <data name="WorkoutUi156" xml:space="preserve"><value>Pause</value></data>
+  <data name="WorkoutUi157" xml:space="preserve"><value>Exercise session</value></data>
+  <data name="WorkoutUi158" xml:space="preserve"><value>Exit</value></data>
+  <data name="WorkoutUi159" xml:space="preserve"><value>Resume</value></data>
+  <data name="WorkoutUi160" xml:space="preserve"><value>Stop relaxation</value></data>
+  <data name="WorkoutUi161" xml:space="preserve"><value>Exit and save</value></data>
+  <data name="WorkoutUi162" xml:space="preserve"><value>Missing custom music</value></data>
+  <data name="WorkoutUi163" xml:space="preserve"><value>The saved audio files are no longer available. In Edit profile, select new music or switch to built-in music.</value></data>
+  <data name="WorkoutUi164" xml:space="preserve"><value>YouTube Music unavailable</value></data>
+  <data name="WorkoutUi165" xml:space="preserve"><value>Check that YouTube Music is installed and the Premium setting in Profile.</value></data>
+  <data name="WorkoutUi166" xml:space="preserve"><value>Relaxation interrupted</value></data>
+  <data name="WorkoutUi167" xml:space="preserve"><value>Leaving the app interrupted relaxation. The full ten minutes restart next time.</value></data>
+  <data name="WorkoutUi168" xml:space="preserve"><value>Exit relaxation?</value></data>
+  <data name="WorkoutUi169" xml:space="preserve"><value>Stop</value></data>
+  <data name="WorkoutUi170" xml:space="preserve"><value>Relaxation cannot be paused. If you leave now, you must restart the full ten minutes next time. This session will not count as completed.</value></data>
+  <data name="WorkoutUi171" xml:space="preserve"><value>Your progress will be saved; you can resume later.</value></data>
+  <data name="WorkoutUi172" xml:space="preserve"><value>Yes, exit</value></data>
+  <data name="WorkoutUi173" xml:space="preserve"><value>Stay</value></data>
+  <data name="WorkoutUi174" xml:space="preserve"><value>Exit failed</value></data>
+  <data name="WorkoutUi175" xml:space="preserve"><value>Continuous relaxation · body and mind</value></data>
+  <data name="WorkoutUi176" xml:space="preserve"><value>Preparing for the first exercise</value></data>
+  <data name="WorkoutUi177" xml:space="preserve"><value>Just relax now</value></data>
+  <data name="WorkoutUi178" xml:space="preserve"><value>Coming up: </value></data>
+  <data name="WorkoutUi179" xml:space="preserve"><value>Next: </value></data>
+  <data name="WorkoutUi180" xml:space="preserve"><value>🎒 Prepare: </value></data>
+  <data name="WorkoutUi181" xml:space="preserve"><value>Next exercise · instructions</value></data>
+  <data name="WorkoutUi182" xml:space="preserve"><value>Starting position: </value></data>
+  <data name="WorkoutUi183" xml:space="preserve"><value>✓ Done</value></data>
+  <data name="WorkoutUi184" xml:space="preserve"><value>Result</value></data>
+  <data name="WorkoutUi185" xml:space="preserve"><value>No monthly badge yet</value></data>
+  <data name="WorkoutUi186" xml:space="preserve"><value>10 minutes of relaxation completed!</value></data>
+  <data name="WorkoutUi187" xml:space="preserve"><value>Recovery session summary</value></data>
+  <data name="WorkoutUi188" xml:space="preserve"><value>Workout complete!</value></data>
+  <data name="WorkoutUi189" xml:space="preserve"><value>Today's movement summary</value></data>
+  <data name="WorkoutUi190" xml:space="preserve"><value> · Rest is a mindful choice too.</value></data>
+  <data name="WorkoutUi191" xml:space="preserve"><value>🌿 Recovery day credited</value></data>
+  <data name="WorkoutUi192" xml:space="preserve"><value>Recovery day not yet complete</value></data>
+  <data name="WorkoutUi193" xml:space="preserve"><value>The full ten-minute relaxation preserves your streak.</value></data>
+  <data name="WorkoutUi194" xml:space="preserve"><value>Complete the full uninterrupted ten minutes to preserve your streak.</value></data>
+  <data name="WorkoutUi195" xml:space="preserve"><value>It earns no XP and does not increase monthly active days.</value></data>
+  <data name="WorkoutUi196" xml:space="preserve"><value>Your progress</value></data>
+  <data name="WorkoutUi197" xml:space="preserve"><value>⌂ Back to home</value></data>
+  <data name="WorkoutUi198" xml:space="preserve"><value>: move up</value></data>
+  <data name="WorkoutUi199" xml:space="preserve"><value>: move down</value></data>
+  <data name="WorkoutUi200" xml:space="preserve"><value>No equipment</value></data>
+  <data name="WorkoutUi201" xml:space="preserve"><value>Mobility</value></data>
+  <data name="WorkoutUi202" xml:space="preserve"><value>Strength</value></data>
+  <data name="WorkoutUi203" xml:space="preserve"><value>Stretching</value></data>
+  <data name="WorkoutUi204" xml:space="preserve"><value>Balance</value></data>
+  <data name="WorkoutUi205" xml:space="preserve"><value>Relaxation</value></data>
+  <data name="WorkoutUi206" xml:space="preserve"><value>Gentle movement</value></data>
+  <data name="WorkoutUi207" xml:space="preserve"><value>Breathing exercise</value></data>
+  <data name="WorkoutUi208" xml:space="preserve"><value>Resistance band</value></data>
+  <data name="WorkoutUi209" xml:space="preserve"><value>Mini band</value></data>
+  <data name="WorkoutUi210" xml:space="preserve"><value>Yoga strap</value></data>
+  <data name="WorkoutUi211" xml:space="preserve"><value>Foam roller</value></data>
+  <data name="WorkoutUi212" xml:space="preserve"><value>Dumbbell</value></data>
+  <data name="WorkoutUi213" xml:space="preserve"><value>Yoga mat</value></data>
+  <data name="WorkoutUi214" xml:space="preserve"><value>Chair</value></data>
+  <data name="WorkoutUi215" xml:space="preserve"><value>Wall</value></data>
+  <data name="WorkoutUi216" xml:space="preserve"><value>Exercise ball</value></data>
+  <data name="WorkoutUi217" xml:space="preserve"><value>Yoga block</value></data>
+  <data name="WorkoutUi218" xml:space="preserve"><value>Balance pad</value></data>
+  <data name="WorkoutUi219" xml:space="preserve"><value>Step</value></data>
+  <data name="WorkoutUi220" xml:space="preserve"><value>reps</value></data>
+  <data name="WorkoutUi221" xml:space="preserve"><value>forward</value></data>
+  <data name="WorkoutUi222" xml:space="preserve"><value>backward</value></data>
+  <data name="WorkoutUi223" xml:space="preserve"><value>each side</value></data>
+  <data name="WorkoutUi224" xml:space="preserve"><value>left</value></data>
+  <data name="WorkoutUi225" xml:space="preserve"><value>right</value></data>
+  <data name="WorkoutUi226" xml:space="preserve"><value>left</value></data>
+  <data name="WorkoutUi227" xml:space="preserve"><value>right</value></data>
+  <data name="WorkoutUi228" xml:space="preserve"><value>Gentle activation</value></data>
+  <data name="WorkoutUi229" xml:space="preserve"><value>Gentle movement, control and light active exercises</value></data>
+  <data name="WorkoutUi230" xml:space="preserve"><value>Strength and stability</value></data>
+  <data name="WorkoutUi231" xml:space="preserve"><value>Targeted, controlled muscle activation and stability</value></data>
+  <data name="WorkoutUi232" xml:space="preserve"><value>Balance and body awareness</value></data>
+  <data name="WorkoutUi233" xml:space="preserve"><value>Mindful, varied movements and cool-down</value></data>
+  <data name="WorkoutUi234" xml:space="preserve"><value>10-minute full-body relaxation</value></data>
+  <data name="WorkoutUi235" xml:space="preserve"><value>Ten minutes of calm in one uninterrupted session.</value></data>
+  <data name="WorkoutUi236" xml:space="preserve"><value>Relaxation cannot be paused. Leaving early restarts the session.</value></data>
+  <data name="WorkoutUi237" xml:space="preserve"><value>Full-body and mind relaxation</value></data>
+  <data name="WorkoutUi238" xml:space="preserve"><value>Shorter coherent workout: too few suitable exercises are available for the selected duration.</value></data>
+  <data name="WorkoutUi239" xml:space="preserve"><value>Lie down or sit with support. Gradually release muscle tension and breathe naturally. If your attention wanders, gently return to your breathing.</value></data>
+  <data name="WorkoutUi240" xml:space="preserve"><value>{0} results</value></data>
+  <data name="WorkoutUi241" xml:space="preserve"><value>Difficulty: {0}/3</value></data>
+  <data name="WorkoutUi242" xml:space="preserve"><value>Replacement must be in the {0} phase.</value></data>
+  <data name="WorkoutUi243" xml:space="preserve"><value>− Omit exercise ({0} remaining)</value></data>
+  <data name="WorkoutUi244" xml:space="preserve"><value>Replace {0} with {1} in the workout?</value></data>
+  <data name="WorkoutUi245" xml:space="preserve"><value>Original: {0}</value></data>
+  <data name="WorkoutUi246" xml:space="preserve"><value>Selected: {0} / {1}</value></data>
+  <data name="WorkoutUi247" xml:space="preserve"><value>Time limit: {0} min · up to {1} selected exercises. Actual duration is also checked.</value></data>
+  <data name="WorkoutUi248" xml:space="preserve"><value>For the selected {0} minutes, you can require up to {1} exercises.</value></data>
+  <data name="WorkoutUi249" xml:space="preserve"><value>{0} · {1} · approx. {2} sec</value></data>
+  <data name="WorkoutUi250" xml:space="preserve"><value>{0} exercises · {1} min target · approx. {2} min including transitions</value></data>
+  <data name="WorkoutUi251" xml:space="preserve"><value>Warm-up: {0} · Main: {1} · Cool-down: {2}</value></data>
+  <data name="WorkoutUi252" xml:space="preserve"><value>Omissions available: {0} / {1}</value></data>
+  <data name="WorkoutUi253" xml:space="preserve"><value>Finished workout · {0} / {1} exercises</value></data>
+  <data name="WorkoutUi254" xml:space="preserve"><value>Transition · {0}/{1}</value></data>
+  <data name="WorkoutUi255" xml:space="preserve"><value>{0} / {1} exercises completed</value></data>
+  <data name="WorkoutUi256" xml:space="preserve"><value> · {0} skipped</value></data>
+  <data name="WorkoutUi257" xml:space="preserve"><value>{0} / 3 of today’s workouts fully completed</value></data>
+  <data name="WorkoutUi258" xml:space="preserve"><value>🔥 {0}-day active streak</value></data>
+  <data name="WorkoutUi259" xml:space="preserve"><value>⭐ {0:N0} total XP · level {1}</value></data>
+  <data name="WorkoutUi260" xml:space="preserve"><value>🧊 {0} / {1} streak freezes · next at {2:N0} XP</value></data>
+  <data name="WorkoutUi261" xml:space="preserve"><value>🏅 Monthly badge: {0} ({1} active days)</value></data>
+  <data name="WorkoutUi262" xml:space="preserve"><value>{0} 3D phases · preset: {1}</value></data>
+  <data name="WorkoutUi263" xml:space="preserve"><value>{0}-phase 3D pose · preset: {1}</value></data>
 </root>

@@ -46,8 +46,8 @@ public sealed class Exercise
     public string ReviewStatus { get; set; } = "draft"; // draft/reviewed/withdrawn
     public MotionPose Pose { get; set; } = new();
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} mp" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {x.Label}"));
-    [JsonIgnore] public string EquipmentLabel => Equipment.Count == 0 ? "Eszköz nélkül" : string.Join(", ", Equipment);
+        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {PresentationText.Known(x.Label)}"));
+    [JsonIgnore] public string EquipmentLabel => Equipment.Count == 0 ? AppLocalization.Text("WorkoutUi200") : string.Join(", ", Equipment.Select(PresentationText.Known));
     [JsonIgnore] public IReadOnlyList<string> RegionAreaIds => RegionTaxonomy.AreaIds(Regions);
     [JsonIgnore] public string RegionAreaLabel => RegionTaxonomy.AreaLabels(Regions);
     [JsonIgnore] public string RegionLabel => RegionTaxonomy.DetailLabels(Regions);
@@ -239,7 +239,7 @@ public sealed class WorkoutItem
     /// <summary>Unpaused seconds in this exercise, excluding transitions.</summary>
     public int ActiveSeconds { get; set; }
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} mp" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {x.Label}"));
+        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {PresentationText.Known(x.Label)}"));
 }
 public sealed class CompletionRecord
 {

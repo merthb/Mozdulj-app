@@ -10,19 +10,19 @@ public sealed class ExerciseEditorPage : ContentPage
     private readonly AppState _state;
     private readonly Exercise _draft;
     private readonly Entry _name = new() { Placeholder = "Gyakorlat neve" };
-    private readonly Picker _category = new() { Title = "Mozgástípus" };
+    private readonly Picker _category = new() { Title = AppLocalization.Text("WorkoutUi002") };
     private readonly List<string> _areas = [];
     private readonly List<string> _details = [];
     private readonly List<string> _legacyDetails = [];
     private readonly VerticalStackLayout _detailChoices = new() { Spacing = 6 };
     private readonly Label _areaSummary = UI.Label("", 13, color:UI.Muted);
-    private readonly Picker _phase = new() { Title = "Edzésfázis" };
-    private readonly Picker _difficulty = new() { Title = "Nehézség" };
-    private readonly Picker _measure = new() { Title = "Mérés típusa" };
-    private readonly Entry _seconds = new() { Placeholder = "Idő másodpercben", Keyboard = Keyboard.Numeric };
-    private readonly Entry _reps = new() { Placeholder = "4 előre; 4 hátra" };
-    private readonly Entry _estimate = new() { Placeholder = "Becsült idő másodpercben", Keyboard = Keyboard.Numeric };
-    private readonly Entry _equipment = new() { Placeholder = "Eszközök vesszővel (vagy üresen)" };
+    private readonly Picker _phase = new() { Title = AppLocalization.Text("WorkoutUi055") };
+    private readonly Picker _difficulty = new() { Title = AppLocalization.Text("Difficulty") };
+    private readonly Picker _measure = new() { Title = AppLocalization.Text("WorkoutUi056") };
+    private readonly Entry _seconds = new() { Placeholder = AppLocalization.Text("WorkoutUi057"), Keyboard = Keyboard.Numeric };
+    private readonly Entry _reps = new() { Placeholder = AppLocalization.Text("WorkoutUi058") };
+    private readonly Entry _estimate = new() { Placeholder = AppLocalization.Text("WorkoutUi059"), Keyboard = Keyboard.Numeric };
+    private readonly Entry _equipment = new() { Placeholder = AppLocalization.Text("WorkoutUi060") };
     private readonly Editor _summary = new() { Placeholder = "Rövid végrehajtási leírás", AutoSize = EditorAutoSizeOption.TextChanges };
     private readonly Editor _position = new() { Placeholder = "Kiinduló helyzet", AutoSize = EditorAutoSizeOption.TextChanges };
     private readonly Editor _steps = new() { Placeholder = "Végrehajtási lépések (soronként)", AutoSize = EditorAutoSizeOption.TextChanges };
@@ -50,12 +50,12 @@ public sealed class ExerciseEditorPage : ContentPage
         } : ExerciseLibraryRules.Clone(current);
         ExerciseLibraryRules.Normalize(_draft);
         if (state.BuiltInCatalog.Exercises.Any(x=>x.Id==_draft.Id))
-            throw new InvalidOperationException("Alapgyakorlat nem szerkeszthető.");
-        UI.Setup(this,current is null ? "Új gyakorlat" : "Saját gyakorlat szerkesztése");
-        foreach (var c in ExerciseLibraryRules.Categories) _category.Items.Add(c);
-        foreach (var p in new[] { "Bemelegítés", "Fő rész", "Levezetés" }) _phase.Items.Add(p);
-        foreach (var d in new[] { "Kezdő", "Középhaladó", "Haladó" }) _difficulty.Items.Add(d);
-        _measure.Items.Add("Ismétlés"); _measure.Items.Add("Idő");
+            throw new InvalidOperationException(AppLocalization.Text("WorkoutUi061"));
+        UI.Setup(this,current is null ? AppLocalization.Text("WorkoutUi062") : AppLocalization.Text("WorkoutUi063"));
+        foreach (var c in ExerciseLibraryRules.Categories) _category.Items.Add(PresentationText.Known(c));
+        foreach (var p in new[] { AppLocalization.Text("WorkoutUi064"), AppLocalization.Text("WorkoutUi065"), AppLocalization.Text("WorkoutUi066") }) _phase.Items.Add(p);
+        foreach (var d in new[] { AppLocalization.Text("Beginner"), AppLocalization.Text("Intermediate"), AppLocalization.Text("Advanced") }) _difficulty.Items.Add(d);
+        _measure.Items.Add(AppLocalization.Text("WorkoutUi067")); _measure.Items.Add(AppLocalization.Text("WorkoutUi068"));
         _name.Text = _draft.Name;
         _category.SelectedIndex = Array.IndexOf(ExerciseLibraryRules.Categories,_draft.Category);
         _details.AddRange(_draft.Regions.Select(RegionTaxonomy.FindDetail).OfType<RegionDetail>().Select(d=>d.Key).Distinct());
@@ -100,8 +100,8 @@ public sealed class ExerciseEditorPage : ContentPage
         Children = { UI.Label(label,13,true,color:UI.Muted),input } };
     private void Fill()
     {
-        _content.Children.Add(UI.Label("Saját gyakorlat",26,true));
-        _content.Children.Add(UI.Label("Piszkozatot hiányos adatokkal is menthetsz. A gyakorlatsor-generátor csak teljes, aktív gyakorlatot használ.",13,color:UI.Muted));
+        _content.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi069"),26,true));
+        _content.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi070"),13,color:UI.Muted));
         var language = new Picker { Title = AppLocalization.IsEnglish ? "Exercise text language" : "Gyakorlat szövegének nyelve" };
         language.Items.Add("Magyar"); language.Items.Add("English");
         _content.Children.Add(Field(AppLocalization.IsEnglish ? "Editing language" : "Szerkesztés nyelve",language));
@@ -113,7 +113,7 @@ public sealed class ExerciseEditorPage : ContentPage
         var enNameField = Field("Exercise name (EN)",_englishName);
         _content.Children.Add(huNameField);
         _content.Children.Add(enNameField);
-        _content.Children.Add(Field("Mozgástípus *",_category));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi071"),_category));
         _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Affected body areas *" : "Érintett testtájak *", 13, true));
         foreach (var group in new[] { "upper", "lower", "full" })
         {
@@ -128,13 +128,13 @@ public sealed class ExerciseEditorPage : ContentPage
             _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Legacy parts — choose replacements before saving: " :
                 "Korábbi egyedi testtájak – mentés előtt válassz megfelelő elemeket: ") + string.Join(", ", _legacyDetails), 13, color:UI.Muted));
         RefreshDetails();
-        _content.Children.Add(Field("Edzésfázis *",_phase));
-        _content.Children.Add(Field("Nehézség *",_difficulty));
-        _content.Children.Add(Field("Mérés típusa *",_measure));
-        _content.Children.Add(Field("Időtartam (időalapú feladatoknál) *",_seconds));
-        _content.Children.Add(Field("Ismétléscélok (pl. 4 előre; 4 hátra) *",_reps));
-        _content.Children.Add(Field("Becsült idő másodpercben *",_estimate));
-        _content.Children.Add(Field("Szükséges eszközök (eszközmentesnél üres)",_equipment));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi072"),_phase));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi073"),_difficulty));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi074"),_measure));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi075"),_seconds));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi076"),_reps));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi077"),_estimate));
+        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi078"),_equipment));
         _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Description and safety" : "Leírás és biztonság",20,true));
         _content.Children.Add(UI.Label(AppLocalization.IsEnglish ?
             "Provide a name and instructions in at least one language. Missing text uses the other language." :
@@ -156,19 +156,19 @@ public sealed class ExerciseEditorPage : ContentPage
         ShowLanguage();
         _content.Children.Add(huFields);
         _content.Children.Add(enFields);
-        _content.Children.Add(UI.Label("Ábra (opcionális)",20,true));
+        _content.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi079"),20,true));
         _content.Children.Add(_figureInfo);
-        var draw=UI.Button("✎ 3D csontváz és eszközök szerkesztése",false);
+        var draw=UI.Button(AppLocalization.Text("WorkoutUi080"),false);
         draw.Clicked+=async (_,_)=>{
             await Navigation.PushAsync(new Rig3DEditorPage(_draft.Pose, pose=>
             { _draft.Pose=pose; UpdateFigureInfo(); }));
         };
         _content.Children.Add(draw);
-        var saveDraft=UI.Button("Piszkozat mentése",false);
+        var saveDraft=UI.Button(AppLocalization.Text("WorkoutUi081"),false);
         saveDraft.Clicked+=async (_,_)=> await Save(LibraryStatuses.Draft);
-        var activate=UI.Button("Aktiválás és mentés");
+        var activate=UI.Button(AppLocalization.Text("WorkoutUi082"));
         activate.Clicked+=async (_,_)=> await Save(LibraryStatuses.Active);
-        var cancel=UI.Button("Mégse",false);
+        var cancel=UI.Button(AppLocalization.Text("Cancel"),false);
         cancel.Clicked+=async (_,_)=> await Navigation.PopModalAsync();
         var buttons=new VerticalStackLayout {Spacing=6,Children={activate,saveDraft,cancel}};
         var layout=new Grid {RowDefinitions={new RowDefinition{Height=GridLength.Star},new RowDefinition{Height=GridLength.Auto}}};
@@ -177,8 +177,8 @@ public sealed class ExerciseEditorPage : ContentPage
         layout.Add(footer,0,1);Content=layout;UpdateFigureInfo();
     }
     private void UpdateFigureInfo() => _figureInfo.Text=_draft.Pose.Rig3D is null
-        ? "Nincs 3D ábra; ez nem akadálya az aktiválásnak."
-        : $"{_draft.Pose.Rig3D.Frames.Count} 3D fázis · preset: {_draft.Pose.Rig3D.Preset}";
+        ? AppLocalization.Text("WorkoutUi083")
+        : AppLocalization.Format("WorkoutUi262", _draft.Pose.Rig3D.Frames.Count, _draft.Pose.Rig3D.Preset);
 
     private void RefreshDetails()
     {
@@ -207,7 +207,7 @@ public sealed class ExerciseEditorPage : ContentPage
     private void Gather()
     {
         _draft.Name=_name.Text?.Trim()??"";
-        _draft.Category=_category.SelectedItem?.ToString()??"";
+        _draft.Category=_category.SelectedIndex>=0 ? ExerciseLibraryRules.Categories[_category.SelectedIndex] : "";
         _draft.Regions = _details.ToList();
         _draft.RegionGroups = new(StringComparer.OrdinalIgnoreCase);
         _draft.Phase=(_phase.SelectedIndex>=0 && _phase.SelectedIndex<3)?ExerciseLibraryRules.Phases[_phase.SelectedIndex]:"";
@@ -252,13 +252,13 @@ public sealed class ExerciseEditorPage : ContentPage
         {
             var validation=ExerciseLibraryRules.ValidateForActivation(_draft);
             if(!validation.IsValid)
-            {await DisplayAlertAsync("Még hiányoznak adatok",string.Join("\n",validation.Errors),"Rendben");return;}
+            {await DisplayAlertAsync(AppLocalization.Text("WorkoutUi084"),string.Join("\n",validation.Errors),AppLocalization.Text("OK"));return;}
         }
         try
         {
             await _state.SaveCustomExerciseAsync(_draft,status);
             await Navigation.PopModalAsync();
         }
-        catch(Exception ex){await DisplayAlertAsync("Mentési hiba",ex.Message,"Rendben");}
+        catch(Exception ex){await DisplayAlertAsync(AppLocalization.Text("SaveError"),ex.Message,AppLocalization.Text("OK"));}
     }
 }

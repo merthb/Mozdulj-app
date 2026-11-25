@@ -119,8 +119,8 @@ public sealed class ProfilePage : ContentPage
         _content.Children.Add(UI.Card(
             UI.Label(AppLocalization.Text("Personalization"),19,true),
             Field(AppLocalization.Text("FocusRegions"),Join(RegionTaxonomy.NormalizeFocus(p.FocusRegions).Select(RegionTaxonomy.AreaLabel))),
-            Field(AppLocalization.Text("PreferredTypes"),Join(p.PreferredCategories)),
-            Field(AppLocalization.Text("Equipment"),Join(p.AvailableEquipment))
+            Field(AppLocalization.Text("PreferredTypes"),Join(p.PreferredCategories.Select(PresentationText.Known))),
+            Field(AppLocalization.Text("Equipment"),Join(p.AvailableEquipment.Select(PresentationText.Known)))
         ));
         _content.Children.Add(UI.Label(AppLocalization.Text("ManageLibrary"),21,true));
         _content.Children.Add(UI.Label(AppLocalization.Format("LibraryCount", _state.Exercises.Count),13,color:UI.Muted));

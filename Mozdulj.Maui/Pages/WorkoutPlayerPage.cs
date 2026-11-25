@@ -24,8 +24,8 @@ public sealed class WorkoutPlayerPage : ContentPage
     private readonly Label _nextGuideTitle=UI.Label("",14,true,UI.Purple);
     private readonly Label _equipmentCue=UI.Label("",17,true,UI.Purple);
     private readonly Label _nextGuideText=UI.Label("",13,color:UI.Ink);
-    private readonly Button _action=UI.Button("Kész");
-    private readonly Button _pause=UI.Button("Szünet",false);
+    private readonly Button _action=UI.Button(AppLocalization.Text("WorkoutUi155"));
+    private readonly Button _pause=UI.Button(AppLocalization.Text("WorkoutUi156"),false);
     private Button? _skip;
     private int _index;
     private bool _paused;
@@ -49,14 +49,14 @@ public sealed class WorkoutPlayerPage : ContentPage
     public WorkoutPlayerPage(AppState state,Workout workout)
     {
         _state=state;_workout=workout;
-        UI.Setup(this,"Gyakorlás");
+        UI.Setup(this,AppLocalization.Text("WorkoutUi157"));
         if (workout.Kind == "recovery")
         {
             // The default NavigationPage arrow can pop the page without calling
             // OnBackButtonPressed on Android. Route every visible back action
             // through the same explicit confirmation instead.
             NavigationPage.SetHasBackButton(this, false);
-            var exitToolbar = new ToolbarItem { Text = "Kilépés", Order = ToolbarItemOrder.Primary };
+            var exitToolbar = new ToolbarItem { Text = AppLocalization.Text("WorkoutUi158"), Order = ToolbarItemOrder.Primary };
             exitToolbar.Clicked += async (_, _) => await LeaveAsync();
             ToolbarItems.Add(exitToolbar);
         }
@@ -81,7 +81,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         _value.HorizontalTextAlignment=TextAlignment.Center;
         _meta.HorizontalTextAlignment=TextAlignment.Center;
         _guidance.HorizontalTextAlignment=TextAlignment.Center;
-        content.Children.Add(UI.Label(workout.Title,15,true,color:UI.Muted));
+        content.Children.Add(UI.Label(PresentationText.Known(workout.Title),15,true,color:UI.Muted));
         content.Children.Add(_meta);
         content.Children.Add(new BoxView { HeightRequest=16, Color=Colors.Transparent });
         content.Children.Add(_headline);
@@ -104,11 +104,11 @@ public sealed class WorkoutPlayerPage : ContentPage
         content.Children.Add(_nextGuideBlock);
         content.Children.Add(new BoxView { HeightRequest=24, Color=Colors.Transparent });
         _action.Clicked+=async (_,_)=>await FinishCurrentAsync(false);
-        _pause.Clicked+=async (_,_)=>{_paused=!_paused;_pause.Text=_paused?"Folytatás":"Szünet";
+        _pause.Clicked+=async (_,_)=>{_paused=!_paused;_pause.Text=_paused?AppLocalization.Text("WorkoutUi159"):AppLocalization.Text("WorkoutUi156");
             _audio.SetPaused(_paused);await _state.SaveAsync();};
-        var skip=UI.Button("Kihagyás",false);
+        var skip=UI.Button(AppLocalization.Text("WorkoutUi107"),false);
         skip.Clicked+=async (_,_)=>await FinishCurrentAsync(true);
-        var stop=UI.Button(workout.Kind=="recovery" ? "Relaxáció megszakítása" : "Kilépés és mentés",false);
+        var stop=UI.Button(workout.Kind=="recovery" ? AppLocalization.Text("WorkoutUi160") : AppLocalization.Text("WorkoutUi161"),false);
         stop.Clicked+=async (_,_)=>await LeaveAsync();
         content.Children.Add(_action);
         _pause.IsVisible=workout.Kind!="recovery";
@@ -147,11 +147,11 @@ public sealed class WorkoutPlayerPage : ContentPage
             catch (Exception ex)
             {
                 _paused=true;
-                await DisplayAlertAsync("Mentési hiba",ex.Message,"Rendben");
+                await DisplayAlertAsync(AppLocalization.Text("SaveError"),ex.Message,AppLocalization.Text("OK"));
                 return;
             }
             _paused=false;
-            _pause.Text="Szünet";
+            _pause.Text=AppLocalization.Text("WorkoutUi156");
             DeviceDisplay.Current.KeepScreenOn=true;
             if (_workout.Kind == "recovery")
                 _recoveryStartTicks = Stopwatch.GetTimestamp();
@@ -172,14 +172,14 @@ public sealed class WorkoutPlayerPage : ContentPage
                         await _audio.StartRelaxationAsync(preferences.RelaxationPlaylist,
                             preferences.RelaxationAudioFileName);
                     else
-                        await DisplayAlertAsync("Hiányzó saját zenék",
-                            "A mentett saját hangfájlok már nem érhetők el. A Profil szerkesztése oldalon válassz új zenéket vagy állítsd át a forrást beépített zenére.",
-                            "Rendben");
+                        await DisplayAlertAsync(AppLocalization.Text("WorkoutUi162"),
+                            AppLocalization.Text("WorkoutUi163"),
+                            AppLocalization.Text("OK"));
                 }
                 else if (!preferences.RelaxationYouTubeMusicPremiumConfirmed || !YouTubeMusicSupport.IsInstalled())
-                    await DisplayAlertAsync("YouTube Music nem érhető el",
-                        "Ellenőrizd a YouTube Music telepítését és a Premium-beállítást a Profil oldalon.",
-                        "Rendben");
+                    await DisplayAlertAsync(AppLocalization.Text("WorkoutUi164"),
+                        AppLocalization.Text("WorkoutUi165"),
+                        AppLocalization.Text("OK"));
             }
         }
     }
@@ -227,9 +227,9 @@ public sealed class WorkoutPlayerPage : ContentPage
         _leaving = true;
         try
         {
-            await DisplayAlertAsync("Relaxáció megszakadt",
-                "Az alkalmazás elhagyása megszakította a relaxációt. A következő alkalommal újraindul a teljes tíz perc.",
-                "Rendben");
+            await DisplayAlertAsync(AppLocalization.Text("WorkoutUi166"),
+                AppLocalization.Text("WorkoutUi167"),
+                AppLocalization.Text("OK"));
             await Navigation.PopAsync();
         }
         catch { _leaving = false; }
@@ -247,11 +247,11 @@ public sealed class WorkoutPlayerPage : ContentPage
         if(_leaving || _finished)return;
         var recovery=_workout.Kind=="recovery";
         var confirmed=await DisplayAlertAsync(
-            recovery ? "Biztosan kilépsz a relaxációból?" : "Leállítás",
+            recovery ? AppLocalization.Text("WorkoutUi168") : AppLocalization.Text("WorkoutUi169"),
             recovery
-                ? "A relaxáció nem szüneteltethető. Ha most kilépsz, a következő alkalommal elölről kell kezdened a teljes 10 percet. A mostani alkalom nem számít teljesítésnek."
-                : "Megőrizzük az aktuális állapotot, később folytathatod.",
-            recovery ? "Igen, kilépek" : "Kilépés", "Maradok");
+                ? AppLocalization.Text("WorkoutUi170")
+                : AppLocalization.Text("WorkoutUi171"),
+            recovery ? AppLocalization.Text("WorkoutUi172") : AppLocalization.Text("WorkoutUi158"), AppLocalization.Text("WorkoutUi173"));
         if(!confirmed)return;
         _leaving=true;
         try
@@ -266,7 +266,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         catch(Exception ex)
         {
             _leaving=false;
-            await DisplayAlertAsync("Kilépési hiba",ex.Message,"Rendben");
+            await DisplayAlertAsync(AppLocalization.Text("WorkoutUi174"),ex.Message,AppLocalization.Text("OK"));
         }
     }
 
@@ -353,22 +353,22 @@ public sealed class WorkoutPlayerPage : ContentPage
         var item=_workout.Items[_index];
         var transition=_workout.PlaybackPhase=="transition";
         var preparing=_workout.PlaybackPhase=="preparation";
-        _meta.Text = _workout.Kind == "recovery" ? "Folyamatos relaxáció · teljes test és elme"
-            : preparing ? "Felkészülés az első gyakorlatra"
-            : transition ? $"Átvezetés · {_index+2}/{_workout.Items.Count}"
-            : $"{_index+1}/{_workout.Items.Count} · {item.Category}";
-        _headline.Text = _workout.Kind == "recovery" ? "Most csak pihenj"
-            : preparing ? "Hamarosan: "+(_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name)
-            : transition ? "Következő: "+(_state.FindExercise(_workout.Items[_index+1].ExerciseId)?.DisplayName ?? _workout.Items[_index+1].Name) : (_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name);
+        _meta.Text = _workout.Kind == "recovery" ? AppLocalization.Text("WorkoutUi175")
+            : preparing ? AppLocalization.Text("WorkoutUi176")
+            : transition ? AppLocalization.Format("WorkoutUi254", _index+2, _workout.Items.Count)
+            : $"{_index+1}/{_workout.Items.Count} · {PresentationText.Known(item.Category)}";
+        _headline.Text = _workout.Kind == "recovery" ? AppLocalization.Text("WorkoutUi177")
+            : preparing ? AppLocalization.Text("WorkoutUi178")+(_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name)
+            : transition ? AppLocalization.Text("WorkoutUi179")+(_state.FindExercise(_workout.Items[_index+1].ExerciseId)?.DisplayName ?? _workout.Items[_index+1].Name) : (_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name);
         _value.Text=preparing ? _workout.RemainingSeconds.ToString() :
             transition || item.Measure=="time" ? UI.FormatSeconds(_workout.RemainingSeconds) : item.TargetLabel;
         _value.FontSize=preparing||transition||item.Measure=="time"?48:28;
         _guidance.IsVisible=_workout.Kind=="recovery" && !transition && !preparing;
-        _guidance.Text=_workout.Kind=="recovery" ? RecoveryRoutine.Guidance : item.Instruction;
+        _guidance.Text=_workout.Kind=="recovery" ? PresentationText.Known(RecoveryRoutine.Guidance) : item.Instruction;
         var upcoming = transition && _index+1<_workout.Items.Count ? _workout.Items[_index+1] : item;
         var requiredEquipment=_workout.Kind=="recovery" ? null : _state.FindExercise(upcoming.ExerciseId);
         _equipmentCue.Text=requiredEquipment?.Equipment.Count>0
-            ? "🎒 Készítsd elő: " + requiredEquipment.EquipmentLabel : "";
+            ? AppLocalization.Text("WorkoutUi180") + requiredEquipment.EquipmentLabel : "";
         _equipmentCue.IsVisible=!string.IsNullOrWhiteSpace(_equipmentCue.Text) && (transition||preparing||!_paused);
         bool showPreview=transition && _index+1<_workout.Items.Count && _workout.Kind!="recovery";
         _nextGuideBlock.IsVisible=showPreview;
@@ -376,18 +376,18 @@ public sealed class WorkoutPlayerPage : ContentPage
         {
             var next=_workout.Items[_index+1];
             var definition=_state.FindExercise(next.ExerciseId);
-            _nextGuideTitle.Text="Következő gyakorlat · végrehajtás";
+            _nextGuideTitle.Text=AppLocalization.Text("WorkoutUi181");
             if(definition is null) _nextGuideText.Text=next.Instruction;
             else
             {
                 var steps=ExerciseText.DeduplicateStartingPosition(definition.DisplayText.StartingPosition,definition.DisplayText.Steps);
                 _nextGuideText.Text=(string.IsNullOrWhiteSpace(definition.DisplayText.StartingPosition)?"":
-                    "Kiinduló helyzet: "+definition.DisplayText.StartingPosition+"\n\n") +
+                    AppLocalization.Text("WorkoutUi182")+definition.DisplayText.StartingPosition+"\n\n") +
                     string.Join("\n",steps.Select((step,i)=>$"{i+1}. {step}"));
             }
         }
         _action.IsVisible=!transition && !preparing && item.Measure=="reps";
         if(_skip is not null) _skip.IsVisible=_workout.Kind!="recovery" && !preparing && !transition;
-        _action.Text="✓ Kész";
+        _action.Text=AppLocalization.Text("WorkoutUi183");
     }
 }

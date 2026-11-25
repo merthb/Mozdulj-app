@@ -60,8 +60,8 @@ public sealed class TodayPage : ContentPage
             var btn = UI.SubtleAction(w.Status == "completed" ? AppLocalization.Text("View") : AppLocalization.Text("TaskList"));
             btn.Clicked += async (_,_) => await Navigation.PushAsync(new WorkoutPreviewPage(_state,w));
             _content.Children.Add(UI.Card(
-                UI.Label(signs[(w.Slot - 1) % signs.Length] + "  " + w.Title, 19, true),
-                UI.Label(w.Description, 14, color:UI.Muted),
+                UI.Label(signs[(w.Slot - 1) % signs.Length] + "  " + PresentationText.Known(w.Title), 19, true),
+                UI.Label(PresentationText.Known(w.Description), 14, color:UI.Muted),
                 UI.Label(AppLocalization.Format("WorkoutCount", w.Items.Count, Math.Ceiling(w.EstimatedSeconds / 60.0)) + (status.Length > 0 ? $" · {status}" : ""), 13, color:UI.Muted),
                 btn));
         }

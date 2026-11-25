@@ -126,4 +126,267 @@
   <data name="MonthlyActive" xml:space="preserve"><value>Havi aktív napok: {0}.</value></data>
   <data name="WeeklyProgress" xml:space="preserve"><value>Heti cél · {0} / {1} aktív nap</value></data>
   <data name="WorkoutCount" xml:space="preserve"><value>{0} feladat · kb. {1} perc</value></data>
+  <data name="WorkoutUi001" xml:space="preserve"><value>Gyakorlat vagy testtáj…</value></data>
+  <data name="WorkoutUi002" xml:space="preserve"><value>Mozgástípus</value></data>
+  <data name="WorkoutUi003" xml:space="preserve"><value>Forrás / állapot</value></data>
+  <data name="WorkoutUi004" xml:space="preserve"><value>Gyakorlatok betöltése…</value></data>
+  <data name="WorkoutUi005" xml:space="preserve"><value>Gyakorlattár</value></data>
+  <data name="WorkoutUi006" xml:space="preserve"><value>Minden gyakorlat</value></data>
+  <data name="WorkoutUi007" xml:space="preserve"><value>Alapgyakorlatok</value></data>
+  <data name="WorkoutUi008" xml:space="preserve"><value>Saját gyakorlatok</value></data>
+  <data name="WorkoutUi009" xml:space="preserve"><value>Piszkozatok</value></data>
+  <data name="WorkoutUi010" xml:space="preserve"><value>Kikapcsolt</value></data>
+  <data name="WorkoutUi011" xml:space="preserve"><value>Nincs találat. Próbálj másik keresőkifejezést, vagy módosítsd a szűrőket.</value></data>
+  <data name="WorkoutUi012" xml:space="preserve"><value>Keresés</value></data>
+  <data name="WorkoutUi013" xml:space="preserve"><value>Gyakorlat vagy testtáj keresése</value></data>
+  <data name="WorkoutUi014" xml:space="preserve"><value>+ Új saját gyakorlat</value></data>
+  <data name="WorkoutUi015" xml:space="preserve"><value>⚙ További szűrők</value></data>
+  <data name="WorkoutUi016" xml:space="preserve"><value>Mind</value></data>
+  <data name="WorkoutUi017" xml:space="preserve"><value>Alap</value></data>
+  <data name="WorkoutUi018" xml:space="preserve"><value>Saját</value></data>
+  <data name="WorkoutUi019" xml:space="preserve"><value>Forrás és állapot</value></data>
+  <data name="WorkoutUi020" xml:space="preserve"><value>Elérhető eszköz</value></data>
+  <data name="WorkoutUi021" xml:space="preserve"><value>Kedvenc</value></data>
+  <data name="WorkoutUi022" xml:space="preserve"><value>⚙ Szűrők bezárása</value></data>
+  <data name="WorkoutUi023" xml:space="preserve"><value>↑ Tetejére</value></data>
+  <data name="WorkoutUi024" xml:space="preserve"><value>Összes mozgástípus</value></data>
+  <data name="WorkoutUi025" xml:space="preserve"><value>Névtelen piszkozat</value></data>
+  <data name="WorkoutUi026" xml:space="preserve"><value>Kikapcsolás</value></data>
+  <data name="WorkoutUi027" xml:space="preserve"><value>Bekapcsolás</value></data>
+  <data name="WorkoutUi028" xml:space="preserve"><value>Aktív gyakorlat. Megnyomva kikapcsolható.</value></data>
+  <data name="WorkoutUi029" xml:space="preserve"><value>Kikapcsolt gyakorlat. Megnyomva bekapcsolható.</value></data>
+  <data name="WorkoutUi030" xml:space="preserve"><value>Nem sikerült</value></data>
+  <data name="WorkoutUi031" xml:space="preserve"><value>Kedvenc eltávolítása</value></data>
+  <data name="WorkoutUi032" xml:space="preserve"><value>Kedvencekhez adás</value></data>
+  <data name="WorkoutUi033" xml:space="preserve"><value>Leírás és ábra javítása</value></data>
+  <data name="WorkoutUi034" xml:space="preserve"><value>Gyakorlat szerkesztése</value></data>
+  <data name="WorkoutUi035" xml:space="preserve"><value>Saját gyakorlat archiválása</value></data>
+  <data name="WorkoutUi036" xml:space="preserve"><value>Saját gyakorlat archiválása?</value></data>
+  <data name="WorkoutUi037" xml:space="preserve"><value>A korábbi teljesítések megmaradnak.</value></data>
+  <data name="WorkoutUi038" xml:space="preserve"><value>Archiválás</value></data>
+  <data name="WorkoutUi039" xml:space="preserve"><value>Aktív</value></data>
+  <data name="WorkoutUi040" xml:space="preserve"><value>Piszkozat</value></data>
+  <data name="WorkoutUi041" xml:space="preserve"><value>Archivált</value></data>
+  <data name="WorkoutUi042" xml:space="preserve"><value>Gyakorlat részletei</value></data>
+  <data name="WorkoutUi043" xml:space="preserve"><value>✎ Gyakorlat szerkesztése</value></data>
+  <data name="WorkoutUi044" xml:space="preserve"><value>3D ábra megtekintése</value></data>
+  <data name="WorkoutUi045" xml:space="preserve"><value>Ehhez a gyakorlathoz még nem tartozik 3D ábra.</value></data>
+  <data name="WorkoutUi046" xml:space="preserve"><value>✓ Eszköz nem szükséges</value></data>
+  <data name="WorkoutUi047" xml:space="preserve"><value>🎒 Szükséges eszköz: </value></data>
+  <data name="WorkoutUi048" xml:space="preserve"><value>Kiinduló helyzet</value></data>
+  <data name="WorkoutUi049" xml:space="preserve"><value>Végrehajtás</value></data>
+  <data name="WorkoutUi050" xml:space="preserve"><value>Gyakori hibák</value></data>
+  <data name="WorkoutUi051" xml:space="preserve"><value>Fontos tudnivaló</value></data>
+  <data name="WorkoutUi052" xml:space="preserve"><value>A 3D ábra tájékoztató jellegű. Kövesd a szöveges útmutatást, és ne erőltesd a mozdulatot.</value></data>
+  <data name="WorkoutUi053" xml:space="preserve"><value>♥ Kedvenc eltávolítása</value></data>
+  <data name="WorkoutUi054" xml:space="preserve"><value>♡ Kedvencekhez</value></data>
+  <data name="WorkoutUi055" xml:space="preserve"><value>Edzésfázis</value></data>
+  <data name="WorkoutUi056" xml:space="preserve"><value>Mérés típusa</value></data>
+  <data name="WorkoutUi057" xml:space="preserve"><value>Idő másodpercben</value></data>
+  <data name="WorkoutUi058" xml:space="preserve"><value>4 előre; 4 hátra</value></data>
+  <data name="WorkoutUi059" xml:space="preserve"><value>Becsült idő másodpercben</value></data>
+  <data name="WorkoutUi060" xml:space="preserve"><value>Eszközök vesszővel (vagy üresen)</value></data>
+  <data name="WorkoutUi061" xml:space="preserve"><value>Alapgyakorlat nem szerkeszthető.</value></data>
+  <data name="WorkoutUi062" xml:space="preserve"><value>Új gyakorlat</value></data>
+  <data name="WorkoutUi063" xml:space="preserve"><value>Saját gyakorlat szerkesztése</value></data>
+  <data name="WorkoutUi064" xml:space="preserve"><value>Bemelegítés</value></data>
+  <data name="WorkoutUi065" xml:space="preserve"><value>Fő rész</value></data>
+  <data name="WorkoutUi066" xml:space="preserve"><value>Levezetés</value></data>
+  <data name="WorkoutUi067" xml:space="preserve"><value>Ismétlés</value></data>
+  <data name="WorkoutUi068" xml:space="preserve"><value>Idő</value></data>
+  <data name="WorkoutUi069" xml:space="preserve"><value>Saját gyakorlat</value></data>
+  <data name="WorkoutUi070" xml:space="preserve"><value>Piszkozatot hiányos adatokkal is menthetsz. A gyakorlatsor-generátor csak teljes, aktív gyakorlatot használ.</value></data>
+  <data name="WorkoutUi071" xml:space="preserve"><value>Mozgástípus *</value></data>
+  <data name="WorkoutUi072" xml:space="preserve"><value>Edzésfázis *</value></data>
+  <data name="WorkoutUi073" xml:space="preserve"><value>Nehézség *</value></data>
+  <data name="WorkoutUi074" xml:space="preserve"><value>Mérés típusa *</value></data>
+  <data name="WorkoutUi075" xml:space="preserve"><value>Időtartam (időalapú feladatoknál) *</value></data>
+  <data name="WorkoutUi076" xml:space="preserve"><value>Ismétléscélok (pl. 4 előre; 4 hátra) *</value></data>
+  <data name="WorkoutUi077" xml:space="preserve"><value>Becsült idő másodpercben *</value></data>
+  <data name="WorkoutUi078" xml:space="preserve"><value>Szükséges eszközök (eszközmentesnél üres)</value></data>
+  <data name="WorkoutUi079" xml:space="preserve"><value>Ábra (opcionális)</value></data>
+  <data name="WorkoutUi080" xml:space="preserve"><value>✎ 3D csontváz és eszközök szerkesztése</value></data>
+  <data name="WorkoutUi081" xml:space="preserve"><value>Piszkozat mentése</value></data>
+  <data name="WorkoutUi082" xml:space="preserve"><value>Aktiválás és mentés</value></data>
+  <data name="WorkoutUi083" xml:space="preserve"><value>Nincs 3D ábra; ez nem akadálya az aktiválásnak.</value></data>
+  <data name="WorkoutUi084" xml:space="preserve"><value>Még hiányoznak adatok</value></data>
+  <data name="WorkoutUi085" xml:space="preserve"><value>Korrektúra mentése</value></data>
+  <data name="WorkoutUi086" xml:space="preserve"><value>Alapgyakorlat korrektúrája</value></data>
+  <data name="WorkoutUi087" xml:space="preserve"><value>A név, testtájak, nehézség, kategória, fázis, eszközök és célértékek védettek. Csak a leírás és az ábra módosítható.</value></data>
+  <data name="WorkoutUi088" xml:space="preserve"><value>Rövid leírás *</value></data>
+  <data name="WorkoutUi089" xml:space="preserve"><value>Kiinduló helyzet *</value></data>
+  <data name="WorkoutUi090" xml:space="preserve"><value>Végrehajtási lépések (soronként) *</value></data>
+  <data name="WorkoutUi091" xml:space="preserve"><value>Biztonsági megjegyzés *</value></data>
+  <data name="WorkoutUi092" xml:space="preserve"><value>Illusztráció</value></data>
+  <data name="WorkoutUi093" xml:space="preserve"><value>Eredeti leírás és ábra visszaállítása</value></data>
+  <data name="WorkoutUi094" xml:space="preserve"><value>Eredeti tartalom visszaállítása?</value></data>
+  <data name="WorkoutUi095" xml:space="preserve"><value>A helyi korrektúra törlődik. A beépített gyakorlat eredeti szövege és ábrája visszaáll.</value></data>
+  <data name="WorkoutUi096" xml:space="preserve"><value>Visszaállítás</value></data>
+  <data name="WorkoutUi097" xml:space="preserve"><value>Nincs 3D ábra. Ez megengedett.</value></data>
+  <data name="WorkoutUi098" xml:space="preserve"><value>Nem menthető</value></data>
+  <data name="WorkoutUi099" xml:space="preserve"><value>Gyakorlat cseréje</value></data>
+  <data name="WorkoutUi100" xml:space="preserve"><value>A helyettesítőnek az érintett testtájhoz és a többi feladathoz is illeszkednie kell. Az idő, a nehézség és az eszközök is korlátok.</value></data>
+  <data name="WorkoutUi101" xml:space="preserve"><value>Nincs megfelelő helyettesítő. Ha a terv összhangja megmarad, a feladat kihagyható.</value></data>
+  <data name="WorkoutUi102" xml:space="preserve"><value>Erre cserélem</value></data>
+  <data name="WorkoutUi103" xml:space="preserve"><value>Gyakorlatcsere</value></data>
+  <data name="WorkoutUi104" xml:space="preserve"><value>Nem sikerült a csere</value></data>
+  <data name="WorkoutUi105" xml:space="preserve"><value>Gyakorlat kihagyása?</value></data>
+  <data name="WorkoutUi106" xml:space="preserve"><value>A kihagyás nem jár XP-vel; az oldalpárok együtt kerülnek ki, ha szükséges. A bemelegítés és levezetés összhangja megmarad.</value></data>
+  <data name="WorkoutUi107" xml:space="preserve"><value>Kihagyás</value></data>
+  <data name="WorkoutUi108" xml:space="preserve"><value>Nem hagyható ki</value></data>
+  <data name="WorkoutUi109" xml:space="preserve"><value>Kötelező gyakorlatok</value></data>
+  <data name="WorkoutUi110" xml:space="preserve"><value>Tervezd meg a saját gyakorlatsorodat</value></data>
+  <data name="WorkoutUi111" xml:space="preserve"><value>Válassz gyakorlatokat, amelyeknek mindenképp szerepelniük kell!</value></data>
+  <data name="WorkoutUi112" xml:space="preserve"><value>A csillaggal megjelölt gyakorlatok garantáltan bekerülnek a még el nem kezdett gyakorlatsorba. A program a többi feladatot köréjük rendezi úgy, hogy a bemelegítés, a fő rész és a levezetés sorrendje megmaradjon.</value></data>
+  <data name="WorkoutUi113" xml:space="preserve"><value>Gyakorlat keresése</value></data>
+  <data name="WorkoutUi114" xml:space="preserve"><value>Edzésfázis szűrése</value></data>
+  <data name="WorkoutUi115" xml:space="preserve"><value>Minden fázis</value></data>
+  <data name="WorkoutUi116" xml:space="preserve"><value>Gyakorlatok szűrése</value></data>
+  <data name="WorkoutUi117" xml:space="preserve"><value>Újraösszeállítás a kijelöltek köré</value></data>
+  <data name="WorkoutUi118" xml:space="preserve"><value>Zárolva</value></data>
+  <data name="WorkoutUi119" xml:space="preserve"><value>Csak a Kezdés előtt szerkeszthető a terv.</value></data>
+  <data name="WorkoutUi120" xml:space="preserve"><value>Nincs kijelölés</value></data>
+  <data name="WorkoutUi121" xml:space="preserve"><value>Legalább egy kötelező gyakorlatot jelölj meg.</value></data>
+  <data name="WorkoutUi122" xml:space="preserve"><value>Nem illeszthető össze</value></data>
+  <data name="WorkoutUi123" xml:space="preserve"><value>Elérted a korlátot</value></data>
+  <data name="WorkoutUi124" xml:space="preserve"><value>Nincs találat a szűrésben.</value></data>
+  <data name="WorkoutUi125" xml:space="preserve"><value>Gyakorlatsor</value></data>
+  <data name="WorkoutUi126" xml:space="preserve"><value>10 perc · folyamatos relaxáció</value></data>
+  <data name="WorkoutUi127" xml:space="preserve"><value>🌿 Ellazulás</value></data>
+  <data name="WorkoutUi128" xml:space="preserve"><value>10 perc után megőrzi a sorozatot · 0 XP</value></data>
+  <data name="WorkoutUi129" xml:space="preserve"><value>Nem szüneteltethető. Ha idő előtt kilépsz, elölről kell kezdened.</value></data>
+  <data name="WorkoutUi130" xml:space="preserve"><value>YouTube Music megnyitása</value></data>
+  <data name="WorkoutUi131" xml:space="preserve"><value>A mentett lejátszási lista a YouTube Musicban nyílik meg. </value></data>
+  <data name="WorkoutUi132" xml:space="preserve"><value>Indítsd el a zenét, majd térj vissza a Mozdulj!-ba a relaxáció indításához.</value></data>
+  <data name="WorkoutUi133" xml:space="preserve"><value>A gyakorlat nevére koppintva megnyílik a leírás. A bal oldali ↑ és ↓ gombokkal a gyakorlatokat a saját blokkjukon belül átrendezheted.</value></data>
+  <data name="WorkoutUi134" xml:space="preserve"><value>A gyakorlat nevére koppintva megnyithatod a részleteket.</value></data>
+  <data name="WorkoutUi135" xml:space="preserve"><value>🔒 A gyakorlatsor már elindult, ezért a feladatok nem módosíthatók.</value></data>
+  <data name="WorkoutUi136" xml:space="preserve"><value>Kötelező gyakorlatok: kijelölhetsz olyan feladatokat, amelyek biztosan szerepeljenek a mai sorban. A program a fennmaradó részt újratervezi az időkeret és az edzésfázisok szerint. Csak a sor elindítása előtt használható.</value></data>
+  <data name="WorkoutUi137" xml:space="preserve"><value>★ Kötelezők kiválasztása ›</value></data>
+  <data name="WorkoutUi138" xml:space="preserve"><value>Korábbi gyakorlat</value></data>
+  <data name="WorkoutUi139" xml:space="preserve"><value>Ez a gyakorlat nincs az aktuális katalógusban.</value></data>
+  <data name="WorkoutUi140" xml:space="preserve"><value>1. Bemelegítés</value></data>
+  <data name="WorkoutUi141" xml:space="preserve"><value>2. Fő blokk</value></data>
+  <data name="WorkoutUi142" xml:space="preserve"><value>3. Levezetés</value></data>
+  <data name="WorkoutUi143" xml:space="preserve"><value>Ellazulási szakaszok</value></data>
+  <data name="WorkoutUi144" xml:space="preserve"><value>Feladatok</value></data>
+  <data name="WorkoutUi145" xml:space="preserve"><value> ★ Kötelező</value></data>
+  <data name="WorkoutUi146" xml:space="preserve"><value>Relaxáció</value></data>
+  <data name="WorkoutUi147" xml:space="preserve"><value>Ismeretlen fázis</value></data>
+  <data name="WorkoutUi148" xml:space="preserve"><value>🎒 Szükséges: </value></data>
+  <data name="WorkoutUi149" xml:space="preserve"><value>▶ Relaxáció indítása</value></data>
+  <data name="WorkoutUi150" xml:space="preserve"><value>▶ Folytatás</value></data>
+  <data name="WorkoutUi151" xml:space="preserve"><value>▶ Kezdés</value></data>
+  <data name="WorkoutUi152" xml:space="preserve"><value>Nem megfelelő gyakorlatsor</value></data>
+  <data name="WorkoutUi153" xml:space="preserve"><value>A gyakorlatsor ellenőrzése nem sikerült. A program nem indítható el.</value></data>
+  <data name="WorkoutUi154" xml:space="preserve"><value>Nem rendezhető át</value></data>
+  <data name="WorkoutUi155" xml:space="preserve"><value>Kész</value></data>
+  <data name="WorkoutUi156" xml:space="preserve"><value>Szünet</value></data>
+  <data name="WorkoutUi157" xml:space="preserve"><value>Gyakorlás</value></data>
+  <data name="WorkoutUi158" xml:space="preserve"><value>Kilépés</value></data>
+  <data name="WorkoutUi159" xml:space="preserve"><value>Folytatás</value></data>
+  <data name="WorkoutUi160" xml:space="preserve"><value>Relaxáció megszakítása</value></data>
+  <data name="WorkoutUi161" xml:space="preserve"><value>Kilépés és mentés</value></data>
+  <data name="WorkoutUi162" xml:space="preserve"><value>Hiányzó saját zenék</value></data>
+  <data name="WorkoutUi163" xml:space="preserve"><value>A mentett saját hangfájlok már nem érhetők el. A Profil szerkesztése oldalon válassz új zenéket vagy állítsd át a forrást beépített zenére.</value></data>
+  <data name="WorkoutUi164" xml:space="preserve"><value>YouTube Music nem érhető el</value></data>
+  <data name="WorkoutUi165" xml:space="preserve"><value>Ellenőrizd a YouTube Music telepítését és a Premium-beállítást a Profil oldalon.</value></data>
+  <data name="WorkoutUi166" xml:space="preserve"><value>Relaxáció megszakadt</value></data>
+  <data name="WorkoutUi167" xml:space="preserve"><value>Az alkalmazás elhagyása megszakította a relaxációt. A következő alkalommal újraindul a teljes tíz perc.</value></data>
+  <data name="WorkoutUi168" xml:space="preserve"><value>Biztosan kilépsz a relaxációból?</value></data>
+  <data name="WorkoutUi169" xml:space="preserve"><value>Leállítás</value></data>
+  <data name="WorkoutUi170" xml:space="preserve"><value>A relaxáció nem szüneteltethető. Ha most kilépsz, a következő alkalommal elölről kell kezdened a teljes 10 percet. A mostani alkalom nem számít teljesítésnek.</value></data>
+  <data name="WorkoutUi171" xml:space="preserve"><value>Megőrizzük az aktuális állapotot, később folytathatod.</value></data>
+  <data name="WorkoutUi172" xml:space="preserve"><value>Igen, kilépek</value></data>
+  <data name="WorkoutUi173" xml:space="preserve"><value>Maradok</value></data>
+  <data name="WorkoutUi174" xml:space="preserve"><value>Kilépési hiba</value></data>
+  <data name="WorkoutUi175" xml:space="preserve"><value>Folyamatos relaxáció · teljes test és elme</value></data>
+  <data name="WorkoutUi176" xml:space="preserve"><value>Felkészülés az első gyakorlatra</value></data>
+  <data name="WorkoutUi177" xml:space="preserve"><value>Most csak pihenj</value></data>
+  <data name="WorkoutUi178" xml:space="preserve"><value>Hamarosan: </value></data>
+  <data name="WorkoutUi179" xml:space="preserve"><value>Következő: </value></data>
+  <data name="WorkoutUi180" xml:space="preserve"><value>🎒 Készítsd elő: </value></data>
+  <data name="WorkoutUi181" xml:space="preserve"><value>Következő gyakorlat · végrehajtás</value></data>
+  <data name="WorkoutUi182" xml:space="preserve"><value>Kiinduló helyzet: </value></data>
+  <data name="WorkoutUi183" xml:space="preserve"><value>✓ Kész</value></data>
+  <data name="WorkoutUi184" xml:space="preserve"><value>Eredmény</value></data>
+  <data name="WorkoutUi185" xml:space="preserve"><value>Még nincs havi jelvény</value></data>
+  <data name="WorkoutUi186" xml:space="preserve"><value>10 perc relaxáció teljesítve!</value></data>
+  <data name="WorkoutUi187" xml:space="preserve"><value>Regenerációs program összegzése</value></data>
+  <data name="WorkoutUi188" xml:space="preserve"><value>Gyakorlatsor teljesítve!</value></data>
+  <data name="WorkoutUi189" xml:space="preserve"><value>Mai mozgásod összegzése</value></data>
+  <data name="WorkoutUi190" xml:space="preserve"><value> · A nyugodt pihenés is tudatos döntés.</value></data>
+  <data name="WorkoutUi191" xml:space="preserve"><value>🌿 Regeneráló nap jóváírva</value></data>
+  <data name="WorkoutUi192" xml:space="preserve"><value>A regeneráló nap még nem teljesült</value></data>
+  <data name="WorkoutUi193" xml:space="preserve"><value>A teljes 10 perces relaxáció megőrzi a mozgássorozatodat.</value></data>
+  <data name="WorkoutUi194" xml:space="preserve"><value>A streak megőrzéséhez a teljes, összefüggő tíz percet kell befejezned.</value></data>
+  <data name="WorkoutUi195" xml:space="preserve"><value>Nem jár érte XP, és nem növeli a havi aktív napok számát.</value></data>
+  <data name="WorkoutUi196" xml:space="preserve"><value>Haladásod</value></data>
+  <data name="WorkoutUi197" xml:space="preserve"><value>⌂ Vissza a kezdőoldalra</value></data>
+  <data name="WorkoutUi198" xml:space="preserve"><value>: feljebb</value></data>
+  <data name="WorkoutUi199" xml:space="preserve"><value>: lejjebb</value></data>
+  <data name="WorkoutUi200" xml:space="preserve"><value>Eszköz nélkül</value></data>
+  <data name="WorkoutUi201" xml:space="preserve"><value>mobilizálás</value></data>
+  <data name="WorkoutUi202" xml:space="preserve"><value>erősítés</value></data>
+  <data name="WorkoutUi203" xml:space="preserve"><value>nyújtás</value></data>
+  <data name="WorkoutUi204" xml:space="preserve"><value>egyensúly</value></data>
+  <data name="WorkoutUi205" xml:space="preserve"><value>relaxáció</value></data>
+  <data name="WorkoutUi206" xml:space="preserve"><value>átmozgatás</value></data>
+  <data name="WorkoutUi207" xml:space="preserve"><value>légzőgyakorlat</value></data>
+  <data name="WorkoutUi208" xml:space="preserve"><value>gumiszalag</value></data>
+  <data name="WorkoutUi209" xml:space="preserve"><value>miniband</value></data>
+  <data name="WorkoutUi210" xml:space="preserve"><value>jógapánt</value></data>
+  <data name="WorkoutUi211" xml:space="preserve"><value>SMR-henger</value></data>
+  <data name="WorkoutUi212" xml:space="preserve"><value>kézisúlyzó</value></data>
+  <data name="WorkoutUi213" xml:space="preserve"><value>jógamatrac</value></data>
+  <data name="WorkoutUi214" xml:space="preserve"><value>szék</value></data>
+  <data name="WorkoutUi215" xml:space="preserve"><value>fal</value></data>
+  <data name="WorkoutUi216" xml:space="preserve"><value>fitball</value></data>
+  <data name="WorkoutUi217" xml:space="preserve"><value>jógablokk</value></data>
+  <data name="WorkoutUi218" xml:space="preserve"><value>egyensúlypárna</value></data>
+  <data name="WorkoutUi219" xml:space="preserve"><value>fellépő</value></data>
+  <data name="WorkoutUi220" xml:space="preserve"><value>ismétlés</value></data>
+  <data name="WorkoutUi221" xml:space="preserve"><value>előre</value></data>
+  <data name="WorkoutUi222" xml:space="preserve"><value>hátra</value></data>
+  <data name="WorkoutUi223" xml:space="preserve"><value>oldalanként</value></data>
+  <data name="WorkoutUi224" xml:space="preserve"><value>bal</value></data>
+  <data name="WorkoutUi225" xml:space="preserve"><value>jobb</value></data>
+  <data name="WorkoutUi226" xml:space="preserve"><value>balra</value></data>
+  <data name="WorkoutUi227" xml:space="preserve"><value>jobbra</value></data>
+  <data name="WorkoutUi228" xml:space="preserve"><value>Kímélő aktiválás</value></data>
+  <data name="WorkoutUi229" xml:space="preserve"><value>Átmozgatás, kontroll és könnyű aktív feladatok</value></data>
+  <data name="WorkoutUi230" xml:space="preserve"><value>Erő és stabilitás</value></data>
+  <data name="WorkoutUi231" xml:space="preserve"><value>Célzott, kontrollált izomaktiválás és stabilitás</value></data>
+  <data name="WorkoutUi232" xml:space="preserve"><value>Egyensúly és testtudat</value></data>
+  <data name="WorkoutUi233" xml:space="preserve"><value>Tudatos, változatos mozdulatok és levezetés</value></data>
+  <data name="WorkoutUi234" xml:space="preserve"><value>10 perc teljes testes relaxáció</value></data>
+  <data name="WorkoutUi235" xml:space="preserve"><value>Tíz perc nyugalom, egyetlen megszakítás nélküli szakaszban.</value></data>
+  <data name="WorkoutUi236" xml:space="preserve"><value>A relaxáció nem szüneteltethető. Idő előtti kilépéskor elölről indul.</value></data>
+  <data name="WorkoutUi237" xml:space="preserve"><value>Teljes test és elme ellazítása</value></data>
+  <data name="WorkoutUi238" xml:space="preserve"><value>Rövidebb, összeillő program: a beállított időhöz kevés megfelelő gyakorlat érhető el.</value></data>
+  <data name="WorkoutUi239" xml:space="preserve"><value>Feküdj le vagy ülj megtámasztva. Engedd el fokozatosan az izmaid feszülését, és lélegezz természetesen. Ha elkalandozik a figyelmed, finoman térj vissza a légzésedhez.</value></data>
+  <data name="WorkoutUi240" xml:space="preserve"><value>{0} találat</value></data>
+  <data name="WorkoutUi241" xml:space="preserve"><value>Nehézség: {0}/3</value></data>
+  <data name="WorkoutUi242" xml:space="preserve"><value>Csak {0} fázisú feladatra cserélhető.</value></data>
+  <data name="WorkoutUi243" xml:space="preserve"><value>− Gyakorlat kihagyása (még {0} kihagyható)</value></data>
+  <data name="WorkoutUi244" xml:space="preserve"><value>A(z) {0} helyett a(z) {1} gyakorlat kerül a programba. Folytatod?</value></data>
+  <data name="WorkoutUi245" xml:space="preserve"><value>Eredeti: {0}</value></data>
+  <data name="WorkoutUi246" xml:space="preserve"><value>Kijelölve: {0} / {1}</value></data>
+  <data name="WorkoutUi247" xml:space="preserve"><value>Az időkereted: {0} perc · legfeljebb {1} kijelölt feladat. A konkrét időtartamot is ellenőrizzük.</value></data>
+  <data name="WorkoutUi248" xml:space="preserve"><value>A választott {0} perchez legfeljebb {1} kötelező gyakorlat adható meg.</value></data>
+  <data name="WorkoutUi249" xml:space="preserve"><value>{0} · {1} · {2} mp becsült</value></data>
+  <data name="WorkoutUi250" xml:space="preserve"><value>{0} feladat · {1} perc cél · kb. {2} perc az átvezetésekkel</value></data>
+  <data name="WorkoutUi251" xml:space="preserve"><value>Bemelegítés: {0} · Fő rész: {1} · Levezetés: {2}</value></data>
+  <data name="WorkoutUi252" xml:space="preserve"><value>Kihagyható feladatok: {0} / {1}</value></data>
+  <data name="WorkoutUi253" xml:space="preserve"><value>Lezárt gyakorlatsor · {0} / {1} feladat</value></data>
+  <data name="WorkoutUi254" xml:space="preserve"><value>Átvezetés · {0}/{1}</value></data>
+  <data name="WorkoutUi255" xml:space="preserve"><value>{0} / {1} elvégzett feladat</value></data>
+  <data name="WorkoutUi256" xml:space="preserve"><value> · {0} kihagyva</value></data>
+  <data name="WorkoutUi257" xml:space="preserve"><value>A mai három ajánlatból {0} / 3 teljesen elvégezve</value></data>
+  <data name="WorkoutUi258" xml:space="preserve"><value>🔥 {0} napos aktív sorozat</value></data>
+  <data name="WorkoutUi259" xml:space="preserve"><value>⭐ {0:N0} összes XP · {1}. szint</value></data>
+  <data name="WorkoutUi260" xml:space="preserve"><value>🧊 {0} / {1} streak freeze · következő {2:N0} XP-nél</value></data>
+  <data name="WorkoutUi261" xml:space="preserve"><value>🏅 Havi jelvény: {0} ({1} aktív nap)</value></data>
+  <data name="WorkoutUi262" xml:space="preserve"><value>{0} 3D fázis · preset: {1}</value></data>
+  <data name="WorkoutUi263" xml:space="preserve"><value>{0} fázisú 3D póz · preset: {1}</value></data>
 </root>
