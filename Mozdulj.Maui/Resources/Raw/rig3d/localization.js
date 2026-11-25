@@ -286,6 +286,8 @@ const dictionary={
   "Minden rögzítés feloldása": "Unlock all points",
   "Rögzített testpont: ": "Locked body point: ",
   "Oldd fel a rögzítést a további mozgatáshoz.": "Unlock the point to continue moving.",
+  "Hirtelen hajlításirány-váltás: ": "Sudden bend direction change: ",
+  "Módosítsd fokozatosan a hajlítási síkot.": "Adjust the bend plane gradually.",
   "Testrészek ütközése: ": "Body collision: ",
   "Törzs": "Trunk",
   "Fej": "Head",
