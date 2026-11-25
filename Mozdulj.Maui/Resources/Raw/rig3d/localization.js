@@ -1,6 +1,23 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "↶ Visszavonás": "↶ Undo",
+  "↷ Újraalkalmazás": "↷ Redo",
+  "Pózmódosítások": "Pose edits",
+  "🟠 Testpont: húzás": "🟠 Body target: drag",
+  "Medence": "Pelvis",
+  "Mozgatott testpont": "Body target to move",
+  "Automatikus kiválasztás": "Automatic selection",
+  "Mozgatási tengely": "Movement axis",
+  "Szabad mozgatás": "Free movement",
+  "X – oldalirány": "X – sideways",
+  "Y – függőleges": "Y – vertical",
+  "Z – mélység": "Z – depth",
+  "Kamera mélységi iránya": "Camera depth axis",
+  "Nincs kiválasztott testpont": "No body target selected",
+  "Medence magassága (méter)": "Pelvis height (metres)",
+  "Érvénytelen medencemagasság.": "Invalid pelvis height.",
+  "Válassz testpontot, majd húzd a kívánt helyre.": "Select a body target, then drag it to the desired position.",
   "Mozdulj! · 3D Pózstúdió": "Mozdulj! · 3D Pose Studio",
   "3D Pózstúdió": "3D Pose Studio",
   "Csontvázas karakter · mozgatható célpontok": "Skeleton character · movable targets",

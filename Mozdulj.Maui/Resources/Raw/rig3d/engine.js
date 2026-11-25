@@ -275,6 +275,12 @@ function model(centre,xAxis,yAxis,zAxis){return new Float32Array([xAxis[0],xAxis
 function segmentM(a,b,rX,rZ){let y=sub(b,a),l=len(y);if(l<1e-5)return null;y=norm(y);let tmp=Math.abs(dot(y,[0,0,1]))>.96?[1,0,0]:[0,0,1];let x=norm(cross(y,tmp)),z=norm(cross(x,y));return model(mul(add(a,b),.5),mul(x,rX),mul(y,l*.55),mul(z,rZ));}
 function sphereM(pos,size){return model(pos,[size[0],0,0],[0,size[1],0],[0,0,size[2]]);}
 const BAND_ANCHORS=['leftHand','rightHand','leftAnkle','rightAnkle','leftKnee','rightKnee','leftToe','rightToe','floorLeft','floorRight','fixed'];
+// Move the root in world coordinates. IK endpoints retain their positions;
+// FK limbs follow the root. The swept collision guard owns final acceptance.
+function moveRoot(frame,delta){
+ frame.root=frame.root.map((v,i)=>clamp(v+delta[i],i===1?0:-3,3));
+ return frame;
+}
 function shaded3D(canvas){
  let gl=canvas.getContext('webgl',{alpha:true,antialias:true,preserveDrawingBuffer:true});if(!gl)throw Error('A készülék nem támogatja a WebGL megjelenítést.');
  const vert=`attribute vec3 aPos;attribute vec3 aN;uniform mat4 uM;uniform mat4 uVP;varying vec3 vN;varying vec3 vW;void main(){vec4 wp=uM*vec4(aPos,1.);vW=wp.xyz;vN=normalize(mat3(uM)*aN);gl_Position=uVP*wp;}`;
@@ -388,7 +394,7 @@ function shaded3D(canvas){
   }
   if(type==='dumbbell'){for(let s of ['left','right']){let p=j.hands[s];limb(add(p,[-.10,0,0]),add(p,[.10,0,0]),.025,'metal');ell(add(p,[-.12,0,0]),[.035,.06,.06],'metal');ell(add(p,[.12,0,0]),[.035,.06,.06],'metal');}}
  }}
- function draw(frame,{edit=true}={}){let eye=setup();gl.clearColor(.985,.978,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null}={}){let eye=setup();gl.clearColor(.985,.978,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],'floor');
@@ -424,13 +430,18 @@ function shaded3D(canvas){
  ell(head,[.132,.171,.126],'skin');ell(add(head,add(mul(headUp,.135),mul(faceForward,-.036))),[.137,.068,.117],'hair');ell(add(head,add(mul(headUp,.15),mul(faceForward,-.12))),[.065,.068,.062],'hair');
  for(let s of [-1,1])ell(add(head,add(add(mul(headRight,.052*s),mul(headUp,.016)),mul(faceForward,.117))),[.012,.016,.014],'hair');
  ell(add(head,add(mul(faceForward,.129),mul(headUp,-.035))),[.022,.018,.025],'skin');
- if(edit){for(let s of ['left','right']){
-   ell(j.hands[s],[.045,.045,.045],'handle');ell(j.feet[s],[.046,.046,.046],'handle');
-  }}
+ if(edit){
+   const handle=(pos,key)=>{const r=key===selected? .068:.045;ell(pos,[r,r,r],key===selected?[.15,.8,.48]:'handle');};
+   handle(j.root,'root');
+   for(let s of ['left','right']){handle(j.hands[s],s+'Hand');handle(j.feet[s],s+'Foot');}
+ }
  return j;}
  function project(p){let q=[p[0],p[1],p[2],1],r=[];for(let i=0;i<4;i++)r.push(viewproj[i]*q[0]+viewproj[4+i]*q[1]+viewproj[8+i]*q[2]+viewproj[12+i]*q[3]);if(r[3]<=.001)return null;return [(r[0]/r[3]*.5+.5)*dims.w,(-r[1]/r[3]*.5+.5)*dims.h];}
- function pick(x,y){let best=null,dist=32;for(let side of ['left','right'])for(let kind of ['hands','feet']){let screen=project(lastJoints?.[kind]?.[side]||[999,999,999]);if(!screen)continue;let d=Math.hypot(x-screen[0],y-screen[1]);if(d<dist){dist=d;best={kind,side};}}return best;}
- function dragTarget(frame,sel,dx,dy,depth=false){const c=camera,right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)],up=[-Math.sin(c.azimuth)*Math.sin(c.elevation),Math.cos(c.elevation),-Math.cos(c.azimuth)*Math.sin(c.elevation)],forward=[Math.sin(c.azimuth),0,Math.cos(c.azimuth)];let size=c.distance/Math.max(280,dims.h)*1.55;let delta=depth?mul(forward,-dy*size):add(mul(right,dx*size),mul(up,-dy*size));let key=sel.kind==='hands'?'hands':'feet';let origin=frame[key][sel.side];
+ function pick(x,y){let best=null,dist=32;const root=project(lastJoints?.root||[999,999,999]);if(root){const d=Math.hypot(x-root[0],y-root[1]);if(d<dist){dist=d;best={kind:'root'};}}for(let side of ['left','right'])for(let kind of ['hands','feet']){let screen=project(lastJoints?.[kind]?.[side]||[999,999,999]);if(!screen)continue;let d=Math.hypot(x-screen[0],y-screen[1]);if(d<dist){dist=d;best={kind,side};}}return best;}
+ function dragTarget(frame,sel,dx,dy,depth=false,axis='free'){const c=camera,right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)],up=[-Math.sin(c.azimuth)*Math.sin(c.elevation),Math.cos(c.elevation),-Math.cos(c.azimuth)*Math.sin(c.elevation)],forward=[Math.sin(c.azimuth),0,Math.cos(c.azimuth)];let size=c.distance/Math.max(280,dims.h)*1.55;let delta=depth||axis==='depth'?mul(forward,-dy*size):add(mul(right,dx*size),mul(up,-dy*size));
+ if(axis==='x')delta=[dx*size,0,0];else if(axis==='y')delta=[0,-dy*size,0];else if(axis==='z')delta=[0,0,-dy*size];
+ if(sel.kind==='root'){moveRoot(frame,delta);return joints(frame).clamped;}
+ let key=sel.kind==='hands'?'hands':'feet';let origin=frame[key][sel.side];
  if(key==='feet' && frame.legAngles?.[sel.side]){
    // Avoid a visual jump when switching from angle-driven leg controls to IK.
    origin=joints(frame).feet[sel.side];
@@ -468,5 +479,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,checkPose,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

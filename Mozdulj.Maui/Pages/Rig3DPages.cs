@@ -50,6 +50,7 @@ public sealed class Rig3DEditorPage : ContentPage
                           Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(_working.Rig3D,CatalogCodec.JsonOptions)))+"')")
                     : await _browser.EvaluateJavaScriptAsync("(function(){const s=document.getElementById('preset');s.value='"+
                           Rig3DPresetMapper.From(_working.TemplateId,exerciseName)+"';s.dispatchEvent(new Event('change'));return true})()");
+                await _browser.EvaluateJavaScriptAsync("window.resetRigHistory()");
                 var health=await _browser.EvaluateJavaScriptAsync("window.getRigHealth()");
                 _loaded=health?.Contains("\\\"webgl\\\":true",StringComparison.OrdinalIgnoreCase)==true
                       || health?.Contains("\"webgl\":true",StringComparison.OrdinalIgnoreCase)==true;

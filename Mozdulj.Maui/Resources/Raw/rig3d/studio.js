@@ -3,14 +3,52 @@
 const $=id=>document.getElementById(id),canvas=$('scene');
 const clone=o=>JSON.parse(JSON.stringify(o));
 const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
+const history=new MozduljPoseHistory();
+let selectedTarget=null,gesture=null,controlGesture=null;
+const snapshot=()=>{const data=clone(pose);delete data.camera;return {pose:data,frameIndex};};
+function syncHistory(){ $('undoPose').disabled=!history.canUndo; $('redoPose').disabled=!history.canRedo; }
+function closeGesture(){if(pose&&history.pending!==null)history.finish(snapshot());gesture=null;controlGesture=null;syncHistory();}
+function beginGesture(owner){if(gesture!==owner){closeGesture();gesture=owner;history.begin(snapshot());}}
+function tracked(change){
+ const before=snapshot();
+ change();
+ history.record(before,snapshot());
+ syncHistory();
+}
+function restoreHistory(state){
+ if(!state)return;
+ const camera=studio.getCamera();
+ pose=clone(state.pose);pose.camera=camera;
+ frameIndex=Math.min(state.frameIndex,pose.frames.length-1);
+ sync();syncHistory();
+}
+function undoPose(){closeGesture();restoreHistory(history.undo(snapshot()));}
+function redoPose(){closeGesture();restoreHistory(history.redo(snapshot()));}
+window.resetRigHistory=()=>{history.clear();gesture=null;controlGesture=null;syncHistory();return true;};
+const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej'};
+function targetKey(sel){return sel?.kind==='root'?'root':sel?sel.side+(sel.kind==='hands'?'Hand':'Foot'):null;}
+function chooseTarget(key){selectedTarget=key&&key!=='auto'?key:null;show();}
+function explicitTarget(key){
+ if(key==='root')return {kind:'root'};
+ if(!key||key==='auto')return null;
+ return {side:key.startsWith('left')?'left':'right',kind:key.endsWith('Hand')?'hands':'feet'};
+}
+function setMode(m){
+ mode=m;
+ for(const b of ['orbit','move','pan'])$(b).classList.toggle('active',m===b);
+ $('targetControls').hidden=m!=='move';
+ show();
+}
 function current(){return pose.frames[frameIndex];}
 function msg(s){$('status').textContent=window.rigText(s);}
 // All pose-affecting controls share the same swept 3D collision guard.
 // Camera operations are intentionally excluded: orbit/pan never move the body.
 function guardedEdit(change){
- const before=clone(current());change(current());
- const candidate=clone(current());const result=MozduljRig.Collision.transition(before,candidate);
+ const original=snapshot();
+ const before=clone(current()),candidate=clone(before);change(candidate);
+ const result=MozduljRig.Collision.transition(before,candidate);
  pose.frames[frameIndex]=result.frame;
+ history.record(original,snapshot());syncHistory();
  if(result.limited){sync();msg('Ütközési korlát: a végtag nem haladhat át a padlón, falon vagy eszközön. ('+result.issue+')');}
  else show();
  return result;
@@ -29,9 +67,9 @@ function updatePhaseControls(){
  $('phasePrev').setAttribute('aria-disabled',String(frameIndex===0));
  $('phaseNext').setAttribute('aria-disabled',String(frameIndex>=n-1));
 }
-function show(){if(!studio)return;let f=current();const j=studio.draw(f,{edit:!document.body.classList.contains('view-only')});const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
+function show(){if(!studio)return;let f=current();const j=studio.draw(f,{edit:!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
-function sync(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));
+function sync(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number(f.root[1].toFixed(3));
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||{};
  $('hipFlex').value=Math.round(deg(leg.flexion||0));
  $('hipAbduct').value=Math.round(deg(leg.abduction||0));
@@ -93,9 +131,9 @@ function fillSelectedBand(){
  $('bandAnchorB').value=obj.anchorB||({knees:'rightKnee',ankle:'rightAnkle',hands:'rightHand'}[legacy]||'leftHand');
  $('bandRoute').value=obj.route||'auto';$('bandAnchorC').value=obj.anchorC||'none';setFixedInputs('A',obj.position);setFixedInputs('B',obj.positionB);setFixedInputs('C',obj.positionC||[0,.35,.45]);updateFixedAnchorInputs();
 }
-function switchFrame(i){frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
-function setPreset(name){pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(pose.camera);sync();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
-function load(p){MozduljRig.checkPose(p);pose=clone(p);frameIndex=0;studio.setCamera(pose.camera||MozduljRig.initialPose().camera);sync();msg('A 3D testhelyzet betöltve.');}
+function switchFrame(i){closeGesture();frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
+function setPreset(name){const apply=()=>{const camera=pose?studio.getCamera():null;pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(camera||pose.camera);sync();};if(pose){closeGesture();tracked(apply);}else apply();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
+function load(p,track=false){MozduljRig.checkPose(p);const apply=()=>{const camera=track?studio.getCamera():null;pose=clone(p);frameIndex=0;studio.setCamera(camera||pose.camera||MozduljRig.initialPose().camera);sync();};closeGesture();if(track)tracked(apply);else{apply();window.resetRigHistory();}msg('A 3D testhelyzet betöltve.');}
 function b64toStr(s){return decodeURIComponent(escape(atob(s)));}function strtoB64(s){return btoa(unescape(encodeURIComponent(s)));}
 window.loadRigBase64=s=>{try{load(JSON.parse(b64toStr(s)));return true;}catch(e){msg(window.rigText('Betöltési hiba: ')+e.message);return false;}};
 window.exportRigBase64=()=>strtoB64(JSON.stringify({...pose,camera:studio.getCamera()}));
@@ -109,34 +147,55 @@ window.setReadOnlyMode=()=>{
   document.querySelector('.header .hint').textContent='A modellen húzva körbeforgathatod a nézetet';
   document.querySelector('.float-l').style.display='none';
   document.querySelector('.float-b').style.display='none';
-  mode='orbit'; // drag always rotates the camera in the read-only viewer
+  setMode('orbit'); // drag always rotates the camera in the read-only viewer
   updatePhaseControls();show();
 };
 function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}catch(e){initError=e;$('canvasStatus').textContent=e.message;msg(window.rigText('WebGL nem áll rendelkezésre: ')+e.message);return;}
+ $('undoPose').onclick=undoPose;
+ $('redoPose').onclick=redoPose;
+ $('targetSelect').onchange=e=>{chooseTarget(e.target.value);};
+ // One slider gesture or one phase-name edit is one history entry.
+ for(const el of document.querySelectorAll('input[type=range]:not(#zoom),#phaseName')){
+   el.addEventListener('pointerdown',e=>{beginGesture(el);controlGesture=e.pointerId;});
+   el.addEventListener('focus',()=>{if(el.id==='phaseName')beginGesture(el);});
+   el.addEventListener('blur',()=>{if(gesture===el)closeGesture();});
+   el.addEventListener('change',()=>{if(gesture===el)closeGesture();});
+ }
+ const endControl=e=>{if(controlGesture===e.pointerId&&gesture!==canvas)closeGesture();};
+ window.addEventListener('pointerup',endControl);
+ window.addEventListener('pointercancel',endControl);
+ $('rootHeight').onchange=e=>{
+   const value=e.target.valueAsNumber;
+   if(!Number.isFinite(value)||value<0||value>3){sync();msg('Érvénytelen medencemagasság.');return;}
+   guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]));sync();
+ };
  $('phasePrev').addEventListener('click',()=>switchFrame(frameIndex-1));
  $('phaseNext').addEventListener('click',()=>switchFrame(frameIndex+1));
  $('addPhase').addEventListener('click',()=>{
    if(!pose||pose.frames.length>=6){msg('Legfeljebb 6 fázis adható hozzá.');return;}
    const next=clone(current());
    next.name='Új fázis '+(pose.frames.length+1);
-   pose.frames.splice(frameIndex+1,0,next);
-   frameIndex++;
+   closeGesture();tracked(()=>{pose.frames.splice(frameIndex+1,0,next);frameIndex++;});
    sync();msg('Új 3D fázis hozzáadva. Módosítsd a testhelyzetet vagy nevezd át.');
  });
  $('removePhase').addEventListener('click',()=>{
    if(!pose||pose.frames.length<=1){msg('Legalább egy fázis szükséges.');return;}
-   pose.frames.splice(frameIndex,1);
-   frameIndex=Math.min(frameIndex,pose.frames.length-1);
+   closeGesture();tracked(()=>{pose.frames.splice(frameIndex,1);frameIndex=Math.min(frameIndex,pose.frames.length-1);});
    sync();msg('Az aktuális fázist töröltem.');
  });
  $('phaseName').addEventListener('input',e=>{
    if(!pose)return;
-   current().name=e.target.value.slice(0,64);
+   beginGesture($('phaseName'));current().name=e.target.value.slice(0,64);
    $('phaseLabel').textContent=current().name||('Fázis '+(frameIndex+1));
  });
 
  document.addEventListener('keydown',e=>{
-   if(e.altKey||e.ctrlKey||e.metaKey||/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(document.activeElement?.tagName||''))return;
+   if(document.body.classList.contains('view-only'))return;
+   const editing=/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName||'');
+   if(!editing&&(e.ctrlKey||e.metaKey)&&!e.altKey&&['z','y'].includes(e.key.toLowerCase())){
+     e.preventDefault();if(e.key.toLowerCase()==='y'||e.shiftKey)redoPose();else undoPose();return;
+   }
+   if(e.altKey||e.ctrlKey||e.metaKey||editing||document.activeElement?.tagName==='BUTTON')return;
    if(e.key==='ArrowLeft'&&frameIndex>0){e.preventDefault();switchFrame(frameIndex-1);}
    if(e.key==='ArrowRight'&&frameIndex<pose.frames.length-1){e.preventDefault();switchFrame(frameIndex+1);}
  });
@@ -171,7 +230,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      if(!result.limited){syncProps(String(current().equipment.length-1));msg(window.rigText('Eszköz hozzáadva: ')+$('equip').selectedOptions[0].textContent);}
    }else msg('Ez az eszköz már szerepel ebben a fázisban.');
  };
- $('clearEquipment').onclick=()=>{current().equipment=[];syncBands('new');syncProps('none');show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
+ $('clearEquipment').onclick=()=>{closeGesture();tracked(()=>{current().equipment=[];});syncBands('new');syncProps('none');show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
  $('propSelect').onchange=fillProp;
  $('moveProp').onclick=()=>{
    const i=$('propSelect').value;if(i==='none')return;
@@ -179,8 +238,11 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(pos.some((v,n)=>!Number.isFinite(v)||Math.abs(v)>3||(n===1&&v<0))){msg('A pozíció koordinátái nem megfelelőek.');return;}
    // Normalize old tools with implicit default coordinates before sweeping.
    // Otherwise adding a position field would teleport from world origin.
+   closeGesture();const before=snapshot();
+   history.begin(before);
    current().equipment[+i].position??=[...BASE_POS[current().equipment[+i].type]];
    const result=guardedEdit(f=>{f.equipment[+i].position=pos;});
+   closeGesture();
    if(!result.limited){syncProps(i);msg('Eszköz áthelyezve.');}
  };
  $('bandSelect').onchange=fillSelectedBand;
@@ -203,20 +265,27 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  };
  $('deleteBand').onclick=()=>{const i=$('bandSelect').value;
    if(i==='new'){msg('Válassz egy meglévő szalagot a törléshez.');return;}
-   current().equipment.splice(+i,1);syncBands('new');show();msg('Szalag eltávolítva.');
+   closeGesture();tracked(()=>current().equipment.splice(+i,1));syncBands('new');show();msg('Szalag eltávolítva.');
  };
  for(const [id,a,e] of [['front',0,.08],['side',Math.PI/2,.12],['threequarter',.66,.33]])$(''+id).onclick=()=>{let c=studio.getCamera();c.azimuth=a;c.elevation=e;show();};
  $('fit').onclick=()=>{let c=studio.getCamera();Object.assign(c,{azimuth:.58,elevation:.34,distance:3.55,target:[0,.72,0]});sync();};
- for(const m of ['orbit','move','pan'])$(m).onclick=()=>{mode=m;for(const b of ['orbit','move','pan'])$(b).classList.toggle('active',m===b);msg(m==='move'?'Fogj meg egy narancssárga kéz-/lábpontot, és húzd új helyre.':m==='pan'?'Húzással eltolhatod az egész képet, a testarányok változtatása nélkül.':'Húzással elforgathatod a kamerát.');};
+ for(const m of ['orbit','move','pan'])$(m).onclick=()=>{closeGesture();setMode(m);msg(m==='move'?'Válassz testpontot, majd húzd a kívánt helyre.':m==='pan'?'Húzással eltolhatod az egész képet, a testarányok változtatása nélkül.':'Húzással elforgathatod a kamerát.');};
  $('export').onclick=()=>{let s=window.exportRigJson();$('json').value=s;try{let blob=new Blob([s],{type:'application/json;charset=utf-8'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.download='mozdulj-3d-poz.json';a.href=url;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{}msg('3D pózadat mentve.');};
- $('import').onclick=()=>{try{load(JSON.parse($('json').value));}catch(e){msg(window.rigText('Hibás JSON: ')+e.message);}};
+ $('import').onclick=()=>{try{load(JSON.parse($('json').value),true);}catch(e){msg(window.rigText('Hibás JSON: ')+e.message);}};
  function loc(e){let r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
- canvas.addEventListener('pointerdown',e=>{if(!studio)return;canvas.setPointerCapture(e.pointerId);let p=loc(e),sel=mode==='move'?studio.pick(p.x,p.y):null;drag={x:p.x,y:p.y,sel,button:e.button};});
- canvas.addEventListener('pointermove',e=>{if(!drag||!studio)return;let p=loc(e),dx=p.x-drag.x,dy=p.y-drag.y,c=studio.getCamera();if(mode==='move'&&drag.sel)guardedEdit(f=>studio.dragTarget(f,drag.sel,dx,dy,e.shiftKey));else if(mode==='pan'||drag.button===2){let right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)];let scale=c.distance/300;c.target=c.target.map((v,i)=>v-right[i]*dx*scale +(i===1?dy*scale:0));}else{c.azimuth-=dx*.012;c.elevation=Math.max(-1.25,Math.min(1.25,c.elevation+dy*.008));}drag.x=p.x;drag.y=p.y;show();});
- ['pointerup','pointercancel','lostpointercapture'].forEach(n=>canvas.addEventListener(n,()=>drag=null));canvas.addEventListener('contextmenu',e=>e.preventDefault());
+ canvas.addEventListener('pointerdown',e=>{
+   if(!studio||drag||!e.isPrimary)return;
+   canvas.setPointerCapture(e.pointerId);let p=loc(e);
+   let sel=mode==='move'?(explicitTarget($('targetSelect').value)||studio.pick(p.x,p.y)):null;
+   if(mode==='move'){selectedTarget=targetKey(sel);if(sel)beginGesture(canvas);show();}
+   drag={id:e.pointerId,x:p.x,y:p.y,sel,button:e.button};
+ });
+ canvas.addEventListener('pointermove',e=>{if(!drag||!studio||drag.id!==e.pointerId)return;let p=loc(e),dx=p.x-drag.x,dy=p.y-drag.y,c=studio.getCamera();if(mode==='move'){if(drag.sel)guardedEdit(f=>studio.dragTarget(f,drag.sel,dx,dy,e.shiftKey,$('moveAxis').value));}else if(mode==='pan'||drag.button===2){let right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)];let scale=c.distance/300;c.target=c.target.map((v,i)=>v-right[i]*dx*scale +(i===1?dy*scale:0));}else{c.azimuth-=dx*.012;c.elevation=Math.max(-1.25,Math.min(1.25,c.elevation+dy*.008));}drag.x=p.x;drag.y=p.y;show();});
+ ['pointerup','pointercancel','lostpointercapture'].forEach(n=>canvas.addEventListener(n,e=>{if(drag?.id!==e.pointerId)return;drag=null;if(gesture===canvas)closeGesture();sync();}));canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('wheel',e=>{e.preventDefault();let c=studio.getCamera();c.distance=Math.max(1.8,Math.min(6.5,c.distance+Math.sign(e.deltaY)*.22));$('zoom').value=c.distance;show();},{passive:false});
  window.addEventListener('resize',show);const observer=new ResizeObserver(()=>show());observer.observe(canvas);
- window.addEventListener('visibilitychange',()=>{if(!document.hidden)show();});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){closeGesture();drag=null;}else show();});
+ syncHistory();
 }
 connect();
 })();
