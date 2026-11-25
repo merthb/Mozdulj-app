@@ -1,6 +1,15 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Medence előre / hátra forgatása":"Pelvis forward / backward rotation",
+  "Medence oldalirányú forgatása":"Pelvis axial rotation",
+  "Medence oldalra billentése":"Pelvis lateral tilt",
+  "Ágyéki gerinc domborítása / homorítása":"Lumbar flexion / extension",
+  "Ágyéki gerinc oldalra hajlítása":"Lumbar lateral flexion",
+  "Háti gerinc domborítása / homorítása":"Thoracic flexion / extension",
+  "Háti gerinc oldalra hajlítása":"Thoracic lateral flexion",
+  "Medence finom billentése (régi, formai)":"Pelvic tilt (legacy, visual only)",
+  "Érvénytelen helyi gerinc- vagy medenceforgatás.":"Invalid local spine or pelvis rotation.",
   "Harmadik pont (C) – első támasz / vezetés":"Third point (C) – first support / guide",
   "Negyedik pont (D) – második támasz / vezetés":"Fourth point (D) – second support / guide",
   "Nincs negyedik pont":"No fourth point",

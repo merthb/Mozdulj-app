@@ -36,6 +36,21 @@ public sealed class Rig3DFrame
     public float SpineBend { get; set; }
     /// <summary>Small local pelvic rotation around the transverse axis (radians). Does not rotate the upper body.</summary>
     public float PelvicTilt { get; set; }
+    // Optional additive local rotations in radians; omitted for old poses.
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? PelvisPitch { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? PelvisYaw { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? PelvisRoll { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LumbarBend { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LumbarSideBend { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? ThoracicBend { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? ThoracicSideBend { get; set; }
     /// <summary>Ankle plantarflexion (+spicc) and dorsiflexion (-pipa), radians per side.</summary>
     public Dictionary<string,float> FootPitch { get; set; } = [];
     /// <summary>Optional anatomically constrained leg-chain controls, independent of raw IK targets.</summary>
@@ -134,6 +149,9 @@ public static class Rig3DValidator
                (f.HoldSeconds is float hold && (!float.IsFinite(hold)||hold<0f||hold>120f)))
                 throw new InvalidDataException(AppLocalization.Text("RigInvalidPhaseTiming"));
             CheckVector(f.Root,"testgyökér");CheckVector(f.Euler,"forgásszög");
+            foreach(var (angle,degrees) in new (float? Angle,int Degrees)[]{(f.PelvisPitch,30),(f.PelvisYaw,35),(f.PelvisRoll,25),(f.LumbarBend,30),(f.LumbarSideBend,25),(f.ThoracicBend,35),(f.ThoracicSideBend,25)})
+                if(angle is float value && (!float.IsFinite(value)||Math.Abs(value)>degrees*Math.PI/180+1e-6))
+                    throw new InvalidDataException(AppLocalization.Text("RigInvalidArticulation"));
             if(f.PointLocks is not null)
                 foreach(var (key,position) in f.PointLocks)
                 {

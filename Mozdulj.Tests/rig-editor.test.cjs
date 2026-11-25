@@ -419,3 +419,30 @@ test('four-point band follows A-C-D-B, retains legacy routes and mirrors each an
  assert.doesNotThrow(()=>rig.checkPose(pose));
  delete band.anchorC;assert.throws(()=>rig.checkPose(pose));
 });
+
+test('neutral added articulation keeps legacy joint geometry and new fields preserve chain lengths',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand');f.euler=[.17,.2,-.1];f.upperYaw=.3;f.spineBend=.18;
+ f.legAngles={left:{flexion:.5,abduction:.2,kneeFlexion:.6,axialRotation:.12}};
+ f.armAngles={right:{flexion:.5,abduction:.4,elbowFlexion:.6,wristFlexion:0,forearmRotation:0}};
+ const before=rig.joints(f),neutral=JSON.parse(JSON.stringify(f));
+ for(const k of Object.keys(rig.ARTICULATION_LIMITS))neutral[k]=0;
+ assert.equal(JSON.stringify(rig.joints(neutral)),JSON.stringify(before));
+ const next=JSON.parse(JSON.stringify(f));next.lumbarBend=.22;next.lumbarSideBend=.16;next.thoracicBend=-.18;next.thoracicSideBend=.12;next.pelvisPitch=.2;next.pelvisYaw=.25;next.pelvisRoll=.14;
+ const after=rig.joints(next),distance=(a,b)=>m.len(m.sub(a,b));
+ for(const [a,b] of [['root','spineMid'],['spineMid','spineUpper'],['spineMid','neck'],['neck','head']])
+   assert.ok(Math.abs(distance(before[a],before[b])-distance(after[a],after[b]))<1e-8,a+' '+b);
+ for(const side of ['left','right']){
+   for(const [a,b,length] of [['hip','knee',.45],['knee','feet',.43],['shoulder','elbow',.31],['elbow','hands',.28]])
+     assert.ok(Math.abs(distance(after[a][side],after[b][side])-length)<1e-8,a+' '+side);
+ }
+ assert.ok(distance(after.hip.left,before.hip.left)>.01);assert.ok(distance(after.shoulder.right,before.shoulder.right)>.01);
+});
+test('pelvis and spine articulations are independent and mirror correctly',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),before=rig.joints(f);
+ f.pelvisYaw=.3;f.pelvisRoll=.2;const after=rig.joints(f);
+ assert.equal(JSON.stringify(after.shoulder),JSON.stringify(before.shoulder));
+ assert.ok(m.len(m.sub(after.hip.left,before.hip.left))>.01);
+ f.lumbarSideBend=.1;f.thoracicSideBend=.2;f.lumbarBend=.25;f.pelvisPitch=.1;
+ const mirror=rig.mirrorFrame(f);assert.equal(mirror.pelvisYaw,-.3);assert.equal(mirror.pelvisRoll,-.2);assert.equal(mirror.lumbarSideBend,-.1);assert.equal(mirror.thoracicSideBend,-.2);assert.equal(mirror.lumbarBend,.25);assert.equal(mirror.pelvisPitch,.1);
+ const pose=rig.initialPose('stand');pose.frames[0]=f;assert.doesNotThrow(()=>rig.checkPose(pose));f.lumbarBend=2;assert.throws(()=>rig.checkPose(pose));
+});

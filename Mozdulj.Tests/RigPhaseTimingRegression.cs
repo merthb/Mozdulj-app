@@ -38,7 +38,14 @@ internal static class RigPhaseTimingRegression
         var bandRestored=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
         Check(bandRestored.Frames[0].Equipment[0].AnchorD=="fixed" && bandRestored.Frames[0].Equipment[0].PositionD![0]==.3f,"fourth point round trip");
         band.AnchorC=null;Reject(pose);band.AnchorC="leftToe";band.AnchorD="invalid";Reject(pose);
-        Console.WriteLine("PASS 3D phase timing, equipment identities and four-point band compatibility");
+        frame.Equipment=[];
+        var legacyArticulation=JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions);
+        Check(!legacyArticulation.Contains("lumbarBend")&&!legacyArticulation.Contains("pelvisYaw"),"legacy articulation omission");
+        frame.LumbarBend=.2f;frame.ThoracicSideBend=-.15f;frame.PelvisYaw=.3f;Rig3DValidator.Validate(pose);
+        var articulated=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
+        Check(articulated.Frames[0].LumbarBend==.2f&&articulated.Frames[0].PelvisYaw==.3f,"articulation round trip");
+        frame.PelvisYaw=2;Reject(pose);frame.PelvisYaw=.3f;frame.ThoracicSideBend=float.NaN;Reject(pose);
+        Console.WriteLine("PASS 3D phase timing, equipment identities, bands and articulation compatibility");
     }
     private static void Reject(Rig3DPose p){try{Rig3DValidator.Validate(p);}catch(InvalidDataException){return;}throw new Exception("TEST FAIL: invalid 3D phase timing accepted");}
     private static void Check(bool ok,string label){if(!ok)throw new Exception("TEST FAIL: "+label);}
