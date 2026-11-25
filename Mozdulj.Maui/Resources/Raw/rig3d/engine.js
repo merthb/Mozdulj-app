@@ -972,6 +972,33 @@ const VIEW_FOV=Math.PI/4;
 function ortho(halfHeight,aspect,n=.04,f=90){
  const a=new Float32Array(16);a[0]=1/(halfHeight*aspect);a[5]=1/halfHeight;a[10]=-2/(f-n);a[14]=-(f+n)/(f-n);a[15]=1;return a;
 }
+const CAMERA_VIEWS={front:[0,0],side:[Math.PI/2,0],leftView:[-Math.PI/2,0],backView:[Math.PI,0],topView:[0,Math.PI/2-.001],bottomView:[0,-Math.PI/2+.001],threequarter:[.66,.33]};
+function setCameraView(camera,name){
+ const angles=CAMERA_VIEWS[name];if(!angles)return false;
+ [camera.azimuth,camera.elevation]=angles;return true;
+}
+function cameraViewName(camera){
+ const direction=cameraBasis(camera).forward;
+ return Object.keys(CAMERA_VIEWS).find(name=>dot(direction,cameraBasis({azimuth:CAMERA_VIEWS[name][0],elevation:CAMERA_VIEWS[name][1]}).forward)>.9998)||null;
+}
+// Ratio refers to the model viewport, not to the inspector. A smaller
+// landscape/portrait viewport has a higher minimum to keep the model visible.
+function workspaceShare(value,vertical){return clamp(Number.isFinite(value)?value:vertical?56:60,vertical?50:38,vertical?75:72);}
+function skeletonSegments(j){
+ const segments=[[j.root,j.spineMid],[j.spineMid,j.spineUpper],[j.spineUpper,j.neck],[j.neck,j.head]];
+ for(const side of ['left','right']){
+   segments.push([j.spineUpper,j.shoulder[side]],[j.shoulder[side],j.elbow[side]],[j.elbow[side],j.hands[side]],[j.root,j.hip[side]],[j.hip[side],j.knee[side]],[j.knee[side],j.feet[side]],[j.feet[side],j.toes[side]]);
+   const detail=j.handDetails?.[side];
+   if(detail){
+     segments.push([j.hands[side],detail.center]);
+     for(const finger of [...detail.fingers,detail.thumb]){
+       segments.push([detail.center,finger[0]]);
+       for(let k=1;k<finger.length;k++)segments.push([finger[k-1],finger[k]]);
+     }
+   }else segments.push([j.hands[side],j.palms[side]],[j.hands[side],j.thumbs[side]]);
+ }
+ return segments;
+}
 function cameraBasis(c){
  const a=c.azimuth,e=c.elevation;
  return {right:[Math.cos(a),0,-Math.sin(a)],up:[-Math.sin(a)*Math.sin(e),Math.cos(e),-Math.cos(a)*Math.sin(e)],forward:[Math.sin(a)*Math.cos(e),Math.sin(e),Math.cos(a)*Math.cos(e)]};
@@ -1326,7 +1353,8 @@ function shaded3D(canvas){
  let camera={azimuth:.58,elevation:.34,distance:3.55,target:[0,.72,0]},viewproj, dims={w:0,h:0},lastJoints;
  let projectionMode='perspective';
  function setup(){const w=Math.max(1,canvas.clientWidth),h=Math.max(1,canvas.clientHeight),dpr=Math.min(window.devicePixelRatio||1,2);if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){canvas.width=Math.floor(w*dpr);canvas.height=Math.floor(h*dpr);gl.viewport(0,0,canvas.width,canvas.height);}dims={w,h};let c=camera;let el=clamp(c.elevation,-Math.PI/2+.001,Math.PI/2-.001);c.elevation=el;let eye=add(c.target,[c.distance*Math.sin(c.azimuth)*Math.cos(el),c.distance*Math.sin(el),c.distance*Math.cos(c.azimuth)*Math.cos(el)]);viewproj=mul4(projectionMode==='ortho'?ortho(c.distance*Math.tan(VIEW_FOV/2),w/h):perspective(VIEW_FOV,w/h,.04,90),lookAt(eye,c.target));gl.uniformMatrix4fv(uVP,false,viewproj);return eye;}
- function drawM(M,color,opacity=1){if(!M)return;gl.uniformMatrix4fv(uM,false,M);gl.uniform3fv(uC,new Float32Array(palette[color]||color));gl.uniform1f(uO,opacity);gl.drawElements(gl.TRIANGLES,indices.length,gl.UNSIGNED_SHORT,0);}
+ let characterOpacity=1;
+ function drawM(M,color,opacity=1){if(!M)return;gl.uniformMatrix4fv(uM,false,M);gl.uniform3fv(uC,new Float32Array(palette[color]||color));gl.uniform1f(uO,opacity*characterOpacity);gl.drawElements(gl.TRIANGLES,indices.length,gl.UNSIGNED_SHORT,0);}
  const ell=(centre,s,c,o=1)=>drawM(sphereM(centre,s),c,o),limb=(a,b,th,c)=>drawM(segmentM(a,b,th,th),c);
  function poly(points,th,color){for(let i=1;i<points.length;i++)limb(points[i-1],points[i],th,color);}
  function bezier(a,b,c,d,t){let u=1-t;return add(add(mul(a,u*u*u),mul(b,3*u*u*t)),add(mul(c,3*u*t*t),mul(d,t*t*t)));}
@@ -1417,12 +1445,16 @@ function shaded3D(canvas){
     for(const sign of [-1,1])ell(add(p,mul(axis,sign*.12)),[.035,.06,.06],'metal');
   }}
  }}
- function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],dark?[.26,.23,.34]:'floor');
  // Props drawn before character; the rubber band is routed away from the trunk.
  renderEquipment(frame,j);
+ const ghost=displayMode==='ghost',skeleton=displayMode==='skeleton';
+ if(!skeleton){
+ if(ghost){characterOpacity=.20;gl.enable(gl.BLEND);gl.depthMask(false);}
+ try{
  const rp=j.root,axis=(p)=>rotate(p,frame.euler),neck=j.neck,axes=articulationAxes(frame);
  // torso and pelvis; geometry stays constant length through every pose.
  let torsoUpper=j.spineUpper;limb(add(rp,axis([0,.025,0])),j.spineMid,.19,'shirt');limb(j.spineMid,torsoUpper,.19,'shirt');
@@ -1463,12 +1495,25 @@ function shaded3D(canvas){
  ell(head,[.132,.171,.126],'skin');ell(add(head,add(mul(headUp,.135),mul(faceForward,-.036))),[.137,.068,.117],'hair');ell(add(head,add(mul(headUp,.15),mul(faceForward,-.12))),[.065,.068,.062],'hair');
  for(let s of [-1,1])ell(add(head,add(add(mul(headRight,.052*s),mul(headUp,.016)),mul(faceForward,.117))),[.012,.016,.014],'hair');
  ell(add(head,add(mul(faceForward,.129),mul(headUp,-.035))),[.022,.018,.025],'skin');
+ }finally{if(ghost){characterOpacity=1;gl.depthMask(true);gl.disable(gl.BLEND);}}
+ }
+ if(ghost||skeleton){
+   const bone=dark?(highContrast?[1,1,1]:[.87,.84,.98]):(highContrast?[.05,.04,.10]:[.23,.16,.38]);
+   gl.disable(gl.DEPTH_TEST);
+   try{
+     for(const [a,b] of skeletonSegments(j))limb(a,b,.016,bone);
+     for(const target of BODY_TARGETS){const pos=bodyPoint(j,target.key);ell(pos,[.025,.025,.025],bone);}
+   }finally{gl.enable(gl.DEPTH_TEST);}
+ }
  if(edit){
    const handle=(pos,key)=>{const r=key===selected? .068:.045;ell(pos,[r,r,r],key===selected?[.15,.8,.48]:'handle');};
-   if(!equipmentMode)for(const target of BODY_TARGETS){if(target.kind==='inspect'&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
-   for(const key of Object.keys(frame.pointLocks||{})){
-     if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
-   }
+   if(ghost||skeleton)gl.disable(gl.DEPTH_TEST);
+   try{
+     if(!equipmentMode)for(const target of BODY_TARGETS){if(target.kind==='inspect'&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
+     for(const key of Object.keys(frame.pointLocks||{})){
+       if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
+     }
+   }finally{if(ghost||skeleton)gl.enable(gl.DEPTH_TEST);}
  }
  if(edit&&equipmentMode){
    gl.disable(gl.DEPTH_TEST);
@@ -1558,5 +1603,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

@@ -675,3 +675,25 @@ test('all 21 built-in templates pass both phases and checked transition geometry
    assert.equal(a.transition,true,name+' transition');
  }
 });
+
+test('viewport resizing is bounded and camera view faces are consistent',()=>{
+ const rig=loadRig();
+ assert.equal(rig.workspaceShare(0,true),50);assert.equal(rig.workspaceShare(100,true),75);
+ assert.equal(rig.workspaceShare(0,false),38);assert.equal(rig.workspaceShare(100,false),72);
+ assert.equal(rig.workspaceShare(NaN,true),56);
+ const pose=rig.initialPose(),before=JSON.stringify(pose.frames);
+ for(const view of Object.keys(rig.CAMERA_VIEWS)){
+   assert.equal(rig.setCameraView(pose.camera,view),true);
+   assert.equal(rig.cameraViewName(pose.camera),view);
+ }
+ assert.equal(JSON.stringify(pose.frames),before);
+});
+test('skeleton uses the actual articulated joints and preserves pose data',()=>{
+ const rig=loadRig(),f=rig.baseFrame('crosslegged');f.leftHandCurl=.7;
+ const before=JSON.stringify(f),j=rig.joints(f),segments=rig.skeletonSegments(j);
+ assert.ok(segments.some(([a,b])=>a===j.hip.left&&b===j.knee.left));
+ assert.ok(segments.some(([a,b])=>a===j.knee.left&&b===j.feet.left));
+ assert.ok(segments.some(([a,b])=>a===j.handDetails.left.fingers[0][0]&&b===j.handDetails.left.fingers[0][1]));
+ assert.ok(segments.flat(2).every(Number.isFinite));
+ assert.equal(JSON.stringify(f),before);
+});
