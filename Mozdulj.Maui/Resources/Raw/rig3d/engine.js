@@ -606,6 +606,7 @@ function mirrorFrame(frame){
  for(const key of ['hands','feet','poles','pointLocks']){
    if(f[key]!=null)f[key]=Object.fromEntries(Object.entries(f[key]).map(([name,pos])=>[swapSide(name),reflectX(pos)]));
  }
+ if(f.bodyPointLinks!=null)f.bodyPointLinks=Object.fromEntries(Object.entries(f.bodyPointLinks).map(([key,b])=>[swapSide(key),{leader:swapSide(b.leader),offset:reflectX(b.offset)}]));
  if(f.equipmentPointLocks!=null)f.equipmentPointLocks=Object.fromEntries(Object.entries(f.equipmentPointLocks).map(([key,binding])=>[swapSide(key),mirrorEquipmentSupport(binding)]));
  if(f.footPitch!=null)f.footPitch=Object.fromEntries(Object.entries(f.footPitch).map(([side,value])=>[swapSide(side),value]));
  for(const suffix of [...SIDE_ARTICULATION.arm,...SIDE_ARTICULATION.leg]){
@@ -768,6 +769,9 @@ function copyIssue(source,result){
  const collision=Collision3D.worse(Collision3D.overlaps(result),Collision3D.overlaps(source),1e-6);
  if(collision)return collision;
  if(!validEquipmentPointLocks(result))return {id:'lock:equipment',depth:1};
+ if(!validBodyLinks(result))return {id:'link:invalid',depth:1};
+ const linkBefore=bodyLinkErrors(joints(source),source);
+ for(const [key,d] of bodyLinkErrors(joints(result),result))if(d>Math.max(.005,linkBefore.get(key)||0)+1e-7)return {id:'link:'+key,depth:d};
  const before=lockErrors(joints(source),effectiveLocks(source)),after=lockErrors(joints(result),effectiveLocks(result,source));
  for(const [key,d] of after)if(d>Math.max(.005,before.get(key)||0)+1e-7)return {id:'lock:'+key,depth:d};
  return null;
@@ -810,6 +814,57 @@ function lockPoint(j,key){
  const kind=key.endsWith('Hand')?'hands':key.endsWith('Foot')?'feet':key.endsWith('Knee')?'knee':'elbow';
  return j[kind][side];
 }
+
+// Directed endpoint links preserve a captured world-space separation vector.
+// Followers are IK-only; disjoint pairs avoid cycles and order dependence.
+const LINK_KEYS=['leftHand','rightHand','leftFoot','rightFoot'];
+function linkChain(key){return {side:key.startsWith('left')?'left':'right',kind:key.endsWith('Hand')?'arm':'leg',target:key.endsWith('Hand')?'hands':'feet'};}
+function validBodyLinks(frame){
+ const links=frame.bodyPointLinks;if(links==null)return true;
+ if(typeof links!=='object'||Array.isArray(links))return false;
+ const used=new Set();
+ for(const [key,b] of Object.entries(links)){
+   if(!LINK_KEYS.includes(key)||!b||!LINK_KEYS.includes(b.leader)||key===b.leader||used.has(key)||used.has(b.leader)||
+      frame.pointLocks?.[key]||frame.equipmentPointLocks?.[key]||!Array.isArray(b.offset)||b.offset.length!==3||b.offset.some(x=>!Number.isFinite(x)||Math.abs(x)>6))return false;
+   const c=linkChain(key);if(frame[modeKeys[c.kind]]?.[c.side])return false;
+   used.add(key);used.add(b.leader);
+ }
+ return true;
+}
+function setBodyLink(frame,follower,leader){
+ if(!LINK_KEYS.includes(follower)||!LINK_KEYS.includes(leader)||follower===leader)return false;
+ const candidate=cloneFrame(frame),c=linkChain(follower),j=joints(candidate);
+ if(!prepareTargetMode(candidate,c.kind,c.side))return false;
+ candidate.bodyPointLinks??={};
+ candidate.bodyPointLinks[follower]={leader,offset:sub(lockPoint(j,follower),lockPoint(j,leader))};
+ if(!validBodyLinks(candidate))return false;
+ Object.assign(frame,candidate);return true;
+}
+function removeBodyLink(frame,key){
+ if(!frame.bodyPointLinks?.[key])return false;
+ delete frame.bodyPointLinks[key];if(!Object.keys(frame.bodyPointLinks).length)delete frame.bodyPointLinks;
+ return true;
+}
+function bodyLinkErrors(j,frame){
+ const errors=new Map();
+ for(const [key,b] of Object.entries(frame.bodyPointLinks||{})){
+   const d=len(sub(lockPoint(j,key),add(lockPoint(j,b.leader),b.offset)));
+   if(d>0)errors.set(key,d);
+ }
+ return errors;
+}
+function adaptBodyLinks(frame,reference=null){
+ if(!frame.bodyPointLinks)return frame;
+ const j=joints(frame);
+ for(const [key,b] of Object.entries(frame.bodyPointLinks)){
+   // A direct edit of a follower cannot silently move its leader.
+   if(reference&&len(sub(lockPoint(j,b.leader),lockPoint(reference,b.leader)))<1e-8)continue;
+   const c=linkChain(key);
+   if(!frame[modeKeys[c.kind]]?.[c.side])frame[c.target][c.side]=add(lockPoint(j,b.leader),b.offset);
+ }
+ return frame;
+}
+
 function effectiveLocks(frame,source=frame){
  const locks={...source.pointLocks};
  for(const [key,binding] of Object.entries(source.equipmentPointLocks||{})){
@@ -825,6 +880,7 @@ function validEquipmentPointLocks(frame){
    LOCK_KEYS.includes(key)&&!Object.hasOwn(frame.pointLocks||{},key)&&resolveEquipmentSupport(frame,binding)!=null);
 }
 function setEquipmentPointLock(frame,key,index){
+ if(frame.bodyPointLinks?.[key])return false;
  const binding=captureEquipmentSupport(frame,key,index);
  if(!binding)return false;
  setPointLock(frame,key,false);
@@ -832,6 +888,7 @@ function setEquipmentPointLock(frame,key,index){
 }
 function setPointLock(frame,key,enabled){
  if(!LOCK_KEYS.includes(key))throw Error('Érvénytelen rögzítési pont.');
+ if(enabled&&frame.bodyPointLinks?.[key])return false;
  if(frame.equipmentPointLocks){delete frame.equipmentPointLocks[key];if(!Object.keys(frame.equipmentPointLocks).length)delete frame.equipmentPointLocks;}
  if(enabled){frame.pointLocks??={};frame.pointLocks[key]=[...lockPoint(joints(frame),key)];}
  else if(frame.pointLocks){delete frame.pointLocks[key];if(!Object.keys(frame.pointLocks).length)delete frame.pointLocks;}
@@ -1026,6 +1083,8 @@ const Collision3D=(()=>{
    const from=joints(before),to=joints(after),originalJoints=original===before?from:joints(original);
    const baseline=overlaps(original,originalJoints);
    const baseLocks=effectiveLocks(original),baseLockErrors=lockErrors(originalJoints,baseLocks);
+   if(!validBodyLinks(before)||!validBodyLinks(after)||!validBodyLinks(original))return {frame:before,fraction:0,limited:true,issue:'link:invalid'};
+   const baseLinkErrors=bodyLinkErrors(originalJoints,original);
     if(!validEquipmentPointLocks(original)||!validEquipmentPointLocks(after))return {frame:before,fraction:0,limited:true,issue:'lock:equipment'};
    let travel=0;
    const keys=['root','neck','head','spineUpper'];
@@ -1043,12 +1102,14 @@ const Collision3D=(()=>{
    for(let i=1;i<=steps;i++){
      const f=interpolate(before,after,i/steps),locks=effectiveLocks(f,original);
       if(adapt==='equipment'&&original.equipmentPointLocks?.root&&locks.root)moveRoot(f,sub(locks.root,f.root));
-      if(adapt)adaptSupportPoints(f,locks,{reference:accepted,source:before,projectRoot:adapt==='root'});const j=joints(f);
+      if(adapt)adaptSupportPoints(f,locks,{reference:accepted,source:before,projectRoot:adapt==='root'});
+     adaptBodyLinks(f,from);const j=joints(f);
      const flip=bendFlip(previousJoints,j);
      let err=flip?{id:'bend:'+flip}:worse(overlaps(f,j),baseline);
      if(!err)for(const [key,depth] of lockErrors(j,locks)){
        if(depth>Math.max(.005,baseLockErrors.get(key)||0)+1e-7){err={id:'lock:'+key,depth};break;}
      }
+     if(!err)for(const [key,d] of bodyLinkErrors(j,f))if(d>Math.max(.005,baseLinkErrors.get(key)||0)+1e-7){err={id:'link:'+key,depth:d};break;}
      if(err){issue=err;break;}
      ratio=i/steps;accepted=f;previousJoints=j;
    }
@@ -1105,7 +1166,7 @@ const Collision3D=(()=>{
  function previewCompatible(a,b){
    for(const key of ['armAngles','legAngles','footPitch','poles','equipment'])
      if(JSON.stringify(shape(a[key]??{}))!==JSON.stringify(shape(b[key]??{})))return false;
-   return JSON.stringify(a.pointLocks??{})===JSON.stringify(b.pointLocks??{})&&JSON.stringify(a.equipmentPointLocks??{})===JSON.stringify(b.equipmentPointLocks??{});
+   return JSON.stringify(a.pointLocks??{})===JSON.stringify(b.pointLocks??{})&&JSON.stringify(a.equipmentPointLocks??{})===JSON.stringify(b.equipmentPointLocks??{})&&JSON.stringify(a.bodyPointLinks??{})===JSON.stringify(b.bodyPointLinks??{});
  }
  function previewTransition(a,b){
    const normalized=previewCompatible(a,b)?[a,b]:normalizePreview(a,b);
@@ -1115,6 +1176,8 @@ const Collision3D=(()=>{
    for(const [id,depth] of overlaps(b))baseline.set(id,Math.max(depth,baseline.get(id)||0));
    if(!validEquipmentPointLocks(a)||!validEquipmentPointLocks(b))return {ok:false,issue:'lock:equipment'};
     const start=lockErrors(joints(a),effectiveLocks(a)),end=lockErrors(joints(b),effectiveLocks(b));
+   if(!validBodyLinks(a)||!validBodyLinks(b))return {ok:false,issue:'link:invalid'};
+   const startLinks=bodyLinkErrors(joints(a),a),endLinks=bodyLinkErrors(joints(b),b);
    const samples=[];let previousJoints=null;
    // Precompute the exact samples that will be displayed. Never render unchecked
    // intermediate poses. Fixed sampling is approximate, not continuous proof.
@@ -1122,7 +1185,9 @@ const Collision3D=(()=>{
      const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(from,to,i/48);
      const locks=effectiveLocks(frame,a);
       if(i>0&&i<48&&Object.keys(locks).length){if(a.equipmentPointLocks?.root&&locks.root)moveRoot(frame,sub(locks.root,frame.root));adaptSupportPoints(frame,locks,{reference:samples.at(-1)});}
+     if(i>0&&i<48)adaptBodyLinks(frame);
      const j=joints(frame);
+     for(const [key,d] of bodyLinkErrors(j,frame))if(d>Math.max(.005,startLinks.get(key)||0,endLinks.get(key)||0)+1e-7)return {ok:false,issue:'link:'+key};
      const flip=previousJoints&&bendFlip(previousJoints,j);
      if(flip)return {ok:false,issue:'bend:'+flip};
      const err=worse(overlaps(frame,j),baseline);
@@ -1187,6 +1252,10 @@ function pinchCamera(c,previous,next,height){
 // Convert collision identifiers to body-space geometry for visual feedback.
 function issueGeometry(frame,j,id){
  if(!id)return [];
+ if(id.startsWith('link:')){
+   const key=id.slice(5),b=frame.bodyPointLinks?.[key];
+   return b?[{a:lockPoint(j,key),b:lockPoint(j,b.leader),r:.035}]:[];
+ }
  if(id.startsWith('bend:')){
    const key=id.slice(5);
    return LOCK_KEYS.includes(key)?[{a:lockPoint(j,key),b:lockPoint(j,key),r:.065}]:[];
@@ -1436,7 +1505,7 @@ function fitSupport(frame,type,keys,index=null,lock=false,align=false,relative=f
  const before=cloneFrame(frame);
  // Conversion must preserve the original rendered pose before starting.
  for(const key of keys){
-   if(before.pointLocks?.[key]||before.equipmentPointLocks?.[key])return fail('locked',key);
+   if(before.pointLocks?.[key]||before.equipmentPointLocks?.[key]||before.bodyPointLinks?.[key])return fail('locked',key);
    if(key==='root')continue;
    const side=key.startsWith('left')?'left':'right',kind=key.endsWith('Hand')?'arm':'leg';
    if(!prepareTargetMode(before,kind,side))return fail('mode',key);
@@ -1923,6 +1992,11 @@ function shaded3D(canvas){
    if(ghost||skeleton)gl.disable(gl.DEPTH_TEST);
    try{
      if(!equipmentMode)for(const target of BODY_TARGETS){if(target.secondary&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
+     for(const [key,b] of Object.entries(frame.bodyPointLinks||{})){
+       const a=lockPoint(j,key),end=lockPoint(j,b.leader),color=[.70,.32,.86];
+       if(len(sub(a,end))>.001)limb(a,end,.012,color);
+       ell(a,[.045,.045,.045],color);ell(end,[.035,.035,.035],color);
+     }
      for(const key of Object.keys(effectiveLocks(frame))){
        if(!LOCK_KEYS.includes(key))continue;
         const pos=lockPoint(j,key),relative=!!frame.equipmentPointLocks?.[key];
@@ -2002,7 +2076,7 @@ function shaded3D(canvas){
  return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,pickEquipment,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
 function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');if(!validEquipmentIds(p.frames))throw Error('Érvénytelen eszközazonosító.');for(let f of p.frames){if(!validHandCurl(f))throw Error('Érvénytelen kéztartás.');if(!validArticulation(f))throw Error('Érvénytelen helyi gerinc- vagy medenceforgatás.');if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
-if(!validEquipmentPointLocks(f))throw Error('Érvénytelen rögzítési pont.');
+if(!validEquipmentPointLocks(f)||!validBodyLinks(f))throw Error('Érvénytelen rögzítési pont.');
 if(f.pointLocks!=null){
  if(typeof f.pointLocks!=='object'||Array.isArray(f.pointLocks))throw Error('Érvénytelen rögzítési pont.');
  for(const [key,pos] of Object.entries(f.pointLocks))if(!LOCK_KEYS.includes(key)||!Array.isArray(pos)||pos.length!==3||pos.some(x=>!Number.isFinite(x)||Math.abs(x)>10))throw Error('Érvénytelen rögzítési pont.');
@@ -2037,5 +2111,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,fitHingeFloor,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,bendFlip,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,fitHingeFloor,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,LINK_KEYS,validBodyLinks,setBodyLink,removeBodyLink,bodyLinkErrors,adaptBodyLinks,bendFlip,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
