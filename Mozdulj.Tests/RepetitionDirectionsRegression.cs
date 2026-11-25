@@ -12,6 +12,17 @@ internal static class RepetitionDirectionsRegression
         Check(normalized[0].Code=="left" && normalized[1].Code=="forward" && normalized[0].Count==8,"canonical codes, order and counts");
         var exercise=new Exercise { Measure="reps",RepTargets=targets };
         var workout=new WorkoutItem { Measure="reps",RepTargets=targets };
+        var guideItem=new WorkoutItem{Measure="reps",ActiveSeconds=9,RepTargets=[RepetitionDirections.Create("each_side",6),RepetitionDirections.Create("forward",4)]};
+        var saved=JsonSerializer.Serialize(guideItem,CatalogCodec.JsonOptions);
+        var guideTargets=Rig3DMovement.RepetitionGuideTargets(guideItem);
+        Check(guideTargets.Count==3&&guideTargets[0]==new RepGuideTarget("left",6)&&guideTargets[1]==new RepGuideTarget("right",6)&&guideTargets[2]==new RepGuideTarget("forward",4),"guide expansion");
+        var session=new Workout{PlaybackPhase="exercise",Items=[guideItem]};
+        var timing=Rig3DMovement.ForRepetitionWorkout(session,guideItem,guideTargets[1],4,false);
+        Check(timing is {Direction:"right",ElapsedSeconds:5,Playing:true,Repetitions:true},"guide selected direction");
+        Check(Rig3DMovement.ForRepetitionWorkout(session,guideItem,guideTargets[1],4,true) is {Playing:false},"guide pause");
+        session.PlaybackPhase="transition";
+        Check(Rig3DMovement.ForRepetitionWorkout(session,guideItem,guideTargets[1],4,false) is null,"guide transition");
+        Check(JsonSerializer.Serialize(guideItem,CatalogCodec.JsonOptions)==saved,"guide never changes workout data");
         try
         {
             AppLocalization.Apply("en");
