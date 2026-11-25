@@ -13,7 +13,7 @@ public sealed class WorkoutCustomization
         EnsureEditable(workout, item);
         string phase = ResolvePhase(catalog, item);
         var original = catalog.Exercises.FirstOrDefault(e=>e.Id==item.ExerciseId) ??
-            throw new InvalidOperationException("Az eredeti gyakorlat már nincs a katalógusban.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation038"));
         var inThisWorkout = workout.Items.Select(x => x.ExerciseId).ToHashSet(StringComparer.Ordinal);
         return catalog.Exercises
             .Where(x => x.Phase == phase && x.ReviewStatus != "withdrawn"
@@ -43,12 +43,12 @@ public sealed class WorkoutCustomization
     {
         if (!Alternatives(catalog, preferences, workout, item, favoriteIds)
             .Any(x => x.Id == replacement.Id))
-            throw new InvalidOperationException("Ez a gyakorlat nem választható helyettesítőnek: ellenőrizd az edzésfázist, nehézséget és az eszközöket.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation039"));
 
         // Replace both sides as one logical movement. Retain the selected item's
         // identity and immediately insert the new opposite-side variant.
         workout.Items=ProjectedSwap(catalog,workout,item,replacement)
-            ?? throw new InvalidOperationException("A cserével nem maradna kiegyensúlyozott gyakorlatsor.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation040"));
     }
 
     private static WorkoutItem AsItem(Exercise exercise, string? existingItemId=null) => new()
@@ -113,16 +113,16 @@ public sealed class WorkoutCustomization
         if (item.Phase is "warmup" or "main" or "cooldown") return item.Phase;
         // Backward compatibility for plans saved before workout items had a Phase field.
         return catalog.Exercises.FirstOrDefault(x => x.Id == item.ExerciseId)?.Phase
-            ?? throw new InvalidOperationException("Az elavult gyakorlat edzésfázisa nem határozható meg; csere nem engedélyezhető.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation041"));
     }
 
     private static void EnsureEditable(Workout workout, WorkoutItem item)
     {
         if (workout.Status != "planned")
-            throw new InvalidOperationException("Csak a még el nem kezdett gyakorlatsor szerkeszthető.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation042"));
         if (item.IsRequired)
-            throw new InvalidOperationException("A kötelezően rögzített gyakorlatot előbb a teljes tervezésnél kell feloldani.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation043"));
         if (item.Status != "pending" || !workout.Items.Contains(item))
-            throw new InvalidOperationException("A feladat már elkezdődött, vagy nem ehhez a gyakorlatsorhoz tartozik.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation044"));
     }
 }

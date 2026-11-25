@@ -556,4 +556,138 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="SettingsUi157" xml:space="preserve"><value>aktív nap</value></data>
   <data name="SettingsUi158" xml:space="preserve"><value>különböző gyakorlat</value></data>
   <data name="SettingsUi159" xml:space="preserve"><value>különböző nap</value></data>
+  <data name="Validation001" xml:space="preserve"><value>Hiányzik a fő mentés.</value></data>
+  <data name="Validation002" xml:space="preserve"><value>Üres felhasználói fájl.</value></data>
+  <data name="Validation003" xml:space="preserve"><value>Üres tartalék mentés.</value></data>
+  <data name="Validation004" xml:space="preserve"><value>A felhasználói adatok és a tartalék fájl sem olvasható. </value></data>
+  <data name="Validation005" xml:space="preserve"><value>Először add meg és mentsd a személyes beállításaidat.</value></data>
+  <data name="Validation006" xml:space="preserve"><value>A kezdeti beállítások már elkészültek.</value></data>
+  <data name="Validation007" xml:space="preserve"><value>Érvénytelen beállítások.</value></data>
+  <data name="Validation008" xml:space="preserve"><value>Hiányzó beállítások.</value></data>
+  <data name="Validation009" xml:space="preserve"><value>Ismeretlen testtáj, mozgástípus vagy eszköz.</value></data>
+  <data name="Validation010" xml:space="preserve"><value>Érvénytelen beállításérték.</value></data>
+  <data name="Validation011" xml:space="preserve"><value>A kijelölt gyakorlatsor nem szerepel a mai tervben.</value></data>
+  <data name="Validation012" xml:space="preserve"><value>A választott gyakorlat nem található az aktuális katalógusban.</value></data>
+  <data name="Validation013" xml:space="preserve"><value>A relaxáció csak a teljes tíz perc letelte után írható jóvá.</value></data>
+  <data name="Validation014" xml:space="preserve"><value>A regeneráló program nem teljesült, vagy nem a mai naphoz tartozik.</value></data>
+  <data name="Validation015" xml:space="preserve"><value>A korábbi regenerációs munkamenet nem állítható helyre.</value></data>
+  <data name="Validation016" xml:space="preserve"><value>A szerkesztendő gyakorlat nem található.</value></data>
+  <data name="Validation017" xml:space="preserve"><value>Hibás helyi mentési kulcs.</value></data>
+  <data name="Validation018" xml:space="preserve"><value>Más profilhoz tartozó mentés nem írhatja felül a haladást.</value></data>
+  <data name="Validation019" xml:space="preserve"><value>Csak létező alapgyakorlat kapcsolható ki vagy be.</value></data>
+  <data name="Validation020" xml:space="preserve"><value>Érvénytelen szerkesztői állapot.</value></data>
+  <data name="Validation021" xml:space="preserve"><value>A saját gyakorlat azonosítója érvénytelen.</value></data>
+  <data name="Validation022" xml:space="preserve"><value>Az alapgyakorlatok nem írhatók felül.</value></data>
+  <data name="Validation023" xml:space="preserve"><value>Az archivált azonosító nem használható újra.</value></data>
+  <data name="Validation024" xml:space="preserve"><value>A saját gyakorlat nem található.</value></data>
+  <data name="Validation025" xml:space="preserve"><value>Csak kész saját gyakorlat aktiválható vagy kapcsolható ki.</value></data>
+  <data name="Validation026" xml:space="preserve"><value>Ismeretlen importmód.</value></data>
+  <data name="Validation027" xml:space="preserve"><value>A fájl túllépi a 8 MB-os korlátot.</value></data>
+  <data name="Validation028" xml:space="preserve"><value>Üres gyakorlattár.</value></data>
+  <data name="Validation029" xml:space="preserve"><value>A profilhoz nem áll rendelkezésre bemelegítés, fő gyakorlat és levezetés.</value></data>
+  <data name="Validation030" xml:space="preserve"><value>Nem állítható össze a kért nehézséggel és eszközökkel biztonságosan összefüggő gyakorlatsor. Válassz több elérhető eszközt vagy rövidebb programot.</value></data>
+  <data name="Validation031" xml:space="preserve"><value>Elkezdett gyakorlatsort nem lehet újraösszeállítani.</value></data>
+  <data name="Validation032" xml:space="preserve"><value>Válassz legalább egy kötelezően szerepeltetendő gyakorlatot.</value></data>
+  <data name="Validation033" xml:space="preserve"><value>Ugyanaz a gyakorlat nem jelölhető ki kétszer.</value></data>
+  <data name="Validation034" xml:space="preserve"><value>Nem sikerült az összes kötelező gyakorlatot megtartani.</value></data>
+  <data name="Validation035" xml:space="preserve"><value>Ehhez a testtájhoz nincs megfelelő fő gyakorlat.</value></data>
+  <data name="Validation036" xml:space="preserve"><value>A kiválasztott gyakorlatokhoz nem biztosítható megfelelő bemelegítés, levezetés és időkeret. Válassz kevesebb vagy hasonló testtájra ható kötelező gyakorlatot.</value></data>
+  <data name="Validation037" xml:space="preserve"><value>Az időkeretben nem fér el a szükséges bemelegítés, fő rész és levezetés.</value></data>
+  <data name="Validation038" xml:space="preserve"><value>Az eredeti gyakorlat már nincs a katalógusban.</value></data>
+  <data name="Validation039" xml:space="preserve"><value>Ez a gyakorlat nem választható helyettesítőnek: ellenőrizd az edzésfázist, nehézséget és az eszközöket.</value></data>
+  <data name="Validation040" xml:space="preserve"><value>A cserével nem maradna kiegyensúlyozott gyakorlatsor.</value></data>
+  <data name="Validation041" xml:space="preserve"><value>Az elavult gyakorlat edzésfázisa nem határozható meg; csere nem engedélyezhető.</value></data>
+  <data name="Validation042" xml:space="preserve"><value>Csak a még el nem kezdett gyakorlatsor szerkeszthető.</value></data>
+  <data name="Validation043" xml:space="preserve"><value>A kötelezően rögzített gyakorlatot előbb a teljes tervezésnél kell feloldani.</value></data>
+  <data name="Validation044" xml:space="preserve"><value>A feladat már elkezdődött, vagy nem ehhez a gyakorlatsorhoz tartozik.</value></data>
+  <data name="Validation045" xml:space="preserve"><value>Név megadása kötelező.</value></data>
+  <data name="Validation046" xml:space="preserve"><value>Válassz érvényes mozgástípust.</value></data>
+  <data name="Validation047" xml:space="preserve"><value>Legalább egy érintett testtáj szükséges.</value></data>
+  <data name="Validation048" xml:space="preserve"><value>Válassz edzésfázist (bemelegítés/fő rész/levezetés).</value></data>
+  <data name="Validation049" xml:space="preserve"><value>A nehézség 1–3 lehet.</value></data>
+  <data name="Validation050" xml:space="preserve"><value>A becsült idő 5–3600 másodperc lehet.</value></data>
+  <data name="Validation051" xml:space="preserve"><value>Az eszközlista hibás. Eszköz nélkül üres lista használható.</value></data>
+  <data name="Validation052" xml:space="preserve"><value>Legalább egy végrehajtási leírás vagy lépés szükséges.</value></data>
+  <data name="Validation053" xml:space="preserve"><value>Időalapú gyakorlatnál adj meg 5–3600 másodpercet.</value></data>
+  <data name="Validation054" xml:space="preserve"><value>Időalapú feladat nem tartalmazhat ismétléscélt.</value></data>
+  <data name="Validation055" xml:space="preserve"><value>Ismétlésalapú feladat nem tartalmazhat időcélt.</value></data>
+  <data name="Validation056" xml:space="preserve"><value>Ismétlésalapú feladatnál minden szegmenshez pozitív darabszám és név szükséges.</value></data>
+  <data name="Validation057" xml:space="preserve"><value>Válassz idő- vagy ismétlésalapú mérést.</value></data>
+  <data name="Validation058" xml:space="preserve"><value>Ábra nélkül nyilak nem tárolhatók.</value></data>
+  <data name="Validation059" xml:space="preserve"><value>Ábra: </value></data>
+  <data name="Validation060" xml:space="preserve"><value>3D póz: </value></data>
+  <data name="Validation061" xml:space="preserve"><value>A gyakorlat nem másolható.</value></data>
+  <data name="Validation062" xml:space="preserve"><value>Saját gyakorlat nem írhat felül alapgyakorlatot.</value></data>
+  <data name="Validation063" xml:space="preserve"><value>Aktív saját gyakorlat hibás: </value></data>
+  <data name="Validation064" xml:space="preserve"><value>Nem támogatott gyakorlattár-export formátum.</value></data>
+  <data name="Validation065" xml:space="preserve"><value>Hiányzó gyakorlattári adatok.</value></data>
+  <data name="Validation066" xml:space="preserve"><value>Érvénytelen alapgyakorlat-állapot.</value></data>
+  <data name="Validation067" xml:space="preserve"><value>Hiányzó beépített gyakorlat-korrektúrák.</value></data>
+  <data name="Validation068" xml:space="preserve"><value>A v1 formátum nem tartalmazhat szerkeszthető alapgyakorlat-korrektúrát.</value></data>
+  <data name="Validation069" xml:space="preserve"><value>Duplikált alapgyakorlat-korrektúra.</value></data>
+  <data name="Validation070" xml:space="preserve"><value>Érvénytelen saját gyakorlat vagy ütköző azonosító.</value></data>
+  <data name="Validation071" xml:space="preserve"><value>A mozgatandó gyakorlat nem található.</value></data>
+  <data name="Validation072" xml:space="preserve"><value>A célgyakorlat nem található.</value></data>
+  <data name="Validation073" xml:space="preserve"><value>Csak egy blokkon belül rendezheted át a feladatokat.</value></data>
+  <data name="Validation074" xml:space="preserve"><value>A módosítás megbontaná az edzésfázisokat vagy az oldalpárokat.</value></data>
+  <data name="Validation075" xml:space="preserve"><value>Ez a gyakorlat nem távolítható el.</value></data>
+  <data name="Validation076" xml:space="preserve"><value>Kötelező gyakorlat vagy annak oldalpárja nem hagyható ki.</value></data>
+  <data name="Validation077" xml:space="preserve"><value>Ezt a gyakorlatot nem lehet kivenni: nem maradna megfelelő bemelegítés, fő rész vagy levezetés.</value></data>
+  <data name="Validation078" xml:space="preserve"><value>Csak a még el nem kezdett alap gyakorlatsor rendezhető át.</value></data>
+  <data name="Validation079" xml:space="preserve"><value>Üres vagy olvashatatlan katalógus.</value></data>
+  <data name="Validation080" xml:space="preserve"><value>Nem támogatott katalógusséma (v3 szükséges, pózadatokkal).</value></data>
+  <data name="Validation081" xml:space="preserve"><value>A katalógus verziója vagy tartalma hibás.</value></data>
+  <data name="Validation082" xml:space="preserve"><value>Hibás korrektúra-visszaállítási lista.</value></data>
+  <data name="Validation083" xml:space="preserve"><value>Kiadási reset-lista ismeretlen gyakorlatot tartalmaz.</value></data>
+  <data name="Validation084" xml:space="preserve"><value>A póz nem másolható.</value></data>
+  <data name="Validation085" xml:space="preserve"><value>Hiányzó leírás-felülírás.</value></data>
+  <data name="Validation086" xml:space="preserve"><value>Érvénytelen alapverzió: </value></data>
+  <data name="Validation087" xml:space="preserve"><value>Leírás, kiinduló helyzet, legalább egy lépés és biztonsági tudnivaló kötelező.</value></data>
+  <data name="Validation088" xml:space="preserve"><value>Az ábra helyére üres pózobjektum szükséges.</value></data>
+  <data name="Validation089" xml:space="preserve"><value>Kép nélküli ábrában nem lehet nyíl.</value></data>
+  <data name="Validation090" xml:space="preserve"><value>Hibás mentés-hitelesítő kulcs.</value></data>
+  <data name="Validation091" xml:space="preserve"><value>Ez a mentés nem tartalmaz ellenőrizhető hitelesítést. A haladás nem tölthető vissza.</value></data>
+  <data name="Validation092" xml:space="preserve"><value>A mentés hitelesítése sérült.</value></data>
+  <data name="Validation093" xml:space="preserve"><value>Érvénytelen mentés-hitelesítési mező.</value></data>
+  <data name="Validation094" xml:space="preserve"><value>A mentés hitelesítési mezője sérült.</value></data>
+  <data name="Validation095" xml:space="preserve"><value>Túl nagy biztonsági mentés.</value></data>
+  <data name="Validation096" xml:space="preserve"><value>Üres biztonsági mentés.</value></data>
+  <data name="Validation097" xml:space="preserve"><value>Ismeretlen mentési formátum.</value></data>
+  <data name="Validation098" xml:space="preserve"><value>A mentésben nincs érvényes profilazonosító.</value></data>
+  <data name="Validation099" xml:space="preserve"><value>A mentésben ismeretlen kikapcsolt alapgyakorlat található.</value></data>
+  <data name="Validation100" xml:space="preserve"><value>A YouTube Music nincs telepítve ezen a készüléken.</value></data>
+  <data name="Validation101" xml:space="preserve"><value>Érvénytelen YouTube Music-lejátszási lista.</value></data>
+  <data name="Validation102" xml:space="preserve"><value>Hibás 3D pózverzió vagy mozgásfázis-szám.</value></data>
+  <data name="Validation103" xml:space="preserve"><value>A fej forgásszöge érvénytelen.</value></data>
+  <data name="Validation104" xml:space="preserve"><value>Hiányzó kéz- vagy lábcélpont.</value></data>
+  <data name="Validation105" xml:space="preserve"><value>Hiányzó ízületi vagy eszközréteg.</value></data>
+  <data name="Validation106" xml:space="preserve"><value>A lábfejállás tartományon kívüli.</value></data>
+  <data name="Validation107" xml:space="preserve"><value>A lábcsontlánc vezérlése nem megengedett.</value></data>
+  <data name="Validation108" xml:space="preserve"><value>A karcsontlánc vezérlése nem megengedett.</value></data>
+  <data name="Validation109" xml:space="preserve"><value>Ismeretlen 3D eszköz.</value></data>
+  <data name="Validation110" xml:space="preserve"><value>A szalag két rögzítési pontja nem érvényes.</value></data>
+  <data name="Validation111" xml:space="preserve"><value>A szalag harmadik pontja nem érvényes.</value></data>
+  <data name="Validation112" xml:space="preserve"><value>A szalag vezetése nem érvényes.</value></data>
+  <data name="Validation113" xml:space="preserve"><value>Érvénytelen 3D kamera.</value></data>
+  <data name="Validation114" xml:space="preserve"><value>Érvénytelen 3D koordináta: </value></data>
+  <data name="Validation115" xml:space="preserve"><value>Érvénytelen regeneráló program.</value></data>
+  <data name="Validation116" xml:space="preserve"><value>A(z) {0} nem elérhető a választott nehézséggel vagy eszközökkel.</value></data>
+  <data name="Validation117" xml:space="preserve"><value>Legfeljebb {0} kötelező gyakorlat férhet a választott időkeretbe.</value></data>
+  <data name="Validation118" xml:space="preserve"><value>Ebben a {0} perces tervben már csak {1} feladat hagyható ki. Az oldalpár két feladatnak számít.</value></data>
+  <data name="Validation119" xml:space="preserve"><value>Hiányzó/duplikált azonosító: {0}</value></data>
+  <data name="Validation120" xml:space="preserve"><value>Hiányos gyakorlat: {0}</value></data>
+  <data name="Validation121" xml:space="preserve"><value>Hibás időcél: {0}</value></data>
+  <data name="Validation122" xml:space="preserve"><value>Hibás ismétléscél: {0}</value></data>
+  <data name="Validation123" xml:space="preserve"><value>Ismeretlen mérés: {0}</value></data>
+  <data name="Validation124" xml:space="preserve"><value>Ismeretlen felhasználói sémaverzió: {0}</value></data>
+  <data name="Validation125" xml:space="preserve"><value>Hiányzó/hibás generált póz: {0}</value></data>
+  <data name="Validation126" xml:space="preserve"><value>2D fázis nélküli eszköz vagy nyíl: {0}</value></data>
+  <data name="Validation127" xml:space="preserve"><value>Hibás régi 2D fázisszám: {0}</value></data>
+  <data name="Validation128" xml:space="preserve"><value>Ismeretlen nézőpont: {0}</value></data>
+  <data name="Validation129" xml:space="preserve"><value>Hiányzó eszközréteg: {0}</value></data>
+  <data name="Validation130" xml:space="preserve"><value>Érvénytelen mozgásnyíl: {0}</value></data>
+  <data name="Validation131" xml:space="preserve"><value>Érvénytelen eszköz: {0}</value></data>
+  <data name="Validation132" xml:space="preserve"><value>Hiányos referenciapontok: {0}</value></data>
+  <data name="Validation133" xml:space="preserve"><value>Érvénytelen ízületi koordináta: {0}/{1}</value></data>
+  <data name="Validation134" xml:space="preserve"><value>Valószínűtlen szegmenshossz: {0}/{1}-{2}</value></data>
 </root>

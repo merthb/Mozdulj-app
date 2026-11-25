@@ -42,7 +42,7 @@ public static class RecoveryRoutine
                 }
             ]
         };
-        if (!IsValid(workout)) throw new InvalidOperationException("Érvénytelen regeneráló program.");
+        if (!IsValid(workout)) throw new InvalidOperationException(AppLocalization.Text("Validation115"));
         return workout;
     }
 

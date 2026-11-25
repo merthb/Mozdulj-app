@@ -556,4 +556,138 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="SettingsUi157" xml:space="preserve"><value>active days</value></data>
   <data name="SettingsUi158" xml:space="preserve"><value>different exercises</value></data>
   <data name="SettingsUi159" xml:space="preserve"><value>different days</value></data>
+  <data name="Validation001" xml:space="preserve"><value>The main save file is missing.</value></data>
+  <data name="Validation002" xml:space="preserve"><value>Empty user data file.</value></data>
+  <data name="Validation003" xml:space="preserve"><value>Empty backup save file.</value></data>
+  <data name="Validation004" xml:space="preserve"><value>Neither the user data nor the backup file can be read. </value></data>
+  <data name="Validation005" xml:space="preserve"><value>Enter and save your personal settings first.</value></data>
+  <data name="Validation006" xml:space="preserve"><value>Initial setup has already been completed.</value></data>
+  <data name="Validation007" xml:space="preserve"><value>Invalid settings.</value></data>
+  <data name="Validation008" xml:space="preserve"><value>Missing settings.</value></data>
+  <data name="Validation009" xml:space="preserve"><value>Unknown body area, movement type or equipment.</value></data>
+  <data name="Validation010" xml:space="preserve"><value>Invalid setting value.</value></data>
+  <data name="Validation011" xml:space="preserve"><value>The selected workout is not in today's plan.</value></data>
+  <data name="Validation012" xml:space="preserve"><value>The selected exercise is not in the current library.</value></data>
+  <data name="Validation013" xml:space="preserve"><value>Relaxation can only be credited after the full ten minutes.</value></data>
+  <data name="Validation014" xml:space="preserve"><value>Recovery is incomplete or does not belong to today.</value></data>
+  <data name="Validation015" xml:space="preserve"><value>The previous recovery session cannot be restored.</value></data>
+  <data name="Validation016" xml:space="preserve"><value>The exercise to edit was not found.</value></data>
+  <data name="Validation017" xml:space="preserve"><value>Invalid local backup key.</value></data>
+  <data name="Validation018" xml:space="preserve"><value>A backup from another profile cannot overwrite your progress.</value></data>
+  <data name="Validation019" xml:space="preserve"><value>Only an existing built-in exercise can be enabled or disabled.</value></data>
+  <data name="Validation020" xml:space="preserve"><value>Invalid editor state.</value></data>
+  <data name="Validation021" xml:space="preserve"><value>Invalid custom exercise ID.</value></data>
+  <data name="Validation022" xml:space="preserve"><value>Built-in exercises cannot be overwritten.</value></data>
+  <data name="Validation023" xml:space="preserve"><value>An archived ID cannot be reused.</value></data>
+  <data name="Validation024" xml:space="preserve"><value>Custom exercise not found.</value></data>
+  <data name="Validation025" xml:space="preserve"><value>Only a complete custom exercise can be activated or disabled.</value></data>
+  <data name="Validation026" xml:space="preserve"><value>Unknown import mode.</value></data>
+  <data name="Validation027" xml:space="preserve"><value>The file exceeds the 8 MB limit.</value></data>
+  <data name="Validation028" xml:space="preserve"><value>Empty exercise library.</value></data>
+  <data name="Validation029" xml:space="preserve"><value>Warm-up, main exercises and cool-down are not available for this profile.</value></data>
+  <data name="Validation030" xml:space="preserve"><value>A coherent, safe workout cannot be created with the requested difficulty and equipment. Select more available equipment or a shorter workout.</value></data>
+  <data name="Validation031" xml:space="preserve"><value>A started workout cannot be rebuilt.</value></data>
+  <data name="Validation032" xml:space="preserve"><value>Select at least one required exercise.</value></data>
+  <data name="Validation033" xml:space="preserve"><value>The same exercise cannot be selected twice.</value></data>
+  <data name="Validation034" xml:space="preserve"><value>Could not retain all required exercises.</value></data>
+  <data name="Validation035" xml:space="preserve"><value>No suitable main exercise for this body area.</value></data>
+  <data name="Validation036" xml:space="preserve"><value>Suitable warm-up, cool-down and duration cannot be ensured for the selected exercises. Choose fewer required exercises or exercises targeting similar body areas.</value></data>
+  <data name="Validation037" xml:space="preserve"><value>The required warm-up, main section and cool-down do not fit in the time limit.</value></data>
+  <data name="Validation038" xml:space="preserve"><value>The original exercise is no longer in the library.</value></data>
+  <data name="Validation039" xml:space="preserve"><value>This exercise is not a suitable replacement: check the workout phase, difficulty and equipment.</value></data>
+  <data name="Validation040" xml:space="preserve"><value>The replacement would make the workout unbalanced.</value></data>
+  <data name="Validation041" xml:space="preserve"><value>The workout phase of the outdated exercise cannot be determined; replacement is not allowed.</value></data>
+  <data name="Validation042" xml:space="preserve"><value>Only an unstarted workout can be edited.</value></data>
+  <data name="Validation043" xml:space="preserve"><value>Remove the required status in the workout planner first.</value></data>
+  <data name="Validation044" xml:space="preserve"><value>The exercise has already started or does not belong to this workout.</value></data>
+  <data name="Validation045" xml:space="preserve"><value>A name is required.</value></data>
+  <data name="Validation046" xml:space="preserve"><value>Select a valid movement type.</value></data>
+  <data name="Validation047" xml:space="preserve"><value>At least one affected body area is required.</value></data>
+  <data name="Validation048" xml:space="preserve"><value>Select a workout phase (warm-up/main section/cool-down).</value></data>
+  <data name="Validation049" xml:space="preserve"><value>Difficulty must be between 1 and 3.</value></data>
+  <data name="Validation050" xml:space="preserve"><value>Estimated time must be 5–3600 seconds.</value></data>
+  <data name="Validation051" xml:space="preserve"><value>Invalid equipment list. Leave it empty if no equipment is needed.</value></data>
+  <data name="Validation052" xml:space="preserve"><value>At least one instruction or execution step is required.</value></data>
+  <data name="Validation053" xml:space="preserve"><value>Enter 5–3600 seconds for a timed exercise.</value></data>
+  <data name="Validation054" xml:space="preserve"><value>A timed exercise cannot have a repetition target.</value></data>
+  <data name="Validation055" xml:space="preserve"><value>A repetition-based exercise cannot have a time target.</value></data>
+  <data name="Validation056" xml:space="preserve"><value>Each repetition segment requires a positive count and a name.</value></data>
+  <data name="Validation057" xml:space="preserve"><value>Select timed or repetition-based measurement.</value></data>
+  <data name="Validation058" xml:space="preserve"><value>Arrows cannot be stored without an illustration.</value></data>
+  <data name="Validation059" xml:space="preserve"><value>Illustration: </value></data>
+  <data name="Validation060" xml:space="preserve"><value>3D pose: </value></data>
+  <data name="Validation061" xml:space="preserve"><value>The exercise cannot be copied.</value></data>
+  <data name="Validation062" xml:space="preserve"><value>A custom exercise cannot overwrite a built-in exercise.</value></data>
+  <data name="Validation063" xml:space="preserve"><value>Invalid active custom exercise: </value></data>
+  <data name="Validation064" xml:space="preserve"><value>Unsupported exercise library export format.</value></data>
+  <data name="Validation065" xml:space="preserve"><value>Missing exercise library data.</value></data>
+  <data name="Validation066" xml:space="preserve"><value>Invalid built-in exercise status.</value></data>
+  <data name="Validation067" xml:space="preserve"><value>Missing built-in exercise corrections.</value></data>
+  <data name="Validation068" xml:space="preserve"><value>The v1 format cannot contain editable built-in exercise corrections.</value></data>
+  <data name="Validation069" xml:space="preserve"><value>Duplicate built-in exercise correction.</value></data>
+  <data name="Validation070" xml:space="preserve"><value>Invalid custom exercise or conflicting ID.</value></data>
+  <data name="Validation071" xml:space="preserve"><value>The exercise to move was not found.</value></data>
+  <data name="Validation072" xml:space="preserve"><value>The destination exercise was not found.</value></data>
+  <data name="Validation073" xml:space="preserve"><value>You can only reorder exercises within the same section.</value></data>
+  <data name="Validation074" xml:space="preserve"><value>The change would disrupt workout phases or paired sides.</value></data>
+  <data name="Validation075" xml:space="preserve"><value>This exercise cannot be removed.</value></data>
+  <data name="Validation076" xml:space="preserve"><value>A required exercise or its paired side cannot be omitted.</value></data>
+  <data name="Validation077" xml:space="preserve"><value>This exercise cannot be removed because suitable warm-up, main section or cool-down would not remain.</value></data>
+  <data name="Validation078" xml:space="preserve"><value>Only an unstarted standard workout can be reordered.</value></data>
+  <data name="Validation079" xml:space="preserve"><value>Empty or unreadable library.</value></data>
+  <data name="Validation080" xml:space="preserve"><value>Unsupported library schema (v3 with pose data required).</value></data>
+  <data name="Validation081" xml:space="preserve"><value>Invalid library version or content.</value></data>
+  <data name="Validation082" xml:space="preserve"><value>Invalid correction reset list.</value></data>
+  <data name="Validation083" xml:space="preserve"><value>The release reset list contains an unknown exercise.</value></data>
+  <data name="Validation084" xml:space="preserve"><value>The pose cannot be copied.</value></data>
+  <data name="Validation085" xml:space="preserve"><value>Missing description override.</value></data>
+  <data name="Validation086" xml:space="preserve"><value>Invalid base version: </value></data>
+  <data name="Validation087" xml:space="preserve"><value>A description, starting position, at least one step and safety information are required.</value></data>
+  <data name="Validation088" xml:space="preserve"><value>An empty pose object is required if there is no illustration.</value></data>
+  <data name="Validation089" xml:space="preserve"><value>An illustration without an image cannot contain arrows.</value></data>
+  <data name="Validation090" xml:space="preserve"><value>Invalid backup authentication key.</value></data>
+  <data name="Validation091" xml:space="preserve"><value>This backup contains no verifiable authentication. Progress cannot be restored.</value></data>
+  <data name="Validation092" xml:space="preserve"><value>Backup authentication is corrupted.</value></data>
+  <data name="Validation093" xml:space="preserve"><value>Invalid backup authentication field.</value></data>
+  <data name="Validation094" xml:space="preserve"><value>The backup authentication field is corrupted.</value></data>
+  <data name="Validation095" xml:space="preserve"><value>Backup too large.</value></data>
+  <data name="Validation096" xml:space="preserve"><value>Empty backup.</value></data>
+  <data name="Validation097" xml:space="preserve"><value>Unknown backup format.</value></data>
+  <data name="Validation098" xml:space="preserve"><value>The backup contains no valid profile ID.</value></data>
+  <data name="Validation099" xml:space="preserve"><value>The backup contains an unknown disabled built-in exercise.</value></data>
+  <data name="Validation100" xml:space="preserve"><value>YouTube Music is not installed on this device.</value></data>
+  <data name="Validation101" xml:space="preserve"><value>Invalid YouTube Music playlist.</value></data>
+  <data name="Validation102" xml:space="preserve"><value>Invalid 3D pose version or number of phases.</value></data>
+  <data name="Validation103" xml:space="preserve"><value>Invalid head rotation angle.</value></data>
+  <data name="Validation104" xml:space="preserve"><value>Missing hand or foot target.</value></data>
+  <data name="Validation105" xml:space="preserve"><value>Missing joint or equipment layer.</value></data>
+  <data name="Validation106" xml:space="preserve"><value>Foot position is out of range.</value></data>
+  <data name="Validation107" xml:space="preserve"><value>Invalid leg skeleton control.</value></data>
+  <data name="Validation108" xml:space="preserve"><value>Invalid arm skeleton control.</value></data>
+  <data name="Validation109" xml:space="preserve"><value>Unknown 3D equipment.</value></data>
+  <data name="Validation110" xml:space="preserve"><value>The two band anchors are invalid.</value></data>
+  <data name="Validation111" xml:space="preserve"><value>The third band anchor is invalid.</value></data>
+  <data name="Validation112" xml:space="preserve"><value>Invalid band routing.</value></data>
+  <data name="Validation113" xml:space="preserve"><value>Invalid 3D camera.</value></data>
+  <data name="Validation114" xml:space="preserve"><value>Invalid 3D coordinate: </value></data>
+  <data name="Validation115" xml:space="preserve"><value>Invalid recovery session.</value></data>
+  <data name="Validation116" xml:space="preserve"><value>Exercise {0} is not available with the selected difficulty or equipment.</value></data>
+  <data name="Validation117" xml:space="preserve"><value>At most {0} required exercises fit in the selected time limit.</value></data>
+  <data name="Validation118" xml:space="preserve"><value>Only {1} exercises can still be omitted from this {0}-minute workout. Paired sides count as two exercises.</value></data>
+  <data name="Validation119" xml:space="preserve"><value>Missing or duplicate ID: {0}</value></data>
+  <data name="Validation120" xml:space="preserve"><value>Incomplete exercise: {0}</value></data>
+  <data name="Validation121" xml:space="preserve"><value>Invalid time target: {0}</value></data>
+  <data name="Validation122" xml:space="preserve"><value>Invalid repetition target: {0}</value></data>
+  <data name="Validation123" xml:space="preserve"><value>Unknown measurement: {0}</value></data>
+  <data name="Validation124" xml:space="preserve"><value>Unknown user schema version: {0}</value></data>
+  <data name="Validation125" xml:space="preserve"><value>Missing or invalid generated pose: {0}</value></data>
+  <data name="Validation126" xml:space="preserve"><value>Equipment or arrow without a 2D phase: {0}</value></data>
+  <data name="Validation127" xml:space="preserve"><value>Invalid legacy 2D phase count: {0}</value></data>
+  <data name="Validation128" xml:space="preserve"><value>Unknown viewpoint: {0}</value></data>
+  <data name="Validation129" xml:space="preserve"><value>Missing equipment layer: {0}</value></data>
+  <data name="Validation130" xml:space="preserve"><value>Invalid movement arrow: {0}</value></data>
+  <data name="Validation131" xml:space="preserve"><value>Invalid equipment: {0}</value></data>
+  <data name="Validation132" xml:space="preserve"><value>Incomplete reference points: {0}</value></data>
+  <data name="Validation133" xml:space="preserve"><value>Invalid joint coordinate: {0}/{1}</value></data>
+  <data name="Validation134" xml:space="preserve"><value>Implausible segment length: {0}/{1}-{2}</value></data>
 </root>

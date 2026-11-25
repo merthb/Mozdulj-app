@@ -13,11 +13,11 @@ public static class WorkoutPlanEditing
     {
         RequirePlanned(workout);
         var moving=workout.Items.FirstOrDefault(x=>x.Id==itemId)
-            ?? throw new InvalidOperationException("A mozgatandó gyakorlat nem található.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation071"));
         var destination=workout.Items.FirstOrDefault(x=>x.Id==destinationId)
-            ?? throw new InvalidOperationException("A célgyakorlat nem található.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation072"));
         if(moving.Phase!=destination.Phase)
-            throw new InvalidOperationException("Csak egy blokkon belül rendezheted át a feladatokat.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation073"));
         var group=Group(catalog,workout,moving);
         if(group.Contains(destination))return;
         // Dropping onto the second member of a left/right pair always places
@@ -28,7 +28,7 @@ public static class WorkoutPlanEditing
         moved.RemoveAll(x=>group.Contains(x));
         moved.InsertRange(moved.IndexOf(destination),group);
         if (!WorkoutCoherence.IsCoherent(catalog,moved) || !SidePairing.Balanced(catalog,moved))
-            throw new InvalidOperationException("A módosítás megbontaná az edzésfázisokat vagy az oldalpárokat.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation074"));
         workout.Items=moved;
         ResetTransitions(workout);
     }
@@ -37,18 +37,18 @@ public static class WorkoutPlanEditing
     {
         RequirePlanned(workout);
         if(!workout.Items.Contains(item) || item.Status!="pending")
-            throw new InvalidOperationException("Ez a gyakorlat nem távolítható el.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation075"));
         var group=Group(catalog,workout,item);
         if(group.Any(x=>x.IsRequired))
-            throw new InvalidOperationException("Kötelező gyakorlat vagy annak oldalpárja nem hagyható ki.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation076"));
         if(group.Count>RemainingRemovals(workout))
-            throw new InvalidOperationException($"Ebben a {workout.TargetMinutes} perces tervben már csak {RemainingRemovals(workout)} feladat hagyható ki. Az oldalpár két feladatnak számít.");
+            throw new InvalidOperationException(AppLocalization.Format("Validation118", workout.TargetMinutes, RemainingRemovals(workout)));
         var projected=workout.Items.Where(x=>!group.Contains(x)).ToList();
         if(!WorkoutCoherence.IsCoherent(catalog,projected) ||
            !SidePairing.Balanced(catalog,projected) ||
            projected.Count(x=>x.Phase=="warmup")<(workout.TargetMinutes>=10?2:1) ||
            projected.Count(x=>x.Phase=="cooldown")<(workout.TargetMinutes>=10?2:1))
-            throw new InvalidOperationException("Ezt a gyakorlatot nem lehet kivenni: nem maradna megfelelő bemelegítés, fő rész vagy levezetés.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation077"));
         workout.Items=projected;
         workout.ManuallyRemovedCount+=group.Count;
         ResetTransitions(workout);
@@ -68,7 +68,7 @@ public static class WorkoutPlanEditing
     private static void RequirePlanned(Workout workout)
     {
         if(workout.Kind=="recovery" || workout.Status!="planned" || workout.Items.Any(x=>x.Status!="pending"))
-            throw new InvalidOperationException("Csak a még el nem kezdett alap gyakorlatsor rendezhető át.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation078"));
     }
     private static void ResetTransitions(Workout workout)
     {

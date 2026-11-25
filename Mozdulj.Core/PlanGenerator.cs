@@ -20,7 +20,7 @@ public sealed class PlanGenerator
         var eligible = Eligible(catalog, prefs);
         if (eligible.Count(x=>x.Phase=="main")<1 ||
             eligible.Count(x=>x.Phase=="warmup")<1 || eligible.Count(x=>x.Phase=="cooldown")<1)
-            throw new InvalidOperationException("A profilhoz nem áll rendelkezésre bemelegítés, fő gyakorlat és levezetés.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation029"));
         var usedToday = new HashSet<string>(StringComparer.Ordinal);
         var usedGroups = new Dictionary<string,int>();
         var recent = Recent(history,today);
@@ -43,7 +43,7 @@ public sealed class PlanGenerator
                 catch(InvalidOperationException) { /* Another anatomical focus may be feasible. */ }
             }
             if(found is null)
-                throw new InvalidOperationException("Nem állítható össze a kért nehézséggel és eszközökkel biztonságosan összefüggő gyakorlatsor. Válassz több elérhető eszközt vagy rövidebb programot.");
+                throw new InvalidOperationException(AppLocalization.Text("Validation030"));
             plan.Workouts.Add(found);
             var usedGroup=choices.First(g=>found.Items.Any(i=>eligible.Any(e=>e.Id==i.ExerciseId && e.Phase=="main" && Anatomy.InGroup(e,g))));
             usedGroups[usedGroup]=usedGroups.GetValueOrDefault(usedGroup)+1;
@@ -59,14 +59,14 @@ public sealed class PlanGenerator
         IReadOnlyCollection<string> favorites, IReadOnlyCollection<CompletionRecord> history, DateOnly today)
     {
         if(existing.Status!="planned" || existing.Items.Any(x=>x.Status!="pending"))
-            throw new InvalidOperationException("Elkezdett gyakorlatsort nem lehet újraösszeállítani.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation031"));
         if(requiredIds.Count==0)
-            throw new InvalidOperationException("Válassz legalább egy kötelezően szerepeltetendő gyakorlatot.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation032"));
         if(requiredIds.Count!=requiredIds.Distinct(StringComparer.Ordinal).Count())
-            throw new InvalidOperationException("Ugyanaz a gyakorlat nem jelölhető ki kétszer.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation033"));
         var eligible=Eligible(catalog,prefs);
         var requested=requiredIds.Select(id=>eligible.FirstOrDefault(x=>x.Id==id) ??
-            throw new InvalidOperationException($"A(z) {id} nem elérhető a választott nehézséggel vagy eszközökkel.")).ToList();
+            throw new InvalidOperationException(AppLocalization.Format("Validation116", id))).ToList();
         var t=Templates[Math.Clamp(existing.Slot-1,0,2)];
         var requiredMain=requested.Where(x=>x.Phase=="main").ToList();
         var preferredGroup=Anatomy.Groups.OrderByDescending(g=>requested.Count(e=>Anatomy.InGroup(e,g)) +
@@ -77,7 +77,7 @@ public sealed class PlanGenerator
             existing.Description,t.Categories,requested,preferredGroup,favorites,Recent(history,today),
             new HashSet<string>(),today);
         if (!requiredIds.All(id=>rebuilt.Items.Any(x=>x.ExerciseId==id && x.IsRequired)))
-            throw new InvalidOperationException("Nem sikerült az összes kötelező gyakorlatot megtartani.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation034"));
         return rebuilt;
     }
 
@@ -98,7 +98,7 @@ public sealed class PlanGenerator
         var gap=Math.Clamp(prefs.TransitionSeconds,5,10);
         var minimumEdge=prefs.WorkoutMinutes>=10?2:1;
         if(required.Count>MaxRequiredCount(prefs))
-            throw new InvalidOperationException($"Legfeljebb {MaxRequiredCount(prefs)} kötelező gyakorlat férhet a választott időkeretbe.");
+            throw new InvalidOperationException(AppLocalization.Format("Validation117", MaxRequiredCount(prefs)));
         var rng=new Random(HashString($"{today.DayNumber}/{prefs.UserId}/{slot}/{catalog.CatalogVersion}/{preferredGroup}"));
         var pinnedMain=required.Where(x=>x.Phase=="main").ToList();
         var pinnedWarm=required.Where(x=>x.Phase=="warmup").ToList();
@@ -118,7 +118,7 @@ public sealed class PlanGenerator
             var pick=Pick(pool, categories,prefs,favorites,recent,usedToday,rng,mains);
             mains.Add(pick);
         }
-        if(mains.Count==0) throw new InvalidOperationException("Ehhez a testtájhoz nincs megfelelő fő gyakorlat.");
+        if(mains.Count==0) throw new InvalidOperationException(AppLocalization.Text("Validation035"));
         for(;;)
         {
             // Scale the supporting phases to the REAL main-section workload. When
@@ -163,10 +163,10 @@ public sealed class PlanGenerator
             // if that's not enough, report incompatible or overlong pins to the user.
             var removable=mains.FindLastIndex(e=>!required.Any(r=>r.Id==e.Id));
             if(removable<0)
-                throw new InvalidOperationException("A kiválasztott gyakorlatokhoz nem biztosítható megfelelő bemelegítés, levezetés és időkeret. Válassz kevesebb vagy hasonló testtájra ható kötelező gyakorlatot.");
+                throw new InvalidOperationException(AppLocalization.Text("Validation036"));
             mains.RemoveAt(removable);
             if(mains.Count==0)
-                throw new InvalidOperationException("Az időkeretben nem fér el a szükséges bemelegítés, fő rész és levezetés.");
+                throw new InvalidOperationException(AppLocalization.Text("Validation037"));
         }
     }
 

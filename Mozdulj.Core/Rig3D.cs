@@ -93,7 +93,7 @@ public static class Rig3DValidator
     {
         if(rig.Version != 1 || rig.Frames is null || rig.Frames.Count is < 1 or > 6 ||
            rig.ReviewStatus is not ("illustrative" or "reviewed"))
-            throw new InvalidDataException("Hibás 3D pózverzió vagy mozgásfázis-szám.");
+            throw new InvalidDataException(AppLocalization.Text("Validation102"));
         foreach(var f in rig.Frames)
         {
             CheckVector(f.Root,"testgyökér");CheckVector(f.Euler,"forgásszög");
@@ -103,25 +103,25 @@ public static class Rig3DValidator
                Math.Abs(f.HeadYaw)>Math.PI/2 || Math.Abs(f.HeadPitch)>Math.PI/2 ||
                Math.Abs(f.HeadRoll)>Math.PI/3 || Math.Abs(f.ShoulderLift)>.09f ||
                Math.Abs(f.UpperYaw)>1.30 || Math.Abs(f.SpineBend)>.60 || Math.Abs(f.PelvicTilt)>.35)
-                throw new InvalidDataException("A fej forgásszöge érvénytelen.");
+                throw new InvalidDataException(AppLocalization.Text("Validation103"));
             foreach(var points in new[]{f.Hands,f.Feet})
             {
                 if(points is null || !points.ContainsKey("left") || !points.ContainsKey("right"))
-                    throw new InvalidDataException("Hiányzó kéz- vagy lábcélpont.");
+                    throw new InvalidDataException(AppLocalization.Text("Validation104"));
                 foreach(var p in points.Values)CheckVector(p,"végtag célpont");
             }
             if(f.Poles is null || f.Equipment is null || f.FootPitch is null || f.LegAngles is null || f.ArmAngles is null)
-                throw new InvalidDataException("Hiányzó ízületi vagy eszközréteg.");
+                throw new InvalidDataException(AppLocalization.Text("Validation105"));
             foreach(var (side,value) in f.FootPitch)
                 if(side is not ("left" or "right") || !float.IsFinite(value) ||
                    value < -0.65f || value > 0.95f)
-                    throw new InvalidDataException("A lábfejállás tartományon kívüli.");
+                    throw new InvalidDataException(AppLocalization.Text("Validation106"));
             foreach(var (side,leg) in f.LegAngles)
                 if(side is not ("left" or "right") || leg is null ||
                    !float.IsFinite(leg.Flexion) || !float.IsFinite(leg.Abduction) || !float.IsFinite(leg.KneeFlexion) ||
                    leg.Flexion < -.3f || leg.Flexion > 2.36f ||
                    Math.Abs(leg.Abduction) > .7f || leg.KneeFlexion < 0 || leg.KneeFlexion > 2.36f)
-                    throw new InvalidDataException("A lábcsontlánc vezérlése nem megengedett.");
+                    throw new InvalidDataException(AppLocalization.Text("Validation107"));
             foreach(var (side,arm) in f.ArmAngles)
                 if(side is not ("left" or "right") || arm is null ||
                    !float.IsFinite(arm.Flexion) || !float.IsFinite(arm.Abduction) ||
@@ -132,12 +132,12 @@ public static class Rig3DValidator
                    arm.ElbowFlexion < 0 || arm.ElbowFlexion > 2.62f ||
                    Math.Abs(arm.WristFlexion) > 1.04f ||
                    Math.Abs(arm.ForearmRotation) > 1.57f)
-                    throw new InvalidDataException("A karcsontlánc vezérlése nem megengedett.");
+                    throw new InvalidDataException(AppLocalization.Text("Validation108"));
             foreach(var p in f.Poles.Values)CheckVector(p,"hajlítási irány");
             foreach(var obj in f.Equipment)
             {
                 if(obj is null || !EquipmentTypes.Contains(obj.Type))
-                    throw new InvalidDataException("Ismeretlen 3D eszköz.");
+                    throw new InvalidDataException(AppLocalization.Text("Validation109"));
                 if(obj.Position is not null)CheckVector(obj.Position,"eszköz pozíció");
                 if(obj.PositionB is not null)CheckVector(obj.PositionB,"második rögzítési pont");
                 if(obj.PositionC is not null)CheckVector(obj.PositionC,"harmadik szalagpont");
@@ -146,23 +146,23 @@ public static class Rig3DValidator
                     if((obj.AnchorA is not null || obj.AnchorB is not null) &&
                        (!BandAttachments.Contains(obj.AnchorA ?? "") ||
                         !BandAttachments.Contains(obj.AnchorB ?? "")))
-                        throw new InvalidDataException("A szalag két rögzítési pontja nem érvényes.");
+                        throw new InvalidDataException(AppLocalization.Text("Validation110"));
                     if(obj.AnchorC is not null && !BandAttachments.Contains(obj.AnchorC))
-                        throw new InvalidDataException("A szalag harmadik pontja nem érvényes.");
+                        throw new InvalidDataException(AppLocalization.Text("Validation111"));
                     if(!BandRoutes.Contains(obj.Route ?? "auto"))
-                        throw new InvalidDataException("A szalag vezetése nem érvényes.");
+                        throw new InvalidDataException(AppLocalization.Text("Validation112"));
                 }
             }
         }
         if(rig.Camera is null || !float.IsFinite(rig.Camera.Distance) ||
            rig.Camera.Distance is < 1.0f or > 12f ||
            !float.IsFinite(rig.Camera.Azimuth) || !float.IsFinite(rig.Camera.Elevation))
-            throw new InvalidDataException("Érvénytelen 3D kamera.");
+            throw new InvalidDataException(AppLocalization.Text("Validation113"));
         CheckVector(rig.Camera.Target,"kamera célpont");
     }
     private static void CheckVector(float[]? v, string name)
     {
         if(v is null || v.Length!=3 || v.Any(x=>!float.IsFinite(x)||Math.Abs(x)>10))
-            throw new InvalidDataException("Érvénytelen 3D koordináta: "+name);
+            throw new InvalidDataException(AppLocalization.Text("Validation114")+name);
     }
 }
