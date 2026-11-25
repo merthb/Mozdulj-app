@@ -40,6 +40,7 @@ public static class LocalDataMigrations
         data.Preferences.AvailableEquipment ??= [];
         data.Preferences.AvailableEquipment.RemoveAll(x =>
             string.Equals(x, "törölköző", StringComparison.OrdinalIgnoreCase));
+        data.ApplicationLanguage = AppLanguage.AfterUpgrade(data.ApplicationLanguage, data.OnboardingCompleted);
         data.SchemaVersion = CurrentVersion;
         return data;
     }

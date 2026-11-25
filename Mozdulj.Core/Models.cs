@@ -136,6 +136,8 @@ public sealed class RelaxationTrack
 public sealed class LocalData
 {
     public int SchemaVersion { get; set; } = 8;
+    // Null is omitted from JSON, preserving legacy signed backup payloads.
+    public string? ApplicationLanguage { get; set; }
     /// <summary>True after the user explicitly saved the initial preferences. Never reset on ordinary updates.</summary>
     public bool OnboardingCompleted { get; set; }
     /// <summary>Personal corrections to built-in instructions and illustration, never core classification.</summary>

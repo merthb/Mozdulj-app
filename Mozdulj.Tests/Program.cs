@@ -3,6 +3,7 @@ using System.Text.Json;
 
 // Always run catalog-search regressions, including in the targeted CI mode.
 CatalogSearchRegression.Run();
+LocalizationRegression.Run();
 
 // Targeted recovery check. The historical full suite contains catalog-version
 // assertions that are independent from the backup-import path.
