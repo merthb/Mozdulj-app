@@ -47,6 +47,9 @@ public sealed class Rig3DLegControl
     public float Flexion { get; set; }
     public float Abduction { get; set; }
     public float KneeFlexion { get; set; }
+    /// <summary>Optional axial rotation of the anatomical hinge plane in radians.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? AxialRotation { get; set; }
 }
 public sealed class Rig3DArmControl
 {
@@ -58,6 +61,9 @@ public sealed class Rig3DArmControl
     public float WristFlexion { get; set; }
     /// <summary>Forearm pronation/supination; affects palm orientation, not elbow position.</summary>
     public float ForearmRotation { get; set; }
+    /// <summary>Optional axial rotation of the anatomical hinge plane in radians.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? AxialRotation { get; set; }
 }
 public sealed class Rig3DEquipment
 {
@@ -129,6 +135,7 @@ public static class Rig3DValidator
             foreach(var (side,leg) in f.LegAngles)
                 if(side is not ("left" or "right") || leg is null ||
                    !float.IsFinite(leg.Flexion) || !float.IsFinite(leg.Abduction) || !float.IsFinite(leg.KneeFlexion) ||
+                   (leg.AxialRotation is float lr && (!float.IsFinite(lr) || Math.Abs(lr)>Math.PI/2 + 1e-6)) ||
                    leg.Flexion < -.3f || leg.Flexion > 2.36f ||
                    Math.Abs(leg.Abduction) > .7f || leg.KneeFlexion < 0 || leg.KneeFlexion > 2.36f)
                     throw new InvalidDataException(AppLocalization.Text("Validation107"));
@@ -137,6 +144,7 @@ public static class Rig3DValidator
                    !float.IsFinite(arm.Flexion) || !float.IsFinite(arm.Abduction) ||
                    !float.IsFinite(arm.ElbowFlexion) || !float.IsFinite(arm.WristFlexion) ||
                    !float.IsFinite(arm.ForearmRotation) ||
+                   (arm.AxialRotation is float ar && (!float.IsFinite(ar) || Math.Abs(ar)>Math.PI/2 + 1e-6)) ||
                    arm.Flexion < -.52f || arm.Flexion > 3.05f ||
                    arm.Abduction < 0 || arm.Abduction > 2.70f ||
                    arm.ElbowFlexion < 0 || arm.ElbowFlexion > 2.62f ||

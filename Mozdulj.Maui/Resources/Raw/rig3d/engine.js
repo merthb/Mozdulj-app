@@ -68,6 +68,8 @@ function initialPose(preset='stand'){
  if(preset==='child'){b.root[1]=.30;b.hands.left=[-.28,.055,.55];b.hands.right=[.28,.055,.55];}
  return {version:1,preset,reviewStatus:'illustrative',frames:[a,b],camera:{azimuth:.58,elevation:.35,distance:3.55,target:[0,.72,0]}};
 }
+// Rotate a direction about a unit axis without changing bone length.
+function axisRotate(v,axis,angle){return add(add(mul(v,Math.cos(angle)),mul(cross(axis,v),Math.sin(angle))),mul(axis,dot(axis,v)*(1-Math.cos(angle))));}
 function joints(frame){
  const root=frame.root,e=frame.euler, world=p=>add(root,rotate(p,e));
  // The pelvis stays anchored while the ribcage can twist and flex independently.
@@ -109,7 +111,11 @@ function joints(frame){
     const kb=clamp(leg.kneeFlexion||0,0,2.36),out=side==='left'?-1:1;
     const dir=ang=>norm(rotate([out*Math.sin(a),-Math.cos(ang)*Math.cos(a),Math.sin(ang)*Math.cos(a)],e));
     k.mid=add(hip[side],mul(dir(f),bones.thigh));
-    k.end=add(k.mid,mul(dir(f-kb),bones.shin));
+    if(leg.axialRotation!=null){
+      const upper=dir(f),hinge=norm(rotate([0,-Math.sin(f),-Math.cos(f)],e));
+      const turned=axisRotate(hinge,upper,clamp(leg.axialRotation,-Math.PI/2,Math.PI/2));
+      k.end=add(k.mid,mul(norm(add(mul(upper,Math.cos(kb)),mul(turned,Math.sin(kb)))),bones.shin));
+    }else k.end=add(k.mid,mul(dir(f-kb),bones.shin));
     k.reachClamped=false;
   }
   // Joint-angle arm controls. Upper arm and forearm are a two-bone local chain;
@@ -121,7 +127,8 @@ function joints(frame){
     const elbow=clamp(arm.elbowFlexion||0,0,2.62);
     const upper=norm(rotate(rotZ(rotX([0,-1,0],-flex),s*abduct),e));
     const hinge=norm(rotate(rotZ(rotX([0,-1,0],-flex-Math.PI/2),s*abduct),e));
-    const lower=norm(add(mul(upper,Math.cos(elbow)),mul(hinge,Math.sin(elbow))));
+    const turned=axisRotate(hinge,upper,clamp(arm.axialRotation||0,-Math.PI/2,Math.PI/2));
+    const lower=norm(add(mul(upper,Math.cos(elbow)),mul(turned,Math.sin(elbow))));
     h.mid=add(shoulder[side],mul(upper,bones.armUpper));
     h.end=add(h.mid,mul(lower,bones.armLower));
     h.reachClamped=false;
@@ -167,7 +174,7 @@ function limbError(a,b,kind,side){
  const keys=kind==='arm'?['elbow','hands','palms','thumbs']:['knee','feet','toes'];
  return Math.max(...keys.map(k=>len(sub(a[k][side],b[k][side]))));
 }
-function inferAngles(frame,kind,side){
+function inferAngles(frame,kind,side,requireAxial=false){
  const j=joints(frame),e=frame.euler,s=side==='left'?-1:1;
  const upper=norm(unrotate(sub(kind==='arm'?j.elbow[side]:j.knee[side],kind==='arm'?j.shoulder[side]:j.hip[side]),e));
  const lower=norm(unrotate(sub(kind==='arm'?j.hands[side]:j.feet[side],kind==='arm'?j.elbow[side]:j.knee[side]),e));
@@ -195,8 +202,25 @@ function inferAngles(frame,kind,side){
      }
    }
  }
+ // For configurations outside the legacy hinge plane, derive axial rotation
+ // from the actual lower bone. Keep legacy candidates as well, so old
+ // poses and their flexion semantics remain unchanged when already exact.
+ const expanded=[...options];
+ for(const a of options){
+   const flex=a.flexion,abd=a.abduction;
+   const base=kind==='leg'?norm([s*Math.sin(abd),-Math.cos(flex)*Math.cos(abd),Math.sin(flex)*Math.cos(abd)]):
+     norm(rotZ(rotX([0,-1,0],-flex),s*abd));
+   const hinge=kind==='leg'?norm([0,-Math.sin(flex),-Math.cos(flex)]):
+     norm(rotZ(rotX([0,-1,0],-flex-Math.PI/2),s*abd));
+   const plane=sub(lower,mul(base,dot(lower,base)));
+   const axial=len(plane)<1e-8?0:Math.atan2(dot(cross(hinge,norm(plane)),base),dot(hinge,norm(plane)));
+   const bend=Math.acos(clamp(dot(base,lower),-1,1));
+   expanded.push({...a,axialRotation:clamp(axial,-Math.PI/2,Math.PI/2),
+     [kind==='leg'?'kneeFlexion':'elbowFlexion']:clamp(bend,0,kind==='leg'?2.36:2.62)});
+ }
  let best=null;
- for(const angles of options){
+ for(const angles of expanded){
+   if(requireAxial&&angles.axialRotation==null)continue;
    const candidate=cloneFrame(frame),key=modeKeys[kind];
    candidate[key]??={};candidate[key][side]=angles;
    const error=limbError(j,joints(candidate),kind,side);
@@ -613,6 +637,9 @@ for(const [side,leg] of Object.entries(f.legAngles||{})){
  leg.flexion<-.3||leg.flexion>2.36||Math.abs(leg.abduction)>.7||leg.kneeFlexion<0||leg.kneeFlexion>2.36)
  throw Error('Érvénytelen csípő- és térdmozgás: '+side);
 }
+for(const controls of [f.legAngles||{},f.armAngles||{}])
+ for(const a of Object.values(controls))
+  if(a.axialRotation!=null&&(!Number.isFinite(a.axialRotation)||Math.abs(a.axialRotation)>1.570797))throw Error('Érvénytelen végtagrotáció.');
 for(const [side,pitch] of Object.entries(f.footPitch||{}))
  if(!['left','right'].includes(side)||!Number.isFinite(pitch)||pitch<-.65||pitch>.95)
  throw Error('Érvénytelen lábfejállás: '+side);

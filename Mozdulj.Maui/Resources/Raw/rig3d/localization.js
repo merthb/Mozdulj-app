@@ -1,6 +1,9 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Felkar befelé / kifelé forgatása":"Upper-arm inward / outward rotation",
+  "Csípő befelé / kifelé forgatása":"Hip inward / outward rotation",
+  "Érvénytelen végtagrotáció.":"Invalid limb rotation.",
   "Mellkas csavarása a medencéhez képest": "Chest rotation relative to pelvis",
   "Gerinc görbítése / homorítása": "Spinal flexion / extension",
   "A jelenlegi póz ebben a vezérlési módban nem adható meg pontosan. A póz változatlan maradt.": "The current pose cannot be represented precisely in this control mode. The pose has been preserved.",

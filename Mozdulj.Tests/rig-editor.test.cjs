@@ -125,3 +125,21 @@ test('chest rotation and spine bend are independent of pelvis and retain limb le
    assert.ok(Math.abs(m.len(m.sub(b.elbow[side],b.hands[side]))-.28)<1e-6);
  }
 });
+
+test('axial rotations preserve bone lengths, move the distal joint and are inferable',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math;
+ f.legAngles.left={flexion:.6,abduction:.2,kneeFlexion:.8,axialRotation:0};
+ f.armAngles.right={flexion:.4,abduction:.3,elbowFlexion:.7,axialRotation:0};
+ const a=rig.joints(f);
+ f.legAngles.left.axialRotation=.55;f.armAngles.right.axialRotation=-.45;
+ const b=rig.joints(f);
+ assert.ok(m.len(m.sub(a.feet.left,b.feet.left))>.03);
+ assert.ok(m.len(m.sub(a.hands.right,b.hands.right))>.03);
+ assert.ok(m.len(m.sub(a.knee.left,b.knee.left))<1e-8);
+ assert.ok(m.len(m.sub(a.elbow.right,b.elbow.right))<1e-8);
+ assert.ok(Math.abs(m.len(m.sub(b.knee.left,b.feet.left))-.43)<1e-8);
+ assert.ok(Math.abs(m.len(m.sub(b.elbow.right,b.hands.right))-.28)<1e-8);
+ for(const [kind,side] of [['leg','left'],['arm','right']])assert.ok(rig.inferAngles(f,kind,side,true).error<1e-5);
+ const pose=rig.initialPose('stand');pose.frames[0].legAngles.left={...f.legAngles.left,axialRotation:2};
+ assert.throws(()=>rig.checkPose(pose));
+});

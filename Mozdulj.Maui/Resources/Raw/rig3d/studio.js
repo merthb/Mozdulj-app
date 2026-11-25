@@ -94,10 +94,10 @@ function sync(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||MozduljRig.inferAngles(f,'leg',side)?.angles||{};
  $('hipFlex').value=Math.round(deg(leg.flexion||0));
  $('hipAbduct').value=Math.round(deg(leg.abduction||0));
- $('kneeFlex').value=Math.round(deg(leg.kneeFlexion||0));
+ $('kneeFlex').value=Math.round(deg(leg.kneeFlexion||0));$('hipRotation').value=Math.round(deg(leg.axialRotation||0));
  $('footPitch').value=Math.round(deg(f.footPitch?.[side]||0));
  const armSide=$('armSide').value||'right';const arm=f.armAngles?.[armSide]||MozduljRig.inferAngles(f,'arm',armSide)?.angles||{};
- for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation']])$(id).value=Math.round(deg(arm[k]||0));
+ for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])$(id).value=Math.round(deg(arm[k]||0));
  $('preset').value=pose.preset;updatePhaseControls();syncBands();syncProps();syncLocks();$('zoom').value=studio.getCamera().distance;show();}
 function syncBands(selected){
  const sel=$('bandSelect'),prior=selected===undefined?sel.value:selected;
@@ -236,14 +236,23 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('armSide').onchange=sync;
  function editArm(field,value){const side=$('armSide').value;
    guardedEdit(frame=>{frame.armAngles[side][field]=rad(value);},f=>MozduljRig.prepareAngleMode(f,'arm',side));}
- for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation']])
+ for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])
    $(id).oninput=e=>editArm(k,+e.target.value);
  $('legSide').onchange=sync;
  function editLeg(field,value){const side=$('legSide').value;
- guardedEdit(f=>{f.legAngles[side][field]=rad(value);},f=>MozduljRig.prepareAngleMode(f,'leg',side));}
+ guardedEdit(f=>{f.legAngles[side][field]=rad(value);},f=>{
+   if(!MozduljRig.prepareAngleMode(f,'leg',side))return false;
+   if(field!=='axialRotation'||f.legAngles[side].axialRotation!=null)return true;
+   const j=MozduljRig.joints(f),copy=clone(f),fit=MozduljRig.inferAngles(f,'leg',side,true);
+   if(!fit||fit.error>1e-5)return false;
+   copy.legAngles[side]=fit.angles;
+   if(MozduljRig.limbError(j,MozduljRig.joints(copy),'leg',side)>1e-5)return false;
+   f.legAngles[side]=fit.angles;return true;
+ });}
  $('hipFlex').oninput=e=>editLeg('flexion',+e.target.value);
  $('hipAbduct').oninput=e=>editLeg('abduction',+e.target.value);
  $('kneeFlex').oninput=e=>editLeg('kneeFlexion',+e.target.value);
+ $('hipRotation').oninput=e=>editLeg('axialRotation',+e.target.value);
  $('footPitch').oninput=e=>{const side=$('legSide').value;guardedEdit(f=>{f.footPitch??={};f.footPitch[side]=rad(+e.target.value);});};
  $('zoom').oninput=e=>{studio.getCamera().distance=+e.target.value;show();};
  $('addEquipment').onclick=()=>{
