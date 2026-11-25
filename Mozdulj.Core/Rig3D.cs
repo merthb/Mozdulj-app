@@ -72,6 +72,10 @@ public sealed class Rig3DEquipment
     public string Type { get; set; } = "mat";
     public string Anchor { get; set; } = "feet";
     public float[]? Position { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? Yaw { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Locked { get; set; }
     /// <summary>Optional second world-space fixed-band endpoint.</summary>
     public float[]? PositionB { get; set; }
     /// <summary>Independent named attachment points, e.g. leftHand/rightAnkle.</summary>
@@ -100,6 +104,7 @@ public static class Rig3DValidator
          "leftToe", "rightToe", "floorLeft", "floorRight", "fixed"];
     private static readonly HashSet<string> BandRoutes =
         ["auto", "direct", "front", "back", "left", "right"];
+    private static readonly HashSet<string> PositionableTypes = ["chair","ball","softBall","roller","wall","step","block","balancePad"];
     private static readonly HashSet<string> LockKeys = ["root", "leftHand", "rightHand", "leftFoot", "rightFoot", "leftKnee", "rightKnee", "leftElbow", "rightElbow"];
     public static void Validate(Rig3DPose rig)
     {
@@ -160,6 +165,9 @@ public static class Rig3DValidator
             {
                 if(obj is null || !EquipmentTypes.Contains(obj.Type))
                     throw new InvalidDataException(AppLocalization.Text("Validation109"));
+                if(obj.Yaw is float yaw && (!PositionableTypes.Contains(obj.Type) || !float.IsFinite(yaw) || Math.Abs(yaw)>Math.PI+1e-6) ||
+                   obj.Locked is not null && !PositionableTypes.Contains(obj.Type))
+                    throw new InvalidDataException(AppLocalization.Text("RigInvalidEquipmentTransform"));
                 if(obj.Position is not null)CheckVector(obj.Position,"eszköz pozíció");
                 if(obj.PositionB is not null)CheckVector(obj.PositionB,"második rögzítési pont");
                 if(obj.PositionC is not null)CheckVector(obj.PositionC,"harmadik szalagpont");

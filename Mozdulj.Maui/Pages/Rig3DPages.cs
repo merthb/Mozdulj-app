@@ -78,6 +78,20 @@ public sealed class Rig3DEditorPage : ContentPage
         _saving=true;_save.IsEnabled=false;
         try
         {
+            // Geometric findings are explicitly reviewed, not clinical approval.
+            var review64=(await _browser.EvaluateJavaScriptAsync("window.reviewRigBase64()"))?.Trim().Trim('"')
+                ?? throw new InvalidDataException(AppLocalization.IsEnglish ? "No geometry review received." : "Nem érkezett geometriai ellenőrzés.");
+            using var review=JsonDocument.Parse(Convert.FromBase64String(review64));
+            var count=review.RootElement.GetProperty("count").GetInt32();
+            if(count>0)
+            {
+                var proceed=await DisplayAlertAsync(
+                    AppLocalization.IsEnglish ? "Geometry review" : "Geometriai ellenőrzés",
+                    AppLocalization.IsEnglish ? $"{count} findings require review. The editor lists the affected phases. Save as an illustrative model anyway?" : $"{count} ellenőrizendő eltérés található. Az érintett fázisokat a szerkesztő listázza. Mented így is szemléltető ábraként?",
+                    AppLocalization.IsEnglish ? "Save anyway" : "Mentés így is",
+                    AppLocalization.IsEnglish ? "Review" : "Átnézem");
+                if(!proceed)return;
+            }
             // Base64 avoids browser-specific quoting/escaping of JSON responses.
             var result=(await _browser.EvaluateJavaScriptAsync("window.exportRigBase64()"))?.Trim().Trim('"')
                 ?? throw new InvalidDataException((AppLocalization.IsEnglish ? "No 3D pose data received." : "Nem érkezett 3D pózadat."));

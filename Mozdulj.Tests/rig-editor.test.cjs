@@ -207,3 +207,25 @@ test('preview is read-only, checks every displayed sample and rejects representa
  b.armAngles.left={flexion:.3,abduction:.2,elbowFlexion:.4};
  assert.equal(rig.Collision.previewTransition(a,b).issue,'representation');
 });
+
+test('rotated chair collision solids follow the rendered backrest',()=>{
+ const rig=loadRig(),f=rig.baseFrame('chair');
+ f.equipment[0].position=[1,.3,0];f.equipment[0].yaw=Math.PI/2;
+ const back=rig.Collision.solids(f).find(x=>x.id.includes('háttámla'));
+ assert.ok(Math.abs(back.centre[0]-.67)<1e-8);
+ assert.ok(Math.abs(back.centre[2])<1e-8);assert.equal(back.yaw,Math.PI/2);
+ assert.equal(rig.mirrorFrame(f).equipment[0].yaw,-Math.PI/2);
+});
+test('equipment scope matches by type and occurrence, locked changes are atomic',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=rig.baseFrame('stand');
+ a.equipment=[{type:'mat'},{type:'block',position:[2,.1,0]}];
+ b.equipment=[{type:'block',position:[2,.1,0],locked:true}];
+ const frames=[a,b],before=JSON.stringify(frames),locations=rig.matchingProp(frames,0,1);
+ assert.equal(JSON.stringify(locations),JSON.stringify([{frame:0,index:1},{frame:1,index:0}]));
+ assert.equal(rig.editProps(frames,locations,[2,.1,.1],.3).ok,false);
+ assert.equal(JSON.stringify(frames),before);
+ delete b.equipment[0].locked;
+ const result=rig.editProps(frames,locations,[2,.1,.1],.3);
+ assert.equal(result.ok,true);assert.equal(result.frames[1].equipment[0].yaw,.3);
+ assert.equal(a.equipment[1].yaw,undefined);
+});

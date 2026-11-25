@@ -18,6 +18,35 @@ function solve2(a,target,upper,lower,pole,minBend=0.04,maxBend=2.62){
   return {mid:add(add(a,mul(u,along)),mul(p,h)),end,reachClamped:len(sub(target,end))>.025};
 }
 const MAX_PHASES=16;
+const PROP_POSITIONS={chair:[0,.30,-.14],ball:[0,.36,.20],softBall:[0,.36,.20],roller:[0,.18,-.20],wall:[0,1,-.62],step:[0,.13,.48],block:[0,.09,.23],balancePad:[0,.04,.3]};
+function propPosition(prop){return prop.position||PROP_POSITIONS[prop.type];}
+function propYaw(prop){return prop.yaw||0;}
+function propTransform(prop,local){return add(propPosition(prop),rotY(local,propYaw(prop)));}
+// A matching occurrence is identified by type + its occurrence number within
+// each frame, not by the absolute equipment array index.
+function matchingProp(frames,sourceFrame,sourceIndex){
+ const prop=frames[sourceFrame].equipment[sourceIndex];
+ if(!prop||!PROP_POSITIONS[prop.type])return [];
+ const ordinal=frames[sourceFrame].equipment.slice(0,sourceIndex).filter(x=>x.type===prop.type).length;
+ return frames.flatMap((f,frame)=>{
+   const indexes=(f.equipment||[]).flatMap((x,i)=>x.type===prop.type?[i]:[]);
+   return indexes[ordinal]===undefined?[]:[{frame,index:indexes[ordinal]}];
+ });
+}
+// Atomic multi-phase edit: compute all candidates before accepting any.
+function editProps(frames,locations,position,yaw){
+ const next=frames.map(cloneFrame);
+ for(const {frame,index} of locations){
+   const old=next[frame].equipment[index];
+   if(old.locked)return {ok:false,frame,issue:'propLocked'};
+   const start=cloneFrame(next[frame]);start.equipment[index].position=[...propPosition(old)];start.equipment[index].yaw=propYaw(old);
+   const end=cloneFrame(start);end.equipment[index].position=[...position];end.equipment[index].yaw=yaw;
+   const result=Collision3D.transition(start,end);
+   if(result.limited)return {ok:false,frame,issue:result.issue};
+   next[frame]=end;
+ }
+ return {ok:true,frames:next};
+}
 const PHASE_DIRECTIONS=['all','left','right','forward','backward','up','down','inward','outward','clockwise','counterclockwise','each_side'];
 const bones={armUpper:.31,armLower:.28,thigh:.45,shin:.43};
 function baseFrame(preset){
@@ -256,6 +285,7 @@ function mirrorFrame(frame){
    f[key]=Object.fromEntries(Object.entries(f[key]).map(([side,a])=>[swapSide(side),mirrorControls(a)]));
  for(const prop of f.equipment||[]){
    for(const key of ['position','positionB','positionC'])if(prop[key]!=null)prop[key]=reflectX(prop[key]);
+   if(prop.yaw!=null)prop.yaw=-prop.yaw;
    for(const key of ['anchor','anchorA','anchorB','anchorC','route'])if(typeof prop[key]==='string')prop[key]=swapSide(prop[key]);
  }
  return f;
@@ -392,23 +422,16 @@ const Collision3D=(()=>{
    return out;
  }
  function solids(frame){
-   // Contact is permitted at surfaces: the solid volumes, not decorative
-   // shadows or the full area behind a finite wall, are used for collisions.
    const out=[{id:'padló',type:'floor',height:0}];
+   const sizes={wall:[1.24,1.1,.025],step:[.43,.13,.28],block:[.22,.09,.14],roller:[.28,.14,.14],balancePad:[.27,.04,.21]};
    for(const [index,q] of (frame.equipment||[]).entries()){
-     const id=q.type+index;
-     // The mat is a thin compliant floor covering, not an obstacle: the
-     // underlying floor collision plane already prevents passing through it.
-     if(q.type==='wall')out.push({id,type:'box',centre:q.position||[0,1,-.62],half:[1.24,1.1,.025]});
+     const id=q.type+index,centre=propPosition(q),yaw=propYaw(q);
+     if(sizes[q.type])out.push({id,type:'box',centre,half:sizes[q.type],yaw});
      if(q.type==='chair'){
-       out.push({id:id+'-ülőlap',type:'box',centre:q.position||[0,.30,-.14],half:[.43,.075,.42]});
-       out.push({id:id+'-háttámla',type:'box',centre:add(q.position||[0,.30,-.14],[0,.32,-.33]),half:[.43,.35,.07]});
+       out.push({id:id+'-ülőlap',type:'box',centre,half:[.43,.075,.42],yaw});
+       out.push({id:id+'-háttámla',type:'box',centre:propTransform(q,[0,.32,-.33]),half:[.43,.35,.07],yaw});
      }
-     if(q.type==='step')out.push({id,type:'box',centre:q.position||[0,.13,.48],half:[.43,.13,.28]});
-     if(q.type==='block')out.push({id,type:'box',centre:q.position||[0,.09,.23],half:[.22,.09,.14]});
-     if(q.type==='ball'||q.type==='softBall')out.push({id,type:'sphere',centre:q.position||[0,.36,.20],radius:.34});
-     if(q.type==='roller')out.push({id,type:'box',centre:q.position||[0,.18,-.2],half:[.28,.14,.14]});
-     if(q.type==='balancePad')out.push({id,type:'box',centre:q.position||[0,.04,.3],half:[.27,.04,.21]});
+     if(q.type==='ball'||q.type==='softBall')out.push({id,type:'sphere',centre,radius:.34});
    }
    return out;
  }
@@ -425,7 +448,7 @@ const Collision3D=(()=>{
      return Math.max(0,Math.min(.03,o.height-(p[1]-v.r)));
    }
    if(o.type==='sphere')return Math.max(0,v.r+o.radius-len(sub(v.p,o.centre)));
-   if(o.type==='box')return Math.max(0,v.r-signedBox(v.p,o.centre,o.half));
+   if(o.type==='box')return Math.max(0,v.r-signedBox(rotY(sub(v.p,o.centre),-(o.yaw||0)),[0,0,0],o.half));
    return 0;
  }
  // Exact distance between closed line segments, including point segments.
@@ -515,6 +538,11 @@ const Collision3D=(()=>{
    const keys=['root','neck','head','spineUpper'];
    for(const key of keys)travel=Math.max(travel,len(sub(from[key],to[key])));
    for(const key of ['hands','feet','elbow','knee','toes'])for(const side of ['left','right'])travel=Math.max(travel,len(sub(from[key][side],to[key][side])));
+   for(const [i,prop] of (before.equipment||[]).entries()){
+     const target=after.equipment?.[i];
+     if(!target||target.type!==prop.type||!PROP_POSITIONS[prop.type])continue;
+     travel=Math.max(travel,len(sub(propPosition(prop),propPosition(target)))+Math.abs(propYaw(prop)-propYaw(target))*1.3);
+   }
    steps=Math.min(256,Math.max(steps,Math.ceil(travel/.027)));
    let accepted=before,ratio=0,issue=null;
    // A swept edit is never allowed to jump through solid surfaces even if its
@@ -624,7 +652,7 @@ function shaded3D(canvas){
        for(const solid of rigid){
          if(solid.type==='sphere')value=Math.min(value,len(sub(p,solid.centre))-solid.radius-.008);
          if(solid.type==='box'){
-           const q=p.map((x,i)=>Math.abs(x-solid.centre[i])-solid.half[i]);
+           const q=rotY(sub(p,solid.centre),-(solid.yaw||0)).map((x,i)=>Math.abs(x)-solid.half[i]);
            value=Math.min(value,len(q.map(x=>Math.max(0,x)))+Math.min(Math.max(...q),0)-.008);
          }
        }
@@ -664,15 +692,30 @@ function shaded3D(canvas){
      default:return [[j.feet.left,j.hands.left],[j.feet.right,j.hands.right]];
    }
  }
+ function bandIssues(frame){
+   const j=joints(frame),issues=[];
+   for(const [index,prop] of (frame.equipment||[]).entries()){
+     if(!['band','miniband','strap'].includes(prop.type))continue;
+     const strands=prop.type==='miniband'&&!prop.anchorA?[[j.knee.left,j.knee.right]]:bandSegments(prop,frame,j);
+     if(strands.some(([a,b])=>!bandPath(a,b,j,prop.route||'auto',frame)))issues.push(index);
+   }
+   return issues;
+ }
  function renderEquipment(frame,j){for(const prop of frame.equipment||[]){let type=prop.type;
-  if(type==='wall'){drawM(model(prop.position||[0,1,-.62],[1.24,0,0],[0,1.1,0],[0,0,.025]),'floor');}
+  if(PROP_POSITIONS[type]){
+    const centre=propPosition(prop),yaw=propYaw(prop);
+    const shape=(pos,size,color='equip')=>drawM(model(pos,rotY([size[0],0,0],yaw),[0,size[1],0],rotY([0,0,size[2]],yaw)),color);
+    const world=p=>propTransform(prop,p);
+    if(type==='wall')shape(centre,[1.24,1.1,.025],'floor');
+    if(type==='chair'){
+      shape(centre,[.43,.08,.42]);
+      drawM(segmentM(world([0,-.04,-.33]),world([0,.65,-.33]),.06,.07),'equip');
+      for(let x of [-.35,.35])for(let z of [-.26,.26])limb(world([x,-.03,z]),world([x,-.27,z]),.035,'equip');
+    }
+    const sizes={step:[.43,.13,.28],block:[.22,.09,.14],ball:[.34,.34,.34],softBall:[.34,.34,.34],roller:[.28,.14,.14],balancePad:[.27,.04,.21]};
+    if(sizes[type])shape(centre,sizes[type]);
+  }
   if(type==='mat'){drawM(model([0,.008,.12],[.52,0,0],[0,.022,0],[0,0,1.42]),'mat');}
-  if(type==='chair'){let centre=prop.position||[0,.30,-.14],shift=sub(centre,[0,.30,-.14]);ell(centre,[.43,.08,.42],'equip');drawM(segmentM(add([0,.26,-.47],shift),add([0,.95,-.47],shift),.06,.07),'equip');for(let x of [-.35,.35])for(let z of [-.40,.12])limb(add([x,.27,z],shift),add([x,.03,z],shift),.035,'equip');}
-  if(type==='step'){ell(prop.position||[0,.13,.48],[.43,.13,.28],'equip');}
-  if(type==='block'){ell(prop.position||[0,.09,.23],[.22,.09,.14],'equip');}
-  if(type==='ball'||type==='softBall'){ell(prop.position||[0,.36,.20],[.34,.34,.34],'equip');}
-  if(type==='roller'){let pos=prop.position||[0,.18,-.2];ell(pos,[.28,.14,.14],'equip');}
-  if(type==='balancePad'){ell(prop.position||[0,.04,.3],[.27,.04,.21],'equip');}
   if(type==='band'||type==='miniband'||type==='strap'){
     const strands=type==='miniband'&&!prop.anchorA ? [[j.knee.left,j.knee.right]] : bandSegments(prop,frame,j);
     for(const [a,b] of strands){
@@ -746,7 +789,7 @@ function shaded3D(canvas){
  let point=add(origin,delta);
  if(key==='feet')point[1]=Math.max(.05,point[1]);
  frame[key][sel.side]=point;return joints(frame).clamped;}
- return {draw,setCamera(c){camera=c;},getCamera:()=>camera,pick,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
+ return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,pick,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
 function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
 if(f.pointLocks!=null){
@@ -771,6 +814,8 @@ for(const [side,a] of Object.entries(f.armAngles||{})){
  for(const [k,[lo,hi]] of Object.entries(armRanges))if(a[k]!==undefined&&(!Number.isFinite(a[k])||a[k]<lo-.00001||a[k]>hi+.00001))throw Error('A kar nem megengedett szögben áll: '+k);
 }
 for(const prop of f.equipment||[]){
+ if(prop.yaw!=null&&(!PROP_POSITIONS[prop.type]||!Number.isFinite(prop.yaw)||Math.abs(prop.yaw)>Math.PI+1e-6))throw Error('Érvénytelen eszközforgatás.');
+ if(prop.locked!=null&&(typeof prop.locked!=='boolean'||!PROP_POSITIONS[prop.type]))throw Error('Érvénytelen eszközrögzítés.');
  if(['band','miniband','strap'].includes(prop.type)){
    if((prop.anchorA||prop.anchorB)&&(!BAND_ANCHORS.includes(prop.anchorA)||!BAND_ANCHORS.includes(prop.anchorB)))throw Error('Hibás gumiszalag-rögzítés.');
    if(prop.anchorC&&!BAND_ANCHORS.includes(prop.anchorC))throw Error('Hibás harmadik szalagpont.');
@@ -778,5 +823,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

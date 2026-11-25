@@ -723,4 +723,5 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="TimeCompleteAll" xml:space="preserve"><value>Complete all timed intervals to finish the exercise.</value></data>
   <data name="RigInvalidPointLock" xml:space="preserve"><value>Invalid locked body point.</value></data>
   <data name="RigInvalidPhaseDirection" xml:space="preserve"><value>Invalid phase direction.</value></data>
+  <data name="RigInvalidEquipmentTransform" xml:space="preserve"><value>Invalid equipment rotation or lock.</value></data>
 </root>

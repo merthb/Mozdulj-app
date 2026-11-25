@@ -134,8 +134,7 @@ function syncBands(selected){
  sel.value=[...sel.options].some(o=>o.value===prior)?prior:'new';
  fillSelectedBand();
 }
-const POSITIONABLE=['chair','ball','softBall','roller','wall','step','block','balancePad'];
-const BASE_POS={chair:[0,.30,-.14],ball:[0,.36,.20],softBall:[0,.36,.20],roller:[0,.18,-.20],wall:[0,1,-.62],step:[0,.13,.48],block:[0,.09,.23],balancePad:[0,.04,.3]};
+const BASE_POS=MozduljRig.PROP_POSITIONS,POSITIONABLE=Object.keys(BASE_POS);
 function syncProps(selected){
  const sel=$('propSelect'),prior=selected===undefined?sel.value:selected;
  sel.innerHTML='<option value="none">Nincs mozgatható eszköz</option>';
@@ -148,7 +147,10 @@ function syncProps(selected){
 function fillProp(){const i=$('propSelect').value;
  const prop=i==='none'?null:current().equipment[+i],pos=prop?(prop.position||BASE_POS[prop.type]):[0,.36,.2];
  for(const [idx,key] of ['X','Y','Z'].entries())$('prop'+key).value=pos[idx];
- $('moveProp').disabled=!prop;
+ $('propYaw').value=prop?Math.round(deg(prop.yaw||0)):0;
+ $('propLocked').checked=!!prop?.locked;$('propLocked').disabled=!prop;
+ $('moveProp').disabled=!prop||!!prop.locked;$('deleteProp').disabled=!prop||!!prop.locked;
+ $('propScope').disabled=!prop;
 }
 function freePlacement(type){
  const base=BASE_POS[type];if(!base)return null;
@@ -237,7 +239,42 @@ function playPreview(){
  }
  animation.request=requestAnimationFrame(tick);
 }
+// Reports are based on the same geometry as the editor, including band routing.
+function reviewPose(){
+ stopPreview();closeGesture();
+ const findings=[];
+ for(const [i,frame] of pose.frames.entries()){
+   const j=MozduljRig.joints(frame);
+   for(const [id,depth] of MozduljRig.Collision.overlaps(frame))findings.push({phase:i,kind:'collision',id,depth});
+   for(const [id,depth] of MozduljRig.lockErrors(j,frame.pointLocks))if(depth>.005) findings.push({phase:i,kind:'lock',id,depth});
+   for(const id of j.clamped)findings.push({phase:i,kind:'reach',id});
+   for(const index of studio.bandIssues(frame))findings.push({phase:i,kind:'band',id:String(index+1)});
+   if(i+1<pose.frames.length){
+     const transition=MozduljRig.Collision.previewTransition(frame,pose.frames[i+1]);
+     if(!transition.ok)findings.push({phase:i,kind:'transition',id:transition.issue});
+   }
+ }
+ const panel=$('reviewResults');panel.replaceChildren();
+ $('reviewSummary').textContent=findings.length?window.rigText('Ellenőrizendő eltérések: ')+findings.length:window.rigText('A geometriai ellenőrzés nem talált eltérést.');
+ // Limit the number of rendered rows, but report every finding in the count.
+ for(const item of findings.slice(0,100)){
+   const button=document.createElement('button');button.type='button';
+   const labels={collision:'Geometriai átfedés',lock:'Rögzített testpont eltérése',reach:'Elérési korlát',band:'Akadályos szalagútvonal',transition:'Nem lejátszható átmenet'};
+   const id=item.id.startsWith('body:')?item.id.slice(5).split('/').map(bodyPartLabel).join(' – '):targetLabels[item.id]?window.rigText(targetLabels[item.id]):item.id;
+   button.textContent=(item.phase+1)+'. '+window.rigText('Fázis')+' · '+window.rigText(labels[item.kind])+' · '+id;
+   button.onclick=()=>{
+     switchFrame(item.phase);
+     const key=targetLabels[item.id]?item.id:item.kind==='collision'&&item.id.startsWith('body:')?item.id.slice(5).split('/').map(id=>{const [part,side]=id.split('-');return side&&(part==='hand'||part==='forearm'?side+'Hand':part==='foot'||part==='shin'?side+'Foot':null);}).find(Boolean):null;
+     if(key){setMode('move');selectedTarget=key;show();}
+   };
+   panel.appendChild(button);
+ }
+ $('reviewPanel').open=true;
+ return {count:findings.length,findings};
+}
+window.reviewRigBase64=()=>strtoB64(JSON.stringify(reviewPose()));
 function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}catch(e){initError=e;$('canvasStatus').textContent=e.message;msg(window.rigText('WebGL nem áll rendelkezésre: ')+e.message);return;}
+ $('runReview').onclick=()=>reviewPose();
  $('undoPose').onclick=undoPose;
  $('redoPose').onclick=redoPose;
  $('targetSelect').onchange=e=>{chooseTarget(e.target.value);};
@@ -353,20 +390,30 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      if(!result.limited){syncProps(String(current().equipment.length-1));msg(window.rigText('Eszköz hozzáadva: ')+$('equip').selectedOptions[0].textContent);}
    }else msg('Ez az eszköz már szerepel ebben a fázisban.');
  };
- $('clearEquipment').onclick=()=>{closeGesture();tracked(()=>{current().equipment=[];});syncBands('new');syncProps('none');show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
+ $('clearEquipment').onclick=()=>{stopPreview();closeGesture();tracked(()=>{current().equipment=current().equipment.filter(p=>p.locked);});syncBands('new');syncProps('none');show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
  $('propSelect').onchange=fillProp;
+ function propLocations(){
+   const i=Number($('propSelect').value);
+   return $('propScope').value==='all'?MozduljRig.matchingProp(pose.frames,frameIndex,i):[{frame:frameIndex,index:i}];
+ }
+ $('propLocked').onchange=()=>{
+   stopPreview();closeGesture();const i=Number($('propSelect').value);
+   if(!Number.isInteger(i))return;
+   tracked(()=>{const prop=current().equipment[i];if($('propLocked').checked)prop.locked=true;else delete prop.locked;});syncProps(String(i));show();
+ };
+ $('deleteProp').onclick=()=>{
+   stopPreview();closeGesture();const locations=propLocations();
+   if(locations.some(({frame,index})=>pose.frames[frame].equipment[index].locked)){msg('Előbb oldd fel az eszköz rögzítését.');return;}
+   tracked(()=>{for(const {frame,index} of locations)pose.frames[frame].equipment.splice(index,1);});
+   sync();msg('Kijelölt eszköz eltávolítva.');
+ };
  $('moveProp').onclick=()=>{
-   const i=$('propSelect').value;if(i==='none')return;
-   const pos=['X','Y','Z'].map(k=>Number($('prop'+k).value));
-   if(pos.some((v,n)=>!Number.isFinite(v)||Math.abs(v)>3||(n===1&&v<0))){msg('A pozíció koordinátái nem megfelelőek.');return;}
-   // Normalize old tools with implicit default coordinates before sweeping.
-   // Otherwise adding a position field would teleport from world origin.
-   closeGesture();const before=snapshot();
-   history.begin(before);
-   current().equipment[+i].position??=[...BASE_POS[current().equipment[+i].type]];
-   const result=guardedEdit(f=>{f.equipment[+i].position=pos;});
-   closeGesture();
-   if(!result.limited){syncProps(i);msg('Eszköz áthelyezve.');}
+   if($('propSelect').value==='none')return;
+   const pos=['X','Y','Z'].map(k=>$('prop'+k).valueAsNumber),yaw=rad($('propYaw').valueAsNumber);
+   if(pos.some((v,n)=>!Number.isFinite(v)||Math.abs(v)>3||(n===1&&v<0))||!Number.isFinite(yaw)||Math.abs(yaw)>Math.PI){msg('A pozíció koordinátái nem megfelelőek.');return;}
+   stopPreview();closeGesture();const result=MozduljRig.editProps(pose.frames,propLocations(),pos,yaw);
+   if(!result.ok){msg(window.rigText('Az eszköz módosítása nem lehetséges ebben a fázisban: ')+(result.frame+1)+' · '+(result.issue==='propLocked'?window.rigText('Rögzített eszköz'):result.issue));return;}
+   tracked(()=>{pose.frames=result.frames;});sync();msg('Eszköz áthelyezve.');
  };
  $('bandSelect').onchange=fillSelectedBand;
  $('bandAnchorA').onchange=updateFixedAnchorInputs;
@@ -386,7 +433,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    syncBands(i==='new'?String(current().equipment.length-1):i);
    msg(window.rigText('Szalagrögzítés mentve: ')+$('bandAnchorA').selectedOptions[0].textContent+' – '+$('bandAnchorB').selectedOptions[0].textContent);
  };
- $('deleteBand').onclick=()=>{const i=$('bandSelect').value;
+ $('deleteBand').onclick=()=>{stopPreview();const i=$('bandSelect').value;
    if(i==='new'){msg('Válassz egy meglévő szalagot a törléshez.');return;}
    closeGesture();tracked(()=>current().equipment.splice(+i,1));syncBands('new');show();msg('Szalag eltávolítva.');
  };

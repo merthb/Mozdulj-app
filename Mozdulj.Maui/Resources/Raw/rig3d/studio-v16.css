@@ -175,3 +175,8 @@ html.dark.high-contrast :is(button,input,select,textarea,summary):focus-visible 
 .preview-tools button,.preview-tools select,.phase-editor select{min-height:44px;border:1px solid var(--outline);border-radius:9px;background:var(--surface);color:inherit;padding:8px;font:inherit}
 .preview-tools .hint{flex-basis:100%}.symmetry-toggle{display:flex;align-items:center;gap:8px;min-height:44px}.symmetry-toggle input,.preview-tools input{width:21px;height:21px;accent-color:var(--purple)}
 .phase-editor select{width:100%}
+
+.review-results{display:grid;gap:6px;max-height:340px;overflow:auto}
+.review-results button{text-align:left;overflow-wrap:anywhere}
+#propYaw{min-height:44px;width:100%;padding:8px;border:1px solid var(--outline);border-radius:9px;background:var(--surface);color:inherit;font:inherit}
+#propLocked{width:21px;height:21px;accent-color:var(--purple)}

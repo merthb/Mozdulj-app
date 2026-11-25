@@ -723,4 +723,5 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="TimeCompleteAll" xml:space="preserve"><value>A teljesítéshez minden időszakaszt be kell fejezni.</value></data>
   <data name="RigInvalidPointLock" xml:space="preserve"><value>Érvénytelen rögzítési pont.</value></data>
   <data name="RigInvalidPhaseDirection" xml:space="preserve"><value>Érvénytelen fázisirány.</value></data>
+  <data name="RigInvalidEquipmentTransform" xml:space="preserve"><value>Érvénytelen eszközforgatás vagy rögzítés.</value></data>
 </root>
