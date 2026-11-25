@@ -4,6 +4,17 @@ namespace Mozdulj.Core;
 
 public static class Rig3DMovement
 {
+    // The workout timer is authoritative; opening the guide mid-segment or
+    // restoring a workout must not reset the active side or the elapsed time.
+    public static WorkoutGuideTiming? ForTimedWorkout(Workout workout, WorkoutItem item, bool paused)
+    {
+        if(workout.PlaybackPhase!="exercise" || item.Measure!="time" || workout.Kind=="recovery") return null;
+        var total=TimedTargets.Seconds(item);
+        if(total<=0) return null;
+        var direction=item.TimeTargets is {Count:>0} ts ? ts[TimedTargets.Index(item)].Code : "all";
+        return new WorkoutGuideTiming(direction,Math.Clamp(total-workout.RemainingSeconds,0,total),total,!paused);
+    }
+
     /// <summary>Display a 2-frame movement as start/action/return; never mutate saved user poses.</summary>
     public static Rig3DPose ForDisplay(Rig3DPose pose)
     {
@@ -18,3 +29,5 @@ public static class Rig3DMovement
         return copy;
     }
 }
+
+public sealed record WorkoutGuideTiming(string Direction,int ElapsedSeconds,int TotalSeconds,bool Playing);
