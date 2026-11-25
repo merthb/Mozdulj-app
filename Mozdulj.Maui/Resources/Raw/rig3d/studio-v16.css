@@ -231,3 +231,9 @@ html.dark .phase-editor input{background:var(--surface);color:#f3f0fa;border-col
 .view-only .viewport-shell .stage{flex:none;height:min(66vh,570px);min-height:250px}
 .view-only #quickPreview{display:none}
 .view-only .view-controls{display:grid}
+
+.precision-field{display:grid;gap:5px;min-width:0}
+.precision-field[hidden]{display:none!important}
+.precision-entry{display:flex;align-items:center;gap:4px;min-width:0}
+.precision-entry input{flex:1}
+.precision-unit{font-size:.8rem;color:inherit;flex:0 0 auto}

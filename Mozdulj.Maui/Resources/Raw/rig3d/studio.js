@@ -34,12 +34,13 @@ function bodyFocusFor(key){
  return (key.startsWith('left')?'left':'right')+(/Hand|Elbow/.test(key)?'Arm':'Leg');
 }
 function selectTab(name){
+ const alreadyActive=$('tab-'+name).getAttribute('aria-selected')==='true';
  for(const tab of document.querySelectorAll('.workspace-tabs [role=tab]')){
    const active=tab.id==='tab-'+name;
    tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;
    $(tab.getAttribute('aria-controls')).hidden=!active;
  }
- $('workspaceScroll').scrollTop=0;
+ if(!alreadyActive)$('workspaceScroll').scrollTop=0;
 }
 function focusBody(value,open=true){
  $('bodyFocus').value=value;
@@ -48,6 +49,10 @@ function focusBody(value,open=true){
    detail.hidden=group!=='all'&&detail.dataset.bodyGroup!==group;
    if(group!=='all'&&!detail.hidden)detail.open=true;
  }
+ const centralFields={root:['rootHeight','pelvicTilt'],head:['yaw','pitch','roll'],trunk:['shoulderLift','torso','upperYaw','spineBend']};
+ for(const field of document.querySelectorAll('[data-central-field]'))
+   field.hidden=group==='central'&&!centralFields[value]?.includes(field.dataset.centralField);
+ if(group==='all')for(const field of document.querySelectorAll('[data-central-field]'))field.hidden=false;
  if(group==='arm')$('armSide').value=value.startsWith('left')?'left':'right';
  if(group==='leg')$('legSide').value=value.startsWith('left')?'left':'right';
  if(open)selectTab('body');
@@ -335,7 +340,10 @@ function setupPrecision(){
    const row=document.createElement('div');row.className='precision-row';
    const number=document.createElement('input');number.type='number';number.min=slider.min;number.max=slider.max;number.step=slider.step||'1';number.value=slider.value;
    const unit=slider.id==='shoulderLift'?'cm':'°';
-   number.setAttribute('aria-label',label.textContent+' ('+unit+')');
+   label.id='label-'+slider.id;
+   number.setAttribute('aria-labelledby',label.id);
+   const unitText=document.createElement('span');unitText.className='precision-unit';unitText.textContent=unit;
+   unitText.setAttribute('aria-hidden','true');
    function apply(value){
      if(!Number.isFinite(value)){number.value=slider.value;return;}
      slider.value=String(Math.max(+slider.min,Math.min(+slider.max,value)));
@@ -345,12 +353,19 @@ function setupPrecision(){
    number.addEventListener('change',()=>apply(number.valueAsNumber));
    const button=(text,delta)=>{
      const b=document.createElement('button');b.type='button';b.textContent=text;
-     b.setAttribute('aria-label',label.textContent+' '+(delta>0?'+1':'−1')+' '+unit);
+     b.setAttribute('aria-label',delta>0?'Növelés egy egységgel':'Csökkentés egy egységgel');
      b.onclick=()=>{closeGesture();apply(+slider.value+delta);};return b;
    };
-   row.append(button('−',-1),number,button('+',1));
-   slider.after(row);slider.classList.add('precision-slider');precisionControls.set(slider.id,number);
+   const entry=document.createElement('div');entry.className='precision-entry';entry.append(number,unitText);
+   row.append(button('−',-1),entry,button('+',1));
+   const field=document.createElement('div');field.className='precision-field';
+   if(label.closest('[data-body-group="central"]'))field.dataset.centralField=slider.id;
+   label.before(field);field.append(label,slider,row);
+   slider.classList.add('precision-slider');precisionControls.set(slider.id,number);
  }
+ const rootHeight=$('rootHeight'),rootLabel=document.querySelector('label[for="rootHeight"]');
+ const rootField=document.createElement('div');rootField.className='precision-field';rootField.dataset.centralField='rootHeight';
+ rootLabel.before(rootField);rootField.append(rootLabel,rootHeight);
  syncPrecision();
 }
 function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}catch(e){initError=e;$('canvasStatus').textContent=e.message;msg(window.rigText('WebGL nem áll rendelkezésre: ')+e.message);return;}
@@ -363,7 +378,14 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      if(n>=0){e.preventDefault();tabs[n].click();tabs[n].focus();}
    };
  }
- $('bodyFocus').onchange=e=>focusBody(e.target.value,false);
+ $('bodyFocus').onchange=e=>{
+   const value=e.target.value;
+   // The inspector and drag selection must not refer to different limbs.
+   const targets={root:'root',leftArm:'leftHand',rightArm:'rightHand',leftLeg:'leftFoot',rightLeg:'rightFoot'};
+   const key=targets[value]||'auto';
+   $('targetSelect').value=key;selectedTarget=key==='auto'?null:key;
+   focusBody(value,false);show();
+ };
  $('quickPreview').onclick=playPreview;
  $('runReview').onclick=()=>reviewPose();
  $('undoPose').onclick=undoPose;

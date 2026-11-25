@@ -244,3 +244,16 @@ test('workspace has unique controls, five accessible tabs and valid angle limits
  }
  assert.ok(html.includes('id="rootHeight" type="number" min="0" max="300"'));
 });
+
+test('editor markup preserves panel boundaries and valid nesting',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<style>[\s\S]*?<\/style>/g,'');
+ const stack=[];
+ for(const m of html.matchAll(/<(\/?)([a-z][a-z0-9-]*)([^>]*?)>/gi)){
+   const tag=m[2].toLowerCase();
+   if(['meta','link','input','br','hr','img'].includes(tag))continue;
+   if(m[1])assert.equal(stack.pop(),tag,'Unbalanced closing '+tag);
+   else stack.push(tag);
+ }
+ assert.equal(stack.length,0);
+ assert.match(html,/<\/div>\s*<\/div><div id="status"/);
+});

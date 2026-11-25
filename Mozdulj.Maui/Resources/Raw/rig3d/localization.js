@@ -1,6 +1,8 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Növelés egy egységgel":"Increase by one unit",
+  "Csökkentés egy egységgel":"Decrease by one unit",
   "Szerkesztési területek": "Editing areas",
   "Test": "Body",
   "Fázisok": "Phases",
