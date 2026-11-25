@@ -721,4 +721,5 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="TimeSegment" xml:space="preserve"><value>Interval {0}/{1}</value></data>
   <data name="TimeNext" xml:space="preserve"><value>Next: {0} · {1} sec</value></data>
   <data name="TimeCompleteAll" xml:space="preserve"><value>Complete all timed intervals to finish the exercise.</value></data>
+  <data name="RigInvalidPointLock" xml:space="preserve"><value>Invalid locked body point.</value></data>
 </root>

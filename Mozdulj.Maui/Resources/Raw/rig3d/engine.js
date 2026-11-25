@@ -162,6 +162,28 @@ function joints(frame){
 // boxes and spheres. This is an editor safety guard, NOT a continuous rigid-body
 // simulation. Existing historical poses may have errors; edits cannot worsen
 // those errors and cannot introduce new crossings.
+// World-space locks record actual rendered joint positions, not raw IK targets.
+const LOCK_KEYS=['root','leftHand','rightHand','leftFoot','rightFoot','leftKnee','rightKnee','leftElbow','rightElbow'];
+function lockPoint(j,key){
+ if(key==='root')return j.root;
+ const side=key.startsWith('left')?'left':'right';
+ const kind=key.endsWith('Hand')?'hands':key.endsWith('Foot')?'feet':key.endsWith('Knee')?'knee':'elbow';
+ return j[kind][side];
+}
+function setPointLock(frame,key,enabled){
+ if(!LOCK_KEYS.includes(key))throw Error('Érvénytelen rögzítési pont.');
+ if(enabled){frame.pointLocks??={};frame.pointLocks[key]=[...lockPoint(joints(frame),key)];}
+ else if(frame.pointLocks){delete frame.pointLocks[key];if(!Object.keys(frame.pointLocks).length)delete frame.pointLocks;}
+}
+function lockErrors(j,locks){
+ const result=new Map();
+ for(const [key,position] of Object.entries(locks||{})){
+   if(!LOCK_KEYS.includes(key))continue;
+   const d=len(sub(lockPoint(j,key),position));
+   if(d>0)result.set(key,d);
+ }
+ return result;
+}
 const Collision3D=(()=>{
  const lerp=(a,b,t)=>add(a,mul(sub(b,a),t));
  function bodyProbes(j){
@@ -220,9 +242,59 @@ const Collision3D=(()=>{
    if(o.type==='box')return Math.max(0,v.r-signedBox(v.p,o.centre,o.half));
    return 0;
  }
- function overlaps(frame){
-   const j=joints(frame),out=new Map();
-   for(const p of bodyProbes(j))for(const o of solids(frame)){
+ // Exact distance between closed line segments, including point segments.
+ function segmentDistance(a,b,c,d){
+   const u=sub(b,a),v=sub(d,c),w=sub(a,c),uu=dot(u,u),vv=dot(v,v),uv=dot(u,v);
+   const uw=dot(u,w),vw=dot(v,w),den=uu*vv-uv*uv;
+   const distance=(s,t)=>len(add(w,sub(mul(u,s),mul(v,t))));
+   let best=Math.min(distance(0,clamp(vw/Math.max(vv,1e-12),0,1)),
+     distance(1,clamp((vw+uv)/Math.max(vv,1e-12),0,1)),
+     distance(clamp(-uw/Math.max(uu,1e-12),0,1),0),
+     distance(clamp((uv-uw)/Math.max(uu,1e-12),0,1),1));
+   if(den>1e-12){
+     const s=(uv*vw-vv*uw)/den,t=(uu*vw-uv*uw)/den;
+     if(s>=0&&s<=1&&t>=0&&t<=1)best=Math.min(best,distance(s,t));
+   }
+   return best;
+ }
+ // Conservative interior capsules leave room for natural soft-tissue contact.
+ function bodySegments(j){
+   const out=[];
+   const seg=(id,a,b,r)=>out.push({id,a,b,r});
+   seg('torso',lerp(j.root,j.spineMid,.15),j.spineUpper,.125);
+   seg('head',j.head,j.head,.105);
+   for(const side of ['left','right']){
+     seg('upperArm-'+side,lerp(j.shoulder[side],j.elbow[side],.28),j.elbow[side],.062);
+     seg('forearm-'+side,j.elbow[side],j.hands[side],.048);
+     seg('hand-'+side,j.hands[side],j.palms[side],.035);
+     seg('thigh-'+side,lerp(j.hip[side],j.knee[side],.22),j.knee[side],.081);
+     seg('shin-'+side,j.knee[side],j.feet[side],.055);
+     seg('foot-'+side,j.feet[side],j.toes[side],.038);
+   }
+   return out;
+ }
+ function adjacent(a,b){
+   const [x,s]=a.split('-'),[y,t]=b.split('-');
+   if(s!==t||!s)return false;
+   return ['forearm/upperArm','forearm/hand','shin/thigh','foot/shin'].includes([x,y].sort().join('/'));
+ }
+ function selfOverlaps(segments){
+   const out=new Map();
+   for(let i=0;i<segments.length;i++)for(let k=i+1;k<segments.length;k++){
+     const a=segments[i],b=segments[k];
+     if(adjacent(a.id,b.id))continue;
+     const r=a.r+b.r-.014;
+     if(r<=0||a.a.some((_,n)=>Math.min(a.a[n],a.b[n])-Math.max(b.a[n],b.b[n])>r||
+       Math.min(b.a[n],b.b[n])-Math.max(a.a[n],a.b[n])>r))continue;
+     const depth=r-segmentDistance(a.a,a.b,b.a,b.b);
+     if(depth>.003)out.set('body:'+ [a.id,b.id].sort().join('/'),depth);
+   }
+   return out;
+ }
+ function overlaps(frame,j=joints(frame)){
+   const out=selfOverlaps(bodySegments(j));
+   const obstacles=solids(frame);
+   for(const p of bodyProbes(j))for(const o of obstacles){
      const d=penetration(p,o);
      if(d>.003)out.set(p.id+'@'+o.id,d);
    }
@@ -232,7 +304,10 @@ const Collision3D=(()=>{
  // moved by a new software version. New penetration or deeper penetration is
  // blocked, and every intermediate path position is checked.
  function worse(now,baseline,epsilon=.004){
-   for(const [id,depth] of now)if(depth>(baseline.get(id)||0)+epsilon)return {id,depth};
+   for(const [id,depth] of now){
+     const margin=id.startsWith('body:')?1e-7:epsilon;
+     if(depth>(baseline.get(id)||0)+margin)return {id,depth};
+   }
    return null;
  }
  function interpolate(a,b,t){
@@ -247,8 +322,9 @@ const Collision3D=(()=>{
    return b;
  }
  function transition(before,after,steps=28){
-   const baseline=overlaps(before);
    const from=joints(before),to=joints(after);
+   const baseline=overlaps(before,from);
+   const locks=before.pointLocks||{},baseLockErrors=lockErrors(from,locks);
    let travel=0;
    const keys=['root','neck','head','spineUpper'];
    for(const key of keys)travel=Math.max(travel,len(sub(from[key],to[key])));
@@ -258,14 +334,18 @@ const Collision3D=(()=>{
    // A swept edit is never allowed to jump through solid surfaces even if its
    // final location is beyond them. Cumulative stepping is robust on mobile.
    for(let i=1;i<=steps;i++){
-     const f=interpolate(before,after,i/steps),err=worse(overlaps(f),baseline);
+     const f=interpolate(before,after,i/steps),j=joints(f);
+     let err=worse(overlaps(f,j),baseline);
+     if(!err)for(const [key,depth] of lockErrors(j,locks)){
+       if(depth>Math.max(.005,baseLockErrors.get(key)||0)+1e-7){err={id:'lock:'+key,depth};break;}
+     }
      if(err){issue=err;break;}
      ratio=i/steps;accepted=f;
    }
    return {frame:accepted,fraction:ratio,limited:ratio<1,issue:issue?.id||null};
  }
  function report(frame){const issues=overlaps(frame);return {count:issues.size,examples:[...issues.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,depth])=>({name,depth:+depth.toFixed(4)}))};}
- return {bodyProbes,solids,overlaps,transition,report,worse};
+ return {bodyProbes,bodySegments,selfOverlaps,segmentDistance,solids,overlaps,transition,report,worse};
 })();
 
 function mul4(a,b){let c=new Float32Array(16);for(let i=0;i<4;i++)for(let k=0;k<4;k++)for(let j=0;j<4;j++)c[j*4+i]+=a[k*4+i]*b[j*4+k];return c;}
@@ -434,6 +514,9 @@ function shaded3D(canvas){
    const handle=(pos,key)=>{const r=key===selected? .068:.045;ell(pos,[r,r,r],key===selected?[.15,.8,.48]:'handle');};
    handle(j.root,'root');
    for(let s of ['left','right']){handle(j.hands[s],s+'Hand');handle(j.feet[s],s+'Foot');}
+   for(const key of Object.keys(frame.pointLocks||{})){
+     if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
+   }
  }
  return j;}
  function project(p){let q=[p[0],p[1],p[2],1],r=[];for(let i=0;i<4;i++)r.push(viewproj[i]*q[0]+viewproj[4+i]*q[1]+viewproj[8+i]*q[2]+viewproj[12+i]*q[3]);if(r[3]<=.001)return null;return [(r[0]/r[3]*.5+.5)*dims.w,(-r[1]/r[3]*.5+.5)*dims.h];}
@@ -457,6 +540,10 @@ function shaded3D(canvas){
  return {draw,setCamera(c){camera=c;},getCamera:()=>camera,pick,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
 function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>6)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
+if(f.pointLocks!=null){
+ if(typeof f.pointLocks!=='object'||Array.isArray(f.pointLocks))throw Error('Érvénytelen rögzítési pont.');
+ for(const [key,pos] of Object.entries(f.pointLocks))if(!LOCK_KEYS.includes(key)||!Array.isArray(pos)||pos.length!==3||pos.some(x=>!Number.isFinite(x)||Math.abs(x)>10))throw Error('Érvénytelen rögzítési pont.');
+}
 for(const [side,leg] of Object.entries(f.legAngles||{})){
  if(!['left','right'].includes(side)|| !leg ||
  !Number.isFinite(leg.flexion)||!Number.isFinite(leg.abduction)||!Number.isFinite(leg.kneeFlexion)||
@@ -479,5 +566,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

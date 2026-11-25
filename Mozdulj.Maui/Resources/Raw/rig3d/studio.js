@@ -25,7 +25,7 @@ function restoreHistory(state){
 function undoPose(){closeGesture();restoreHistory(history.undo(snapshot()));}
 function redoPose(){closeGesture();restoreHistory(history.redo(snapshot()));}
 window.resetRigHistory=()=>{history.clear();gesture=null;controlGesture=null;syncHistory();return true;};
-const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej'};
+const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej',leftKnee:'Bal térd',rightKnee:'Jobb térd',leftElbow:'Bal könyök',rightElbow:'Jobb könyök'};
 function targetKey(sel){return sel?.kind==='root'?'root':sel?sel.side+(sel.kind==='hands'?'Hand':'Foot'):null;}
 function chooseTarget(key){selectedTarget=key&&key!=='auto'?key:null;show();}
 function explicitTarget(key){
@@ -49,11 +49,27 @@ function guardedEdit(change){
  const result=MozduljRig.Collision.transition(before,candidate);
  pose.frames[frameIndex]=result.frame;
  history.record(original,snapshot());syncHistory();
- if(result.limited){sync();msg('Ütközési korlát: a végtag nem haladhat át a padlón, falon vagy eszközön. ('+result.issue+')');}
+ if(result.limited){
+   sync();
+   const issue=result.issue||'';
+   if(issue.startsWith('lock:'))msg(window.rigText('Rögzített testpont: ')+window.rigText(targetLabels[issue.slice(5)])+' — '+window.rigText('Oldd fel a rögzítést a további mozgatáshoz.'));
+   else if(issue.startsWith('body:'))msg(window.rigText('Testrészek ütközése: ')+issue.slice(5).split('/').map(bodyPartLabel).join(' – '));
+   else msg(window.rigText('Ütközési korlát: a végtag nem haladhat át a padlón, falon vagy eszközön. (')+issue+')');
+ }
  else show();
  return result;
 }
 
+function bodyPartLabel(id){
+ const [part,side]=id.split('-');
+ const parts={torso:'Törzs',head:'Fej',upperArm:'Felkar',forearm:'Alkar',hand:'Kéz',thigh:'Comb',shin:'Lábszár',foot:'Lábfej'};
+ const label=window.rigText(parts[part]||part);
+ return side?window.rigText(side==='left'?'Bal':'Jobb')+' '+label:label;
+}
+function syncLocks(){
+ const active=current().pointLocks||{};
+ for(const input of document.querySelectorAll('[data-lock-point]'))input.checked=Object.hasOwn(active,input.dataset.lockPoint);
+}
 function updatePhaseControls(){
  if(!pose)return;
  const n=pose.frames.length;
@@ -67,7 +83,7 @@ function updatePhaseControls(){
  $('phasePrev').setAttribute('aria-disabled',String(frameIndex===0));
  $('phaseNext').setAttribute('aria-disabled',String(frameIndex>=n-1));
 }
-function show(){if(!studio)return;let f=current();const j=studio.draw(f,{edit:!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
+function show(){if(!studio)return;let f=current();const j=studio.draw(f,{edit:!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
 function sync(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number(f.root[1].toFixed(3));
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||{};
@@ -77,7 +93,7 @@ function sync(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('
  $('footPitch').value=Math.round(deg(f.footPitch?.[side]||0));
  const arm=f.armAngles?.[$('armSide').value||'right']||{};
  for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation']])$(id).value=Math.round(deg(arm[k]||0));
- $('preset').value=pose.preset;updatePhaseControls();syncBands();syncProps();$('zoom').value=studio.getCamera().distance;show();}
+ $('preset').value=pose.preset;updatePhaseControls();syncBands();syncProps();syncLocks();$('zoom').value=studio.getCamera().distance;show();}
 function syncBands(selected){
  const sel=$('bandSelect'),prior=selected===undefined?sel.value:selected;
  const items=current().equipment||[];
@@ -164,6 +180,10 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  const endControl=e=>{if(controlGesture===e.pointerId&&gesture!==canvas)closeGesture();};
  window.addEventListener('pointerup',endControl);
  window.addEventListener('pointercancel',endControl);
+ for(const input of document.querySelectorAll('[data-lock-point]'))input.onchange=()=>{
+   closeGesture();tracked(()=>MozduljRig.setPointLock(current(),input.dataset.lockPoint,input.checked));sync();
+ };
+ $('clearPointLocks').onclick=()=>{closeGesture();tracked(()=>{delete current().pointLocks;});sync();};
  $('rootHeight').onchange=e=>{
    const value=e.target.valueAsNumber;
    if(!Number.isFinite(value)||value<0||value>3){sync();msg('Érvénytelen medencemagasság.');return;}

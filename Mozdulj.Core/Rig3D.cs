@@ -38,6 +38,9 @@ public sealed class Rig3DFrame
     public Dictionary<string,float[]> Feet { get; set; } = [];
     public Dictionary<string,float[]> Poles { get; set; } = [];
     public List<Rig3DEquipment> Equipment { get; set; } = [];
+    /// <summary>Optional per-frame world-space point locks; null is omitted in legacy backups.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,float[]>? PointLocks { get; set; }
 }
 public sealed class Rig3DLegControl
 {
@@ -89,6 +92,7 @@ public static class Rig3DValidator
          "leftToe", "rightToe", "floorLeft", "floorRight", "fixed"];
     private static readonly HashSet<string> BandRoutes =
         ["auto", "direct", "front", "back", "left", "right"];
+    private static readonly HashSet<string> LockKeys = ["root", "leftHand", "rightHand", "leftFoot", "rightFoot", "leftKnee", "rightKnee", "leftElbow", "rightElbow"];
     public static void Validate(Rig3DPose rig)
     {
         if(rig.Version != 1 || rig.Frames is null || rig.Frames.Count is < 1 or > 6 ||
@@ -97,6 +101,12 @@ public static class Rig3DValidator
         foreach(var f in rig.Frames)
         {
             CheckVector(f.Root,"testgyökér");CheckVector(f.Euler,"forgásszög");
+            if(f.PointLocks is not null)
+                foreach(var (key,position) in f.PointLocks)
+                {
+                    if(!LockKeys.Contains(key) || position is null || position.Length!=3 || position.Any(x=>!float.IsFinite(x)||Math.Abs(x)>10))
+                        throw new InvalidDataException(AppLocalization.Text("RigInvalidPointLock"));
+                }
             if(!float.IsFinite(f.HeadYaw) || !float.IsFinite(f.HeadPitch) ||
                !float.IsFinite(f.HeadRoll) || !float.IsFinite(f.ShoulderLift) ||
                !float.IsFinite(f.UpperYaw) || !float.IsFinite(f.SpineBend) || !float.IsFinite(f.PelvicTilt) ||

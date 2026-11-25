@@ -37,3 +37,50 @@ test('pelvis movement preserves IK targets and clamps world bounds',()=>{
  assert.equal(JSON.stringify(f.hands),before);assert.equal(JSON.stringify(f.feet),feet);
  rig.moveRoot(f,[0,-100,0]);assert.equal(f.root[1],0);
 });
+
+function loadRig(){
+ const context={};context.window=context;vm.createContext(context);
+ vm.runInContext(fs.readFileSync(path.join(root,'engine.js'),'utf8'),context);
+ return context.MozduljRig;
+}
+test('capsules detect crossing segments but allow surface contact and adjacent bones',()=>{
+ const c=loadRig().Collision;
+ const a={id:'forearm-left',a:[-1,0,0],b:[1,0,0],r:.05};
+ const b={id:'thigh-right',a:[0,-1,0],b:[0,1,0],r:.05};
+ assert.equal(c.segmentDistance(a.a,a.b,b.a,b.b),0);
+ assert.equal(c.selfOverlaps([a,b]).size,1);
+ const contact={...b,a:[0,-1,.1],b:[0,1,.1]};
+ assert.equal(c.selfOverlaps([a,contact]).size,0);
+ assert.equal(c.selfOverlaps([a,{...b,id:'upperArm-left'}]).size,0);
+ assert.equal(c.segmentDistance([0,0,0],[0,0,0],[1,0,0],[1,0,0]),1);
+});
+test('old self-overlap may improve but cannot deepen or accumulate',()=>{
+ const c=loadRig().Collision;
+ const baseline=new Map([['body:forearm-left/torso',.04]]);
+ assert.equal(c.worse(new Map([['body:forearm-left/torso',.03]]),baseline),null);
+ assert.ok(c.worse(new Map([['body:forearm-left/torso',.041]]),baseline));
+ assert.ok(c.worse(new Map([['body:head/hand-left',.01]]),baseline));
+});
+test('world locks capture rendered coordinates and prevent root drift',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ rig.setPointLock(f,'root',true);
+ const a=JSON.stringify(f.root);
+ const next=JSON.parse(JSON.stringify(f));rig.moveRoot(next,[0,.15,0]);
+ const result=rig.Collision.transition(f,next);
+ assert.equal(result.limited,true);
+ assert.ok(Math.abs(result.frame.root[1]-f.root[1])<=.0050001);
+ assert.equal(JSON.stringify(result.frame.pointLocks.root),a);
+ rig.setPointLock(f,'root',false);
+ assert.equal(f.pointLocks,undefined);
+});
+test('knee and hand locks refer to real joint positions and survive JSON',()=>{
+ const rig=loadRig(),f=rig.baseFrame('tabletop');
+ rig.setPointLock(f,'leftKnee',true);rig.setPointLock(f,'rightHand',true);
+ const j=rig.joints(f);
+ assert.equal(JSON.stringify(f.pointLocks.leftKnee),JSON.stringify(j.knee.left));
+ assert.equal(JSON.stringify(f.pointLocks.rightHand),JSON.stringify(j.hands.right));
+ const copy=JSON.parse(JSON.stringify(f));
+ assert.equal(rig.lockErrors(rig.joints(copy),copy.pointLocks).size,0);
+ const pose=rig.initialPose('stand');pose.frames[0].pointLocks={bad:[0,0,0]};
+ assert.throws(()=>rig.checkPose(pose));
+});
