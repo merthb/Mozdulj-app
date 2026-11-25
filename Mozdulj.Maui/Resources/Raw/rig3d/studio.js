@@ -467,6 +467,7 @@ window.setWorkoutGuideBase64=payload=>{
 window.clearWorkoutGuide=()=>{stopWorkoutGuide();canvas.style.visibility='hidden';return true;};
 window.getRigHealth=()=>JSON.stringify({webgl:!!studio,frames:pose?.frames?.length,renderer:'pure-webgl-offline'});
 window.setReadOnlyMode=()=>{
+  if(!studio||!pose)return false;
   document.body.classList.add('view-only');
   document.querySelector('main').style.gridTemplateColumns='1fr';
   document.querySelector('.workspace-shell').style.display='none';
@@ -481,7 +482,7 @@ window.setReadOnlyMode=()=>{
   document.querySelector('.float-l').style.display='none';
   document.querySelector('.float-b').style.display='none';
   setMode('orbit'); // drag always rotates the camera in the read-only viewer
-  updatePhaseControls();show();
+  updatePhaseControls();show();return true;
 };
 const directionNames={all:'Irány nélkül',left:'Bal oldal',right:'Jobb oldal',forward:'Előre',backward:'Hátra',up:'Felfelé',down:'Lefelé',inward:'Befelé',outward:'Kifelé',clockwise:'Óramutató járásával megegyezően',counterclockwise:'Óramutató járásával ellentétesen',each_side:'Oldalanként'};
 function playbackButtons(){
