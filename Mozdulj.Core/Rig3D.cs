@@ -97,6 +97,15 @@ public sealed class Rig3DFrame
     /// <summary>Optional per-frame world-space point locks; null is omitted in legacy backups.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string,float[]>? PointLocks { get; set; }
+    /// <summary>Optional equipment-local point locks, exclusive with world-space locks for the same key.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,Rig3DEquipmentPointLock>? EquipmentPointLocks { get; set; }
+}
+public sealed class Rig3DEquipmentPointLock
+{
+    public string EquipmentId { get; set; } = "";
+    public string EquipmentType { get; set; } = "";
+    public float[]? Local { get; set; }
 }
 public sealed class Rig3DLegControl
 {
@@ -266,6 +275,17 @@ public static class Rig3DValidator
                         throw new InvalidDataException(AppLocalization.Text("Validation112"));
                 }
             }
+            if(f.EquipmentPointLocks is not null)
+                foreach(var (key,binding) in f.EquipmentPointLocks)
+                {
+                    if(!LockKeys.Contains(key) || f.PointLocks?.ContainsKey(key)==true ||
+                       binding is null || string.IsNullOrEmpty(binding.EquipmentId) ||
+                       !PositionableTypes.Contains(binding.EquipmentType) ||
+                       binding.Local is null || binding.Local.Length!=3 ||
+                       binding.Local.Any(x=>!float.IsFinite(x)||Math.Abs(x)>10) ||
+                       !f.Equipment.Any(obj=>obj.Id==binding.EquipmentId && obj.Type==binding.EquipmentType))
+                        throw new InvalidDataException(AppLocalization.Text("RigInvalidPointLock"));
+                }
         }
         if(rig.Camera is null || !float.IsFinite(rig.Camera.Distance) ||
            rig.Camera.Distance is < 1.0f or > 12f ||
