@@ -825,6 +825,25 @@ function lockErrors(j,locks){
  }
  return result;
 }
+
+// Detect a discontinuous bend-plane flip between adjacent checked samples.
+// Ignore almost-straight chains, where the bend plane is not well-defined.
+function bendFlip(previous,current){
+ for(const kind of ['arm','leg'])for(const side of ['left','right']){
+   const a=kind==='arm'?'shoulder':'hip',b=kind==='arm'?'elbow':'knee',c=kind==='arm'?'hands':'feet';
+   const radial=j=>{
+     const axis=norm(sub(j[c][side],j[a][side])),v=sub(j[b][side],j[a][side]);
+     return {axis,offset:sub(v,mul(axis,dot(v,axis)))};
+   };
+   const x=radial(previous),y=radial(current);
+   if(len(x.offset)<.025||len(y.offset)<.025||dot(x.axis,y.axis)<.9)continue;
+   const projected=sub(x.offset,mul(y.axis,dot(x.offset,y.axis)));
+   if(len(projected)>.02&&dot(norm(projected),norm(y.offset))<-.25)
+     return side+(kind==='arm'?'Elbow':'Knee');
+ }
+ return null;
+}
+
 const Collision3D=(()=>{
  const lerp=(a,b,t)=>add(a,mul(sub(b,a),t));
  function bodyProbes(j){
@@ -998,19 +1017,20 @@ const Collision3D=(()=>{
      travel=Math.max(travel,len(sub(propPosition(prop),propPosition(target)))+Math.abs(propYaw(prop)-propYaw(target))*1.3);
    }
    steps=Math.min(256,Math.max(steps,Math.ceil(travel/.027)));
-   let accepted=before,ratio=0,issue=null;
+   let accepted=before,ratio=0,issue=null,previousJoints=from;
    // A swept edit is never allowed to jump through solid surfaces even if its
    // final location is beyond them. Cumulative stepping is robust on mobile.
    for(let i=1;i<=steps;i++){
      const f=interpolate(before,after,i/steps),locks=effectiveLocks(f,original);
       if(adapt==='equipment'&&original.equipmentPointLocks?.root&&locks.root)moveRoot(f,sub(locks.root,f.root));
       if(adapt)adaptSupportPoints(f,locks,{reference:accepted,source:before,projectRoot:adapt==='root'});const j=joints(f);
-     let err=worse(overlaps(f,j),baseline);
+     const flip=bendFlip(previousJoints,j);
+     let err=flip?{id:'bend:'+flip}:worse(overlaps(f,j),baseline);
      if(!err)for(const [key,depth] of lockErrors(j,locks)){
        if(depth>Math.max(.005,baseLockErrors.get(key)||0)+1e-7){err={id:'lock:'+key,depth};break;}
      }
      if(err){issue=err;break;}
-     ratio=i/steps;accepted=f;
+     ratio=i/steps;accepted=f;previousJoints=j;
    }
    return {frame:accepted,fraction:ratio,limited:ratio<1,issue:issue?.id||null,rootAdjusted:adapt==='root'&&ratio>0&&len(sub(accepted.root,interpolate(before.root,after.root,ratio)))>.001};
  }
@@ -1075,7 +1095,7 @@ const Collision3D=(()=>{
    for(const [id,depth] of overlaps(b))baseline.set(id,Math.max(depth,baseline.get(id)||0));
    if(!validEquipmentPointLocks(a)||!validEquipmentPointLocks(b))return {ok:false,issue:'lock:equipment'};
     const start=lockErrors(joints(a),effectiveLocks(a)),end=lockErrors(joints(b),effectiveLocks(b));
-   const samples=[];
+   const samples=[];let previousJoints=null;
    // Precompute the exact samples that will be displayed. Never render unchecked
    // intermediate poses. Fixed sampling is approximate, not continuous proof.
    for(let i=0;i<=48;i++){
@@ -1083,10 +1103,12 @@ const Collision3D=(()=>{
      const locks=effectiveLocks(frame,a);
       if(i>0&&i<48&&Object.keys(locks).length){if(a.equipmentPointLocks?.root&&locks.root)moveRoot(frame,sub(locks.root,frame.root));adaptSupportPoints(frame,locks,{reference:samples.at(-1)});}
      const j=joints(frame);
+     const flip=previousJoints&&bendFlip(previousJoints,j);
+     if(flip)return {ok:false,issue:'bend:'+flip};
      const err=worse(overlaps(frame,j),baseline);
      if(err)return {ok:false,issue:err.id};
      for(const [key,d] of lockErrors(j,locks))if(d>Math.max(.005,start.get(key)||0,end.get(key)||0)+1e-7)return {ok:false,issue:'lock:'+key};
-     samples.push(frame);
+     samples.push(frame);previousJoints=j;
    }
    return {ok:true,samples};
  }
@@ -1145,6 +1167,10 @@ function pinchCamera(c,previous,next,height){
 // Convert collision identifiers to body-space geometry for visual feedback.
 function issueGeometry(frame,j,id){
  if(!id)return [];
+ if(id.startsWith('bend:')){
+   const key=id.slice(5);
+   return LOCK_KEYS.includes(key)?[{a:lockPoint(j,key),b:lockPoint(j,key),r:.065}]:[];
+ }
  if(id.startsWith('lock:')){
    const key=id.slice(5);
    return LOCK_KEYS.includes(key)?[{a:lockPoint(j,key),b:lockPoint(j,key),r:.065}]:[];
@@ -1991,5 +2017,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,bendFlip,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
