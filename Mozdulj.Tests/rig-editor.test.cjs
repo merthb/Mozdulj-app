@@ -787,3 +787,21 @@ test('standing soles and tabletop palms align atomically with the floor',()=>{
    assert.equal(rig.Collision.report(result.frame).count,0,name);
  }
 });
+
+
+test('equipment-relative support coordinates follow stable identity, translation and yaw',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand');
+ f.equipment=[{type:'wall',id:'eq-1',position:[.2,1,-.6],yaw:.35},{type:'wall',id:'eq-2'}];
+ const before=JSON.stringify(f),binding=rig.captureEquipmentSupport(f,'rightHand',0);
+ const near=(a,b)=>assert.ok(m.len(m.sub(a,b))<1e-8);
+ assert.ok(binding);near(rig.resolveEquipmentSupport(f,binding),rig.joints(f).hands.right);
+ assert.equal(JSON.stringify(f),before);
+ f.equipment.reverse();f.equipment[1].position=[.4,1.1,-.5];f.equipment[1].yaw=.35+Math.PI/2;
+ near(rig.resolveEquipmentSupport(f,binding),m.add(f.equipment[1].position,m.rotate(binding.local,[0,f.equipment[1].yaw,0])));
+ const p=rig.resolveEquipmentSupport(f,binding),mirror=rig.mirrorFrame(f);
+ near(rig.resolveEquipmentSupport(mirror,rig.mirrorEquipmentSupport(binding)),[-p[0],p[1],p[2]]);
+ f.equipment.push({type:'wall',id:'eq-1'});assert.equal(rig.resolveEquipmentSupport(f,binding),null);
+ f.equipment.pop();f.equipment.pop();assert.equal(rig.resolveEquipmentSupport(f,binding),null);
+ assert.equal(rig.captureEquipmentSupport(rig.baseFrame('chair'),'root',0),null);
+ assert.equal(rig.resolveEquipmentSupport(f,{...binding,local:[NaN,0,0]}),null);
+});
