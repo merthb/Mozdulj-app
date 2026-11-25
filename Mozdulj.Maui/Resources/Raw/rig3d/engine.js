@@ -322,8 +322,8 @@ function auditPreset(name){
 function axisRotate(v,axis,angle){return add(add(mul(v,Math.cos(angle)),mul(cross(axis,v),Math.sin(angle))),mul(axis,dot(axis,v)*(1-Math.cos(angle))));}
 // Additive local articulations. Missing fields are exactly neutral: existing
 // catalog poses retain their original geometry and serialized representation.
-const ARTICULATION_LIMITS={lumbarYaw:10*Math.PI/180,thoracicYaw:30*Math.PI/180,cervicalPitch:30*Math.PI/180,cervicalYaw:35*Math.PI/180,cervicalRoll:25*Math.PI/180,pelvisPitch:30*Math.PI/180,pelvisYaw:35*Math.PI/180,pelvisRoll:25*Math.PI/180,lumbarBend:30*Math.PI/180,lumbarSideBend:25*Math.PI/180,thoracicBend:35*Math.PI/180,thoracicSideBend:25*Math.PI/180,leftShoulderElevation:20*Math.PI/180,leftShoulderProtraction:25*Math.PI/180,leftWristDeviation:25*Math.PI/180,leftAnkleYaw:30*Math.PI/180,leftAnkleRoll:25*Math.PI/180,rightShoulderElevation:20*Math.PI/180,rightShoulderProtraction:25*Math.PI/180,rightWristDeviation:25*Math.PI/180,rightAnkleYaw:30*Math.PI/180,rightAnkleRoll:25*Math.PI/180,leftWristPitch:59*Math.PI/180,rightWristPitch:59*Math.PI/180,leftPalmTurn:90*Math.PI/180,rightPalmTurn:90*Math.PI/180};
-const SIDE_ARTICULATION={arm:['ShoulderElevation','ShoulderProtraction','WristDeviation','WristPitch','PalmTurn'],leg:['AnkleYaw','AnkleRoll']};
+const ARTICULATION_LIMITS={leftScapulaElevation:15*Math.PI/180,leftScapulaProtraction:20*Math.PI/180,leftScapulaRotation:30*Math.PI/180,rightScapulaElevation:15*Math.PI/180,rightScapulaProtraction:20*Math.PI/180,rightScapulaRotation:30*Math.PI/180,lumbarYaw:10*Math.PI/180,thoracicYaw:30*Math.PI/180,cervicalPitch:30*Math.PI/180,cervicalYaw:35*Math.PI/180,cervicalRoll:25*Math.PI/180,pelvisPitch:30*Math.PI/180,pelvisYaw:35*Math.PI/180,pelvisRoll:25*Math.PI/180,lumbarBend:30*Math.PI/180,lumbarSideBend:25*Math.PI/180,thoracicBend:35*Math.PI/180,thoracicSideBend:25*Math.PI/180,leftShoulderElevation:20*Math.PI/180,leftShoulderProtraction:25*Math.PI/180,leftWristDeviation:25*Math.PI/180,leftAnkleYaw:30*Math.PI/180,leftAnkleRoll:25*Math.PI/180,rightShoulderElevation:20*Math.PI/180,rightShoulderProtraction:25*Math.PI/180,rightWristDeviation:25*Math.PI/180,rightAnkleYaw:30*Math.PI/180,rightAnkleRoll:25*Math.PI/180,leftWristPitch:59*Math.PI/180,rightWristPitch:59*Math.PI/180,leftPalmTurn:90*Math.PI/180,rightPalmTurn:90*Math.PI/180};
+const SIDE_ARTICULATION={arm:['ShoulderElevation','ShoulderProtraction','ScapulaElevation','ScapulaProtraction','ScapulaRotation','WristDeviation','WristPitch','PalmTurn'],leg:['AnkleYaw','AnkleRoll']};
 function sideAngle(frame,side,field){
  const key=side+field,limit=ARTICULATION_LIMITS[key];
  return clamp(frame[key]||0,-limit,limit);
@@ -408,20 +408,32 @@ function joints(frame){
  const axes=articulationAxes(frame);
  const midLocal=spineLocal(.28),mid=add(root,axes.lower(midLocal));
  const upperPoint=v=>axes.l.some(Boolean)||axes.t.some(Boolean)?add(mid,axes.upper(sub(v,midLocal))):world(v);
+ const scapulaLocal=side=>{
+   const sign=side==='left'?-1:1;
+   const elevation=sideAngle(frame,side,'ScapulaElevation'),protraction=sideAngle(frame,side,'ScapulaProtraction'),rotation=sideAngle(frame,side,'ScapulaRotation');
+   // Approximate the scapula gliding around a curved ribcage; all landmarks rotate together.
+   const glide=v=>rotY(v,-sign*protraction);
+   const center=add(spineLocal(.46+(frame.shoulderLift||0)+.16*Math.sin(elevation)),rotY(glide([sign*.11,0,-.15]),twist));
+   const point=v=>add(center,rotY(glide(rotZ(v,sign*rotation)),twist));
+   return {center,superior:point([sign*.055,.065,0]),inferior:point([-sign*.015,-.09,0]),medial:point([-sign*.055,.035,0])};
+ };
  const shoulderLocal=side=>{
    const sign=side==='left'?-1:1;
    const elevation=sideAngle(frame,side,'ShoulderElevation'),protraction=sideAngle(frame,side,'ShoulderProtraction');
    // Rotate the simplified clavicle around the chest anchor, rather than
    // stretching the upper arm or translating the entire ribcage.
-   const clavicle=rotY(rotZ([sign*.215,0,0],sign*elevation),-sign*protraction);
+   const se=sideAngle(frame,side,'ScapulaElevation'),sp=sideAngle(frame,side,'ScapulaProtraction'),sr=sideAngle(frame,side,'ScapulaRotation');
+   // The shoulder follows scapular motion without stretching the clavicle or arm.
+   const clavicle=rotY(rotZ([sign*.215,0,0],sign*(elevation+se+.45*sr)),-sign*(protraction+sp));
    return add(spineLocal(.54+(frame.shoulderLift||0)),rotY(clavicle,twist));
  };
  const hip={left:add(root,axes.pelvis([-.13,0,0])),right:add(root,axes.pelvis([.13,0,0]))};
  const shoulder={left:upperPoint(shoulderLocal('left')),right:upperPoint(shoulderLocal('right'))};
+ const scapula=Object.fromEntries(['left','right'].map(side=>[side,Object.fromEntries(Object.entries(scapulaLocal(side)).map(([key,p])=>[key,upperPoint(p)]))]));
  const neutralNeck=upperPoint(spineLocal(.70)),neckBase=upperPoint(spineLocal(.63));
  const neck=axes.n.some(Boolean)?add(neckBase,axes.cervical(sub(spineLocal(.70),spineLocal(.63)))):neutralNeck;
  const head=add(neck,axes.cervical(rotate([0,.21,.015],[frame.headPitch||0,frame.headYaw||0,frame.headRoll||0])));
- const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},palmNormals:{},handDetails:{},hingePoles:{arm:{},leg:{}},clamped:[]};
+ const j={root,hip,shoulder,scapula,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},palmNormals:{},handDetails:{},hingePoles:{arm:{},leg:{}},clamped:[]};
  for(const side of ['left','right']){
   let s=side==='left'?-1:1;
   // Anatomical hinge pole is anchored to the current body rotation, not a fixed
@@ -1284,11 +1296,12 @@ const BAND_ANCHORS=['leftHand','rightHand','leftAnkle','rightAnkle','leftKnee','
 // FK limbs follow the root. The swept collision guard owns final acceptance.
 const BODY_TARGETS=[
  {key:'root',kind:'root'},{key:'head',kind:'articulate',secondary:true},{key:'neck',kind:'articulate',secondary:true},{key:'chest',kind:'articulate',secondary:true},{key:'waist',kind:'articulate',secondary:true},
- ...['left','right'].flatMap(side=>[{key:side+'Shoulder',kind:'articulate',secondary:true,side},{key:side+'Hip',kind:'articulate',secondary:true,side},{key:side+'Elbow',kind:'elbow',side},{key:side+'Hand',kind:'hands',side},{key:side+'Knee',kind:'knee',side},{key:side+'Foot',kind:'feet',side},{key:side+'Toe',kind:'articulate',secondary:true,side}])];
+ ...['left','right'].flatMap(side=>[{key:side+'Shoulder',kind:'articulate',secondary:true,side},{key:side+'Scapula',kind:'articulate',secondary:true,side},{key:side+'Hip',kind:'articulate',secondary:true,side},{key:side+'Elbow',kind:'elbow',side},{key:side+'Hand',kind:'hands',side},{key:side+'Knee',kind:'knee',side},{key:side+'Foot',kind:'feet',side},{key:side+'Toe',kind:'articulate',secondary:true,side}])];
 function bodyTarget(key){return BODY_TARGETS.find(t=>t.key===key)||null;}
 function bodyPoint(j,key){
  const central={root:'root',head:'head',neck:'neck',chest:'spineUpper',waist:'spineMid'};
  if(central[key])return j[central[key]];
+ if(key.endsWith('Scapula'))return j.scapula[key.startsWith('left')?'left':'right'].inferior;
  const side=key.startsWith('left')?'left':'right',name={Shoulder:'shoulder',Hip:'hip',Elbow:'elbow',Hand:'hands',Knee:'knee',Foot:'feet',Toe:'toes'}[key.slice(side.length)];
  return name?j[name][side]:null;
 }
@@ -1676,6 +1689,7 @@ function articulationControls(sel){
  if(k==='neck')return ['cervicalPitch','cervicalRoll','cervicalYaw'].map(limited);
  if(k==='waist')return ['lumbarBend','lumbarSideBend','lumbarYaw'].map(limited);
  if(k==='chest')return ['thoracicBend','thoracicSideBend','thoracicYaw','lumbarBend','lumbarSideBend','lumbarYaw'].map(limited);
+ if(k.endsWith('Scapula'))return ['ScapulaElevation','ScapulaProtraction','ScapulaRotation'].map(suffix=>({...limited(s+suffix),suffix}));
  if(k.endsWith('Shoulder'))return ['ShoulderElevation','ShoulderProtraction'].map(suffix=>({...limited(s+suffix),suffix}));
  if(k.endsWith('Hip'))return ['pelvisPitch','pelvisYaw','pelvisRoll'].map(limited);
  if(k.endsWith('Toe'))return [spec('footPitch',-.65,.95,s),{...limited(s+'AnkleYaw'),suffix:'AnkleYaw'}];
@@ -1971,6 +1985,7 @@ function shaded3D(canvas){
    gl.disable(gl.DEPTH_TEST);
    try{
      for(const [a,b] of skeletonSegments(j))limb(a,b,.016,bone);
+     for(const side of ['left','right']){const p=j.scapula[side];for(const [a,b] of [[p.superior,p.medial],[p.medial,p.inferior],[p.inferior,p.superior],[p.superior,j.shoulder[side]]])limb(a,b,.012,bone);}
      for(const target of BODY_TARGETS){const pos=bodyPoint(j,target.key);ell(pos,[.025,.025,.025],bone);}
    }finally{gl.enable(gl.DEPTH_TEST);}
  }
@@ -2013,6 +2028,10 @@ function shaded3D(canvas){
         }else ell(pos,[.055,.055,.055],highContrast?(dark?[.45,.85,1]:[.05,.20,.63]):[.19,.49,.92]);
      }
    }finally{if(ghost||skeleton)gl.enable(gl.DEPTH_TEST);}
+ }
+ if(edit&&!equipmentMode&&selected?.endsWith('Scapula')&&!ghost&&!skeleton){
+   const p=j.scapula[selected.startsWith('left')?'left':'right'],color=[.70,.32,.86];
+   gl.disable(gl.DEPTH_TEST);try{for(const [a,b] of [[p.superior,p.medial],[p.medial,p.inferior],[p.inferior,p.superior]])limb(a,b,.012,color);}finally{gl.enable(gl.DEPTH_TEST);}
  }
  if(edit&&!equipmentMode&&selected){
    const target=bodyTarget(selected),origin=bodyPoint(j,selected);
