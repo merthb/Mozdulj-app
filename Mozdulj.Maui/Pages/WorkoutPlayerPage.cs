@@ -23,6 +23,7 @@ public sealed class WorkoutPlayerPage : ContentPage
     private readonly Border _nextGuideBlock = new() { IsVisible=false, BackgroundColor=UI.Lavender,
         StrokeThickness=0, Padding=new Thickness(12), StrokeShape=new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius=new CornerRadius(12) } };
     private readonly Label _nextGuideTitle=UI.Label("",14,true,UI.Purple);
+    private readonly Label _ownExerciseNotice=UI.Label(AppLocalization.Text("OwnExerciseUnreviewed"),13,true,color:UI.Muted);
     private readonly Label _equipmentCue=UI.Label("",17,true,UI.Purple);
     private readonly Label _nextGuideText=UI.Label("",13,color:UI.Ink);
     private readonly Button _action=UI.Button(AppLocalization.Text("WorkoutUi155"));
@@ -126,6 +127,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         // One compact scrollable instruction panel follows the displayed guide item.
         _nextGuideBlock.Content=new VerticalStackLayout{Spacing=5,Children={
             _nextGuideTitle,
+            _ownExerciseNotice,
             new ScrollView{HeightRequest=128,Content=_nextGuideText}
         }};
         content.Children.Add(_nextGuideBlock);
@@ -540,6 +542,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         _equipmentCue.IsVisible=!string.IsNullOrWhiteSpace(_equipmentCue.Text) && (transition||preparing||!_paused);
         var displayed=DisplayGuideItem();
         _nextGuideBlock.IsVisible=displayed is not null&&!_finished;
+        _ownExerciseNotice.IsVisible=displayed is not null&&_state.CustomExercises.Any(x=>x.Exercise.Id==displayed.ExerciseId);
         if(displayed is not null)
         {
             _nextGuideTitle.Text=transition||preparing
