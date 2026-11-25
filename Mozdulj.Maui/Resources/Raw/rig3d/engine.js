@@ -245,6 +245,33 @@ function baseFrame(preset){
    f.hands.left=[j.shoulder.left[0],.075,j.shoulder.left[2]];
    f.hands.right=[.26,.70,-.05];
  }
+ // Fourth creation-only pass: use the same contact envelope as the
+ // support fitter. Explicit authored values avoid an expensive search on load.
+ if(preset==='stand'){
+   for(const side of ['left','right']){
+     f.footPitch[side]=-.165;f.feet[side][1]=.06915497015242196;
+   }
+ }
+ if(['tabletop','catcow','plank'].includes(preset)){
+   for(const side of ['left','right']){
+     f.hands[side][1]=.057;f[side+'HandCurl']=0;
+     f[side+'WristPitch']=preset==='plank'?.815:1;
+     f[side+'WristDeviation']=25*Math.PI/180;
+   }
+ }
+ if(preset==='chair'){
+   f.root[1]=.512;
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:1.51,abduction:.29,kneeFlexion:1.57};
+     f.footPitch[side]=-.03;
+   }
+ }
+ if(preset==='ballseat'){
+   for(const side of ['left','right']){
+     f.feet[side][1]=.069;f.footPitch[side]=-.125;
+     f[side+'AnkleYaw']=.12859877559829883;f[side+'AnkleRoll']=-.025;
+   }
+ }
  return f;
 }
 const PRESET_NAMES=['stand','crosslegged','chair','tabletop','catcow','child','supine','bridge','side','rowband','lunge','balance','boat','reclinedbutterfly','legs-wall','prone','sideplank','kneel','hinge','ballseat','plank'];
