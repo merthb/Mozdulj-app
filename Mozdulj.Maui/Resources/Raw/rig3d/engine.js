@@ -245,6 +245,12 @@ function baseFrame(preset){
    f.hands.left=[j.shoulder.left[0],.075,j.shoulder.left[2]];
    f.hands.right=[.26,.70,-.05];
  }
+ // Lower the folded starting pose without changing its crossed leg
+ // topology; the lower ankle remains just above the floor.
+ if(preset==='crosslegged')f.root[1]=.28;
+ // The rear leg surface should actually approach the wall, not float
+ // several centimetres away from it.
+ if(preset==='legs-wall')f.equipment[1].position[2]=.3786;
  // Fourth creation-only pass: use the same contact envelope as the
  // support fitter. Explicit authored values avoid an expensive search on load.
  if(preset==='stand'){
