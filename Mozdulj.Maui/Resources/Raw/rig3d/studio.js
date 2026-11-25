@@ -31,14 +31,14 @@ function restoreHistory(state){
 function undoPose(){stopPreview();closeGesture();restoreHistory(history.undo(snapshot()));}
 function redoPose(){stopPreview();closeGesture();restoreHistory(history.redo(snapshot()));}
 window.resetRigHistory=()=>{history.clear();gesture=null;controlGesture=null;syncHistory();return true;};
-const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej',leftKnee:'Bal térd',rightKnee:'Jobb térd',leftElbow:'Bal könyök',rightElbow:'Jobb könyök',head:'Fej',neck:'Nyak',chest:'Mellkas',waist:'Derék',leftShoulder:'Bal váll',rightShoulder:'Jobb váll',leftHip:'Bal csípő',rightHip:'Jobb csípő',leftToe:'Bal lábujjrész',rightToe:'Jobb lábujjrész'};
+const targetLabels={root:'Medence',leftHand:'Bal kéz',rightHand:'Jobb kéz',leftFoot:'Bal lábfej',rightFoot:'Jobb lábfej',leftKnee:'Bal térd',rightKnee:'Jobb térd',leftElbow:'Bal könyök',rightElbow:'Jobb könyök',head:'Fej',neck:'Nyak',chest:'Mellkas',waist:'Derék',leftShoulder:'Bal váll',rightShoulder:'Jobb váll',leftScapula:'Bal lapocka',rightScapula:'Jobb lapocka',leftHip:'Bal csípő',rightHip:'Jobb csípő',leftToe:'Bal lábujjrész',rightToe:'Jobb lábujjrész'};
 function targetKey(sel){return sel?.key||null;}
 function bodyFocusFor(key){
  if(key==='root'||key?.endsWith('Hip'))return 'root';
  if(!key)return 'all';
  if(['head','neck'].includes(key))return 'head';
  if(['chest','waist'].includes(key))return 'trunk';
- return (key.startsWith('left')?'left':'right')+(/Hand|Elbow|Shoulder/.test(key)?'Arm':'Leg');
+ return (key.startsWith('left')?'left':'right')+(/Hand|Elbow|Shoulder|Scapula/.test(key)?'Arm':'Leg');
 }
 function selectTab(name){
  const alreadyActive=$('tab-'+name).getAttribute('aria-selected')==='true';
@@ -835,7 +835,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  for(const [kind,selector] of [['arm','armSide'],['leg','legSide']])
    for(const suffix of MozduljRig.SIDE_ARTICULATION[kind])$('side'+suffix).oninput=e=>{
      const selected=$(selector).value,value=rad(+e.target.value),symmetric=$('symmetricEdit').checked;
-     guardedEdit(f=>MozduljRig.editSideArticulation(f,selected,suffix,value,symmetric),null,suffix.startsWith('Shoulder'));
+     guardedEdit(f=>MozduljRig.editSideArticulation(f,selected,suffix,value,symmetric),null,/^(Shoulder|Scapula)/.test(suffix));
    };
  $('handShape').onchange=e=>{
    const selected=$('armSide').value,symmetric=$('symmetricEdit').checked;
