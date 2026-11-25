@@ -76,7 +76,7 @@ public sealed class WorkoutMandatoryPage : ContentPage
         _options.Children.Clear();
         var candidates=_available.Where(e=>(_phase=="mind"||e.Phase==_phase) &&
             (string.IsNullOrWhiteSpace(_query) ||
-             (e.Name+" "+e.Category+" "+e.RegionLabel).Contains(_query,StringComparison.CurrentCultureIgnoreCase)))
+             (CatalogSearch.MatchesText(e,_query) || e.Category.Contains(_query,StringComparison.CurrentCultureIgnoreCase))))
             .Take(65).ToList();
         foreach(var ex in candidates)
         {

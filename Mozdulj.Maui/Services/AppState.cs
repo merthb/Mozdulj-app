@@ -99,7 +99,11 @@ public sealed class AppState
         }
         var needsInitialSave = readFromBackup || !File.Exists(UserPath) || Data.SchemaVersion < LocalDataMigrations.CurrentVersion;
         var previousLanguage = Data.ApplicationLanguage;
+        var oldFocus = Data.Preferences?.FocusRegions?.ToArray() ?? [];
+        var oldDeferredFocus = Data.DeferredTodayPreferences?.FocusRegions?.ToArray() ?? [];
         Data = LocalDataMigrations.Upgrade(Data);
+        if (!oldFocus.SequenceEqual(Data.Preferences.FocusRegions) ||
+            !oldDeferredFocus.SequenceEqual(Data.DeferredTodayPreferences?.FocusRegions ?? [])) needsInitialSave = true;
         if (previousLanguage != Data.ApplicationLanguage) needsInitialSave = true;
         AppLocalization.Apply(Data.ApplicationLanguage);
         if (_baseCatalog.CatalogVersion == bundledVersion &&
@@ -168,7 +172,7 @@ public sealed class AppState
         if (chosen.FocusRegions is null || chosen.PreferredCategories is null ||
             chosen.AvailableEquipment is null || chosen.ExcludedExercises is null)
             throw new ArgumentException("Hiányzó beállítások.",nameof(chosen));
-        var validRegions = Catalog.Exercises.SelectMany(x=>x.Regions).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var validRegions = RegionTaxonomy.Areas.Select(a=>a.Id).ToHashSet(StringComparer.Ordinal);
         var validCategories = Catalog.Categories.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var validEquipment = Catalog.Exercises.SelectMany(x=>x.Equipment).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (chosen.FocusRegions.Any(x=>!validRegions.Contains(x)) ||
@@ -751,6 +755,8 @@ public sealed class AppState
 
     public async Task SaveCustomExerciseAsync(Exercise draft, string status)
     {
+        if (draft.Regions.Any(r=>!RegionTaxonomy.IsDetail(r)))
+            throw new InvalidOperationException(AppLocalization.IsEnglish ? "Choose body parts from the fixed list." : "A testrészeket a fix listából válaszd ki.");
         if (status is not (LibraryStatuses.Draft or LibraryStatuses.Active or LibraryStatuses.Disabled))
             throw new InvalidOperationException("Érvénytelen szerkesztői állapot.");
         if (status == LibraryStatuses.Active)
@@ -846,6 +852,8 @@ public sealed class AppState
             }
         }
         ExerciseLibraryRules.ValidateLibraryPackage(package,_baseCatalog);
+        if (package.UserExercises.Any(x=>x.Exercise.Regions.Any(r=>!RegionTaxonomy.IsDetail(r))))
+            throw new InvalidDataException(AppLocalization.IsEnglish ? "The imported library contains unsupported body parts." : "Az importált gyakorlattár nem támogatott testrészeket tartalmaz.");
         var previous=Catalog.Exercises.Count;
         var affected=Data.UserExercises.Select(e=>e.Exercise.Id)
             .Concat(Data.BuiltInContentOverrides.Select(x=>x.ExerciseId))

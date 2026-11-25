@@ -195,7 +195,7 @@ public sealed class PlanGenerator
             }
             var pick=pool.OrderByDescending(e=>uncovered.Sum(m=>Anatomy.CoverageGain(selection,e,m))*100 +
                 mains.Sum(m=>Anatomy.ExactOverlap(e,m))*10 +
-                prefs.FocusRegions.Count(r=>e.Regions.Contains(r))*2 +
+                prefs.FocusRegions.Count(r=>RegionTaxonomy.Matches(e,r))*2 +
                 (favorites.Contains(e.Id)?3:0) - (recent.Contains(e.Id)?6:0) -
                 (used.Contains(e.Id)?10:0) +rng.NextDouble()).First();
             // Don't add unrelated minutes. If critical body coverage cannot fit the
@@ -236,7 +236,7 @@ public sealed class PlanGenerator
         IReadOnlyCollection<string> fav,HashSet<string> recent,HashSet<string> used,Random rng,List<Exercise> chosen) =>
         pool.OrderByDescending(e=>
             (cats.Contains(e.Category)?5:0) +
-            e.Regions.Count(prefs.FocusRegions.Contains)*3 +
+            prefs.FocusRegions.Count(r=>RegionTaxonomy.Matches(e,r))*3 +
             (prefs.PreferredCategories.Contains(e.Category)?2:0) +
             (fav.Contains(e.Id)?4:0) - (recent.Contains(e.Id)?7:0) - (used.Contains(e.Id)?10:0) +
             chosen.Count(c=>Anatomy.Supports(c,e))*2 + rng.NextDouble()*3).First();

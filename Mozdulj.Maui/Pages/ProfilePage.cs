@@ -118,7 +118,7 @@ public sealed class ProfilePage : ContentPage
         ));
         _content.Children.Add(UI.Card(
             UI.Label(AppLocalization.Text("Personalization"),19,true),
-            Field(AppLocalization.Text("FocusRegions"),Join(p.FocusRegions)),
+            Field(AppLocalization.Text("FocusRegions"),Join(RegionTaxonomy.NormalizeFocus(p.FocusRegions).Select(RegionTaxonomy.AreaLabel))),
             Field(AppLocalization.Text("PreferredTypes"),Join(p.PreferredCategories)),
             Field(AppLocalization.Text("Equipment"),Join(p.AvailableEquipment))
         ));

@@ -16,7 +16,9 @@ public static class Anatomy
         ["csípő"]="hip", ["medence"]="hip", ["ágyék"]="hip", ["farizom"]="hip",
         ["comb"]="leg", ["belső comb"]="leg", ["láb"]="leg", ["lábszár"]="leg",
         ["térd"]="leg", ["boka"]="ankle", ["vádli"]="ankle", ["achilles-ín"]="ankle",
-        ["lábfej"]="ankle"
+        ["lábfej"]="ankle", ["fej"]="neck", ["állkapocs"]="neck", ["felkar"]="arm", ["kézujjak"]="arm",
+        ["mellizom"]="core", ["oldalsó hasizmok"]="core", ["medencefenék"]="hip", ["csípőhajlítók"]="hip",
+        ["elülső comb"]="leg", ["hátsó comb"]="leg", ["külső comb"]="leg", ["talp"]="ankle", ["lábujjak"]="ankle"
     };
     private static readonly HashSet<string> Adjacent = new(StringComparer.Ordinal)
     {
@@ -24,7 +26,8 @@ public static class Anatomy
     };
     public static readonly string[] Groups = ["upper", "core", "lower"];
     public static HashSet<string> Zones(IEnumerable<string> regions) =>
-        regions.Where(ZoneByRegion.ContainsKey).Select(r => ZoneByRegion[r]).ToHashSet(StringComparer.Ordinal);
+        regions.SelectMany(r => RegionTaxonomy.FindArea(r) is null ? new[]{r} : RegionTaxonomy.DetailsForArea(r))
+            .Where(ZoneByRegion.ContainsKey).Select(r => ZoneByRegion[r]).ToHashSet(StringComparer.Ordinal);
     private static bool Close(string left, string right) =>
         left == right || Adjacent.Contains(left + "|" + right) || Adjacent.Contains(right + "|" + left);
     public static bool Supports(Exercise preparation, Exercise target)

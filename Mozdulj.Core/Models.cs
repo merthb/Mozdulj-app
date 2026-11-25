@@ -44,7 +44,9 @@ public sealed class Exercise
     [JsonIgnore] public string TargetLabel => Measure == "time"
         ? $"{TargetSeconds} mp" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {x.Label}"));
     [JsonIgnore] public string EquipmentLabel => Equipment.Count == 0 ? "Eszköz nélkül" : string.Join(", ", Equipment);
-    [JsonIgnore] public string RegionLabel => string.Join(", ", Regions);
+    [JsonIgnore] public IReadOnlyList<string> RegionAreaIds => RegionTaxonomy.AreaIds(Regions);
+    [JsonIgnore] public string RegionAreaLabel => RegionTaxonomy.AreaLabels(Regions);
+    [JsonIgnore] public string RegionLabel => RegionTaxonomy.DetailLabels(Regions);
 }
 
 /// <summary>Two or more locally rendered anatomical landmark frames. No remote images.</summary>
@@ -121,7 +123,7 @@ public sealed class UserPreferences
     /// <summary>Self-confirmed Premium access, not verifiable through YouTube Music.</summary>
     public bool RelaxationYouTubeMusicPremiumConfirmed { get; set; }
     public string RelaxationYouTubeMusicPlaylistUrl { get; set; } = "";
-    public List<string> FocusRegions { get; set; } = ["hát", "csípő", "törzs"];
+    public List<string> FocusRegions { get; set; } = ["back", "pelvis_hip", "lower_back", "abdomen"];
     public List<string> PreferredCategories { get; set; } = ["mobilizálás", "nyújtás", "erősítés"];
     public List<string> AvailableEquipment { get; set; } = [];
     public List<string> ExcludedExercises { get; set; } = [];

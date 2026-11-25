@@ -6,7 +6,7 @@ namespace Mozdulj.Maui.Pages;
 internal static class ChoiceChips
 {
     public static FlexLayout Create(IEnumerable<string> options, List<string> selected,
-        Action<List<Action>>? registerRefresh = null)
+        Action<List<Action>>? registerRefresh = null, Func<string,string>? label = null, Action? changed = null)
     {
         var layout = new FlexLayout
         {
@@ -22,7 +22,7 @@ internal static class ChoiceChips
             var item = option;
             var chip = new Button
             {
-                Text = item,
+                Text = label?.Invoke(item) ?? item,
                 FontSize = 12,
                 FontAttributes = FontAttributes.Bold,
                 CornerRadius = 15,
@@ -40,7 +40,7 @@ internal static class ChoiceChips
                 chip.BackgroundColor = active ? UI.PrimaryButton : UI.Lavender;
                 chip.TextColor = active ? Colors.White : UI.Ink;
                 chip.BorderColor = UI.HighContrast ? UI.Outline : active ? UI.Purple : UI.Outline;
-                SemanticProperties.SetDescription(chip, item + (active ? ", kiválasztva" : ", nincs kiválasztva"));
+                SemanticProperties.SetDescription(chip, chip.Text + (Mozdulj.Core.AppLocalization.IsEnglish ? (active ? ", selected" : ", not selected") : (active ? ", kiválasztva" : ", nincs kiválasztva")));
             }
             chip.Clicked += (_, _) =>
             {
@@ -48,6 +48,7 @@ internal static class ChoiceChips
                     selected.RemoveAll(x => string.Equals(x, item, StringComparison.OrdinalIgnoreCase));
                 else selected.Add(item);
                 Refresh();
+                changed?.Invoke();
             };
             Refresh();
             refreshers.Add(Refresh);

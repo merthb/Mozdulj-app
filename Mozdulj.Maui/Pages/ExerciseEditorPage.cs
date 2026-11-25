@@ -11,10 +11,11 @@ public sealed class ExerciseEditorPage : ContentPage
     private readonly Exercise _draft;
     private readonly Entry _name = new() { Placeholder = "Gyakorlat neve" };
     private readonly Picker _category = new() { Title = "Mozgástípus" };
-    private readonly Entry _regions = new() { Placeholder = "pl. váll, hát" };
-    private readonly VerticalStackLayout _newRegionGroups = new() { Spacing = 6 };
-    private readonly Dictionary<string, Picker> _regionGroupPickers = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, string> _regionGroupChoices = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _areas = [];
+    private readonly List<string> _details = [];
+    private readonly List<string> _legacyDetails = [];
+    private readonly VerticalStackLayout _detailChoices = new() { Spacing = 6 };
+    private readonly Label _areaSummary = UI.Label("", 13, color:UI.Muted);
     private readonly Picker _phase = new() { Title = "Edzésfázis" };
     private readonly Picker _difficulty = new() { Title = "Nehézség" };
     private readonly Picker _measure = new() { Title = "Mérés típusa" };
@@ -51,9 +52,9 @@ public sealed class ExerciseEditorPage : ContentPage
         _measure.Items.Add("Ismétlés"); _measure.Items.Add("Idő");
         _name.Text = _draft.Name;
         _category.SelectedIndex = Array.IndexOf(ExerciseLibraryRules.Categories,_draft.Category);
-        _regions.Text = string.Join(", ",_draft.Regions);
-        foreach (var pair in _draft.RegionGroups) _regionGroupChoices[pair.Key] = pair.Value;
-        _regions.TextChanged += (_, _) => RefreshRegionGroups();
+        _details.AddRange(_draft.Regions.Select(RegionTaxonomy.FindDetail).OfType<RegionDetail>().Select(d=>d.Key).Distinct());
+        _legacyDetails.AddRange(_draft.Regions.Where(r=>!RegionTaxonomy.IsDetail(r)));
+        _areas.AddRange(RegionTaxonomy.AreaIds(_details));
         _phase.SelectedIndex = Array.IndexOf(ExerciseLibraryRules.Phases,_draft.Phase);
         _difficulty.SelectedIndex = Math.Clamp(_draft.Difficulty-1,0,2);
         _measure.SelectedIndex = _draft.Measure=="time"?1:0;
@@ -89,9 +90,20 @@ public sealed class ExerciseEditorPage : ContentPage
         _content.Children.Add(UI.Label("Alapadatok",20,true));
         _content.Children.Add(Field("Gyakorlat neve *",_name));
         _content.Children.Add(Field("Mozgástípus *",_category));
-        _content.Children.Add(Field("Érintett testtájak * (vesszővel)",_regions));
-        _content.Children.Add(_newRegionGroups);
-        RefreshRegionGroups();
+        _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Affected body areas *" : "Érintett testtájak *", 13, true));
+        foreach (var group in new[] { "upper", "lower", "full" })
+        {
+            _content.Children.Add(UI.Label(RegionTaxonomy.GroupLabel(group), 13, true));
+            _content.Children.Add(ChoiceChips.Create(RegionTaxonomy.Areas.Where(a=>a.Group==group).Select(a=>a.Id),
+                _areas, label: RegionTaxonomy.AreaLabel, changed: RefreshDetails));
+        }
+        _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Detailed body parts *" : "Részletes testrészek *", 13, true));
+        _content.Children.Add(_detailChoices);
+        _content.Children.Add(_areaSummary);
+        if (_legacyDetails.Count > 0)
+            _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Legacy parts — choose replacements before saving: " :
+                "Korábbi egyedi testtájak – mentés előtt válassz megfelelő elemeket: ") + string.Join(", ", _legacyDetails), 13, color:UI.Muted));
+        RefreshDetails();
         _content.Children.Add(Field("Edzésfázis *",_phase));
         _content.Children.Add(Field("Nehézség *",_difficulty));
         _content.Children.Add(Field("Mérés típusa *",_measure));
@@ -129,39 +141,36 @@ public sealed class ExerciseEditorPage : ContentPage
         ? "Nincs 3D ábra; ez nem akadálya az aktiválásnak."
         : $"{_draft.Pose.Rig3D.Frames.Count} 3D fázis · preset: {_draft.Pose.Rig3D.Preset}";
 
-    private void RefreshRegionGroups()
+    private void RefreshDetails()
     {
-        foreach (var (region, picker) in _regionGroupPickers)
-            if (picker.SelectedIndex >= 0)
-                _regionGroupChoices[region] = picker.SelectedIndex == 0
-                    ? RegionClassification.Upper : RegionClassification.Lower;
-        _regionGroupPickers.Clear();
-        _newRegionGroups.Children.Clear();
-        foreach (var region in Csv(_regions.Text).Where(r => RegionClassification.BuiltInGroup(r) is null))
+        var allowed = _areas.SelectMany(RegionTaxonomy.DetailsForArea).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _details.RemoveAll(d => !allowed.Contains(d));
+        _detailChoices.Children.Clear();
+        // Render a shared detail once even if it belongs to several selected areas.
+        foreach (var area in RegionTaxonomy.Areas.Where(a => _areas.Contains(a.Id)))
         {
-            var picker = new Picker { Title = "Válassz testtájcsoportot *" };
-            picker.Items.Add(RegionClassification.Upper);
-            picker.Items.Add(RegionClassification.Lower);
-            if (_regionGroupChoices.TryGetValue(region, out var chosen))
-                picker.SelectedIndex = chosen == RegionClassification.Upper ? 0
-                    : chosen == RegionClassification.Lower ? 1 : -1;
-            _regionGroupPickers[region] = picker;
-            _newRegionGroups.Children.Add(Field($"Új testtáj: {region} – besorolás *", picker));
+            var earlier = RegionTaxonomy.Areas.TakeWhile(a=>a.Id!=area.Id).Where(a=>_areas.Contains(a.Id))
+                .SelectMany(a=>a.Details).Select(d=>d.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var keys = area.Details.Select(d=>d.Key).Where(d=>!earlier.Contains(d)).ToList();
+            if (keys.Count == 0) continue;
+            _detailChoices.Children.Add(UI.Label(RegionTaxonomy.AreaLabel(area.Id), 13, true));
+            _detailChoices.Children.Add(ChoiceChips.Create(keys, _details, label: RegionTaxonomy.DetailLabel, changed: UpdateAreaSummary));
         }
+        UpdateAreaSummary();
+    }
+
+    private void UpdateAreaSummary()
+    {
+        _areaSummary.Text = (AppLocalization.IsEnglish ? "Derived areas: " : "Testrészekhez rendelt testtájak: ") +
+            RegionTaxonomy.AreaLabels(_details);
     }
 
     private void Gather()
     {
         _draft.Name=_name.Text?.Trim()??"";
         _draft.Category=_category.SelectedItem?.ToString()??"";
-        _draft.Regions=Csv(_regions.Text);
-        foreach (var (region, picker) in _regionGroupPickers)
-            if (picker.SelectedIndex >= 0)
-                _regionGroupChoices[region] = picker.SelectedIndex == 0
-                    ? RegionClassification.Upper : RegionClassification.Lower;
-        _draft.RegionGroups = _draft.Regions
-            .Where(r => RegionClassification.BuiltInGroup(r) is null && _regionGroupChoices.ContainsKey(r))
-            .ToDictionary(r => r, r => _regionGroupChoices[r], StringComparer.OrdinalIgnoreCase);
+        _draft.Regions = _details.ToList();
+        _draft.RegionGroups = new(StringComparer.OrdinalIgnoreCase);
         _draft.Phase=(_phase.SelectedIndex>=0 && _phase.SelectedIndex<3)?ExerciseLibraryRules.Phases[_phase.SelectedIndex]:"";
         _draft.Difficulty=_difficulty.SelectedIndex+1;
         _draft.Measure=_measure.SelectedIndex==1?"time":"reps";
@@ -188,14 +197,12 @@ public sealed class ExerciseEditorPage : ContentPage
     private async Task Save(string status)
     {
         Gather();
-        var missingGroups = _draft.Regions.Where(r => RegionClassification.BuiltInGroup(r) is null &&
-            (!_draft.RegionGroups.TryGetValue(r, out var group) ||
-             group is not (RegionClassification.Upper or RegionClassification.Lower))).ToList();
-        if (missingGroups.Count > 0)
+        var derived = RegionTaxonomy.AreaIds(_details);
+        if (_areas.Any(id => !derived.Contains(id)) || (_legacyDetails.Count > 0 && _details.Count == 0))
         {
-            await DisplayAlertAsync("Testtáj besorolása szükséges",
-                "Az új testtájaknál válassz Felsőtest vagy Alsótest csoportot: " + string.Join(", ", missingGroups),
-                "Rendben");
+            await DisplayAlertAsync(AppLocalization.IsEnglish ? "Choose detailed body parts" : "Válassz részletes testrészeket",
+                AppLocalization.IsEnglish ? "Select at least one detailed part for every chosen area." :
+                    "Minden kijelölt testtájhoz válassz legalább egy részletes testrészt.", AppLocalization.Text("OK"));
             return;
         }
         if(status==LibraryStatuses.Active)

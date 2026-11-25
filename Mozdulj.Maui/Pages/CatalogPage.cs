@@ -18,7 +18,8 @@ public sealed class CatalogPage : ContentPage
     private readonly AppState _state;
     private readonly SearchBar _search = new() { Placeholder = "Gyakorlat vagy testtáj…" };
     private readonly Picker _category = new() { Title = "Mozgástípus" };
-    private readonly Picker _region = new() { Title = "Érintett testtáj" };
+    private readonly Picker _region = new() { Title = AppLocalization.IsEnglish ? "Body area" : "Testtáj" };
+    private readonly Picker _detailRegion = new() { Title = AppLocalization.IsEnglish ? "Detailed body part" : "Részletes testrész" };
     private readonly Picker _origin = new() { Title = "Forrás / állapot" };
     private readonly Switch _favoritesOnly = new();
     private readonly Switch _availableOnly = new();
@@ -48,6 +49,7 @@ public sealed class CatalogPage : ContentPage
         _search.TextChanged += (_,_) => DebounceSearch();
         _category.SelectedIndexChanged += (_,_) => RefreshMatches();
         _region.SelectedIndexChanged += (_,_) => RefreshMatches();
+        _detailRegion.SelectedIndexChanged += (_,_) => RefreshMatches();
         _origin.SelectedIndexChanged += (_,_) => RefreshMatches();
         _favoritesOnly.Toggled += (_,_) => RefreshMatches();
         _availableOnly.Toggled += (_,_) => RefreshMatches();
@@ -132,10 +134,12 @@ public sealed class CatalogPage : ContentPage
                             new RowDefinition {Height=GridLength.Auto}}};
         void Cell(View view,int column,int row) {Grid.SetColumn(view,column);Grid.SetRow(view,row);filterGrid.Children.Add(view);}
         Cell(UI.Label("Mozgástípus",12,true,color:UI.Muted),0,0);
-        Cell(UI.Label("Érintett testtáj",12,true,color:UI.Muted),1,0);
+        Cell(UI.Label(AppLocalization.IsEnglish ? "Body area" : "Testtáj",12,true,color:UI.Muted),1,0);
         Cell(_category,0,1);Cell(_region,1,1);
         Cell(UI.Label("Forrás és állapot",12,true,color:UI.Muted),0,2);
         Cell(_origin,0,3);
+        Cell(UI.Label(AppLocalization.IsEnglish ? "Detailed body part" : "Részletes testrész",12,true,color:UI.Muted),1,2);
+        Cell(_detailRegion,1,3);
         filterPanel.Children.Add(filterGrid);
         var switches=new HorizontalStackLayout {Spacing=12};
         switches.Children.Add(FilterRow(_availableOnly,"Elérhető eszköz"));
@@ -234,9 +238,10 @@ public sealed class CatalogPage : ContentPage
             UpdatePickerItems(_category,
                 ["Összes mozgástípus", .._librarySnapshot.Select(x => x.Exercise.Category)
                     .Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().OrderBy(x => x)]);
-            UpdatePickerItems(_region,
-                ["Összes testtáj", .._librarySnapshot.SelectMany(x => x.Exercise.Regions)
-                    .Distinct().OrderBy(x => x)]);
+            UpdatePickerItems(_region, [AppLocalization.IsEnglish ? "All body areas" : "Összes testtáj",
+                ..RegionTaxonomy.Areas.Select(a=>RegionTaxonomy.AreaLabel(a.Id))]);
+            UpdatePickerItems(_detailRegion, [AppLocalization.IsEnglish ? "All body parts" : "Összes testrész",
+                ..RegionTaxonomy.Details.Select(d=>RegionTaxonomy.DetailLabel(d.Key))]);
         }
         finally { _refreshing = false; }
         return true;
@@ -289,7 +294,8 @@ public sealed class CatalogPage : ContentPage
             _items.RemainingItemsThreshold = -1;
             var query = _search.Text?.Trim() ?? "";
             var category = _category.SelectedItem?.ToString() ?? "Összes mozgástípus";
-            var region = _region.SelectedItem?.ToString() ?? "Összes testtáj";
+            var region = _region.SelectedIndex > 0 ? RegionTaxonomy.Areas[_region.SelectedIndex-1].Id : null;
+            var detail = _detailRegion.SelectedIndex > 0 ? RegionTaxonomy.Details[_detailRegion.SelectedIndex-1].Key : null;
             var source = _origin.SelectedItem?.ToString() ?? "Minden gyakorlat";
             var favorites = _state.Data.FavoriteIds.ToHashSet(StringComparer.Ordinal);
             var changedFavorites = new HashSet<string>(_lastFavorites, StringComparer.Ordinal);
@@ -297,7 +303,8 @@ public sealed class CatalogPage : ContentPage
             var equipment = _state.Preferences.AvailableEquipment.ToHashSet(StringComparer.Ordinal);
             _matches = _librarySnapshot.Where(x =>
                 (category == "Összes mozgástípus" || x.Exercise.Category == category) &&
-                (region == "Összes testtáj" || x.Exercise.Regions.Contains(region)) &&
+                (region is null || RegionTaxonomy.Matches(x.Exercise,region)) &&
+                (detail is null || RegionTaxonomy.Matches(x.Exercise,detail)) &&
                 CatalogSearch.MatchesText(x.Exercise, query) &&
                 (!_favoritesOnly.IsToggled || favorites.Contains(x.Exercise.Id)) &&
                 (!_availableOnly.IsToggled || x.Exercise.Equipment.All(equipment.Contains)) &&
@@ -356,7 +363,7 @@ public sealed class CatalogPage : ContentPage
         var description = new VerticalStackLayout { Spacing=3, Children=
         {
             UI.Label(string.IsNullOrWhiteSpace(exercise.Name)?"Névtelen piszkozat":exercise.Name,15,true),
-            UI.Label($"{exercise.Category} · {exercise.RegionLabel}",12,color:UI.Muted),
+            UI.Label($"{exercise.Category} · {exercise.RegionAreaLabel}",12,color:UI.Muted),
             UI.Label($"{(row.BuiltIn?"Alap":"Saját")} · {StatusText(row.Status)} · {exercise.TargetLabel}",11,color:UI.Teal)
         }};
         layout.Children.Add(description);

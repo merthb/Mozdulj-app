@@ -40,6 +40,9 @@ public static class LocalDataMigrations
         data.Preferences.AvailableEquipment ??= [];
         data.Preferences.AvailableEquipment.RemoveAll(x =>
             string.Equals(x, "törölköző", StringComparison.OrdinalIgnoreCase));
+        data.Preferences.FocusRegions = RegionTaxonomy.NormalizeFocus(data.Preferences.FocusRegions);
+        if (data.DeferredTodayPreferences is not null)
+            data.DeferredTodayPreferences.FocusRegions = RegionTaxonomy.NormalizeFocus(data.DeferredTodayPreferences.FocusRegions);
         data.ApplicationLanguage = AppLanguage.AfterUpgrade(data.ApplicationLanguage, data.OnboardingCompleted);
         data.SchemaVersion = CurrentVersion;
         return data;

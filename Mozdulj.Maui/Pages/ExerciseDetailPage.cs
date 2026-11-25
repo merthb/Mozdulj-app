@@ -20,7 +20,9 @@ public sealed class ExerciseDetailPage : ContentPage
         _content.Children.Clear();
         var e=_state.FindExercise(_exercise.Id) ?? _exercise;
         _content.Children.Add(UI.Label(e.Name,26,true));
-        _content.Children.Add(UI.Label($"{e.Category} · {e.RegionLabel} · {e.TargetLabel}",14,color:UI.Muted));
+        _content.Children.Add(UI.Label($"{e.Category} · {e.TargetLabel}",14,color:UI.Muted));
+        _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Body areas: " : "Testtájak: ") + e.RegionAreaLabel, 14, true));
+        _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Detailed body parts: " : "Részletes testrészek: ") + e.RegionLabel, 13, color:UI.Muted));
         // Editing is deliberately absent from workout previews and workout playback.
         if (_fromCatalog)
         {
