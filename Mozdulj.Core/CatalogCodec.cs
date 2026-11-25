@@ -17,25 +17,25 @@ public static class CatalogCodec
     public static ExerciseCatalog Parse(string json)
     {
         var catalog = JsonSerializer.Deserialize<ExerciseCatalog>(json, JsonOptions)
-            ?? throw new InvalidDataException("Üres vagy olvashatatlan katalógus.");
+            ?? throw new InvalidDataException(AppLocalization.Text("Validation079"));
         Validate(catalog);
         return catalog;
     }
 
     public static void Validate(ExerciseCatalog catalog)
     {
-        if (catalog.SchemaVersion != 3) throw new InvalidDataException("Nem támogatott katalógusséma (v3 szükséges, pózadatokkal).");
+        if (catalog.SchemaVersion != 3) throw new InvalidDataException(AppLocalization.Text("Validation080"));
         if (catalog.CatalogVersion < 1 || catalog.Exercises == null || catalog.Exercises.Count == 0)
-            throw new InvalidDataException("A katalógus verziója vagy tartalma hibás.");
+            throw new InvalidDataException(AppLocalization.Text("Validation081"));
         var allowed = new HashSet<string> { "mobilizálás", "erősítés", "nyújtás", "egyensúly", "relaxáció", "átmozgatás", "légzőgyakorlat" };
         if(catalog.ResetContentOverridesOnUpgrade is null ||
             catalog.ResetContentOverridesOnUpgrade.Distinct(StringComparer.Ordinal).Count()!=catalog.ResetContentOverridesOnUpgrade.Count)
-            throw new InvalidDataException("Hibás korrektúra-visszaállítási lista.");
+            throw new InvalidDataException(AppLocalization.Text("Validation082"));
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var e in catalog.Exercises)
         {
             if (string.IsNullOrWhiteSpace(e.Id) || !ids.Add(e.Id))
-                throw new InvalidDataException($"Hiányzó/duplikált azonosító: {e.Id}");
+                throw new InvalidDataException(AppLocalization.Format("Validation119", e.Id));
             if (e.Revision < 1 || string.IsNullOrWhiteSpace(e.Name) ||
                 !allowed.Contains(e.Category) || e.Regions == null || e.Regions.Count == 0 ||
                 e.Regions.Any(string.IsNullOrWhiteSpace) || e.Difficulty is < 1 or > 3 ||
@@ -43,22 +43,23 @@ public static class CatalogCodec
                 e.Equipment == null || e.Steps == null || e.Steps.Count < 3 ||
                 e.Steps.Any(string.IsNullOrWhiteSpace) || string.IsNullOrWhiteSpace(e.StartingPosition) ||
                 string.IsNullOrWhiteSpace(e.SafetyNote))
-                throw new InvalidDataException($"Hiányos gyakorlat: {e.Id}");
+                throw new InvalidDataException(AppLocalization.Format("Validation120", e.Id));
             if (e.Measure == "time")
             {
-                if (e.TargetSeconds is null or <= 0 || e.RepTargets.Count != 0)
-                    throw new InvalidDataException($"Hibás időcél: {e.Id}");
+                if (e.TargetSeconds is null or <= 0 || e.RepTargets.Count != 0 ||
+                    (e.TimeTargets is not null && (!TimedTargets.IsValid(e.TargetSeconds,e.TimeTargets) || e.EstimatedSeconds < e.TargetSeconds)))
+                    throw new InvalidDataException(AppLocalization.Format("Validation121", e.Id));
             }
             else if (e.Measure == "reps")
             {
-                if (e.TargetSeconds != null || e.RepTargets.Count == 0 ||
+                if (e.TargetSeconds != null || e.TimeTargets is not null || e.RepTargets.Count == 0 ||
                     e.RepTargets.Any(r => r.Count <= 0 || string.IsNullOrWhiteSpace(r.Label)))
-                    throw new InvalidDataException($"Hibás ismétléscél: {e.Id}");
+                    throw new InvalidDataException(AppLocalization.Format("Validation122", e.Id));
             }
-            else throw new InvalidDataException($"Ismeretlen mérés: {e.Id}");
+            else throw new InvalidDataException(AppLocalization.Format("Validation123", e.Id));
             PoseValidator.Validate(e.Pose,e.Id);
         }
         if(catalog.ResetContentOverridesOnUpgrade.Any(id=>!ids.Contains(id)))
-            throw new InvalidDataException("Kiadási reset-lista ismeretlen gyakorlatot tartalmaz.");
+            throw new InvalidDataException(AppLocalization.Text("Validation083"));
     }
 }

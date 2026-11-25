@@ -14,14 +14,14 @@ internal static class BackupRestoreFlow
     {
         var chosen = await FilePicker.Default.PickAsync(new PickOptions
         {
-            PickerTitle = "Válassz teljes Mozdulj! mentést"
+            PickerTitle = AppLocalization.Text("SettingsUi067")
         });
         if (chosen is null) return false;
 
-        if (!await page.DisplayAlertAsync("Teljes adatvisszaállítás?",
-            "A mentés visszatölti a profilt, saját gyakorlatokat és előzményeket. " +
-            "A jelenlegi adataid változhatnak. Csak saját mentést válassz!",
-            "Visszaállítás", "Mégse")) return false;
+        if (!await page.DisplayAlertAsync(AppLocalization.Text("SettingsUi068"),
+            AppLocalization.Text("SettingsUi069") +
+            AppLocalization.Text("SettingsUi070"),
+            AppLocalization.Text("WorkoutUi096"), AppLocalization.Text("Cancel"))) return false;
 
         // Preserve the exact selected bytes for both attempts. Do not reopen a
         // file after user confirmation, since its contents might have changed.
@@ -34,7 +34,7 @@ internal static class BackupRestoreFlow
             while ((count = await input.ReadAsync(buffer.AsMemory())) > 0)
             {
                 if (memory.Length + count > LocalBackupCodec.MaxBackupBytes)
-                    throw new InvalidDataException("A mentés túllépi a méretkorlátot.");
+                    throw new InvalidDataException(AppLocalization.Text("SettingsUi071"));
                 await memory.WriteAsync(buffer.AsMemory(0, count));
             }
             bytes = memory.ToArray();
@@ -51,25 +51,25 @@ internal static class BackupRestoreFlow
             // The old key can disappear during uninstall. A corrupted or
             // altered backup could cause the *same* mismatch, so never silently
             // bypass authentication or reimport without an informed opt-in.
-            if (!await page.DisplayAlertAsync("Régi mentés – ellenőrizetlen aláírás",
-                "A mentés titkos hitelesítése nem egyezik a jelenlegi telepítésével. " +
-                "Ez előfordulhat újratelepítés után, de módosított fájl esetén is. " +
-                "Az eredeti aláírás hitelessége így NEM ellenőrizhető. " +
-                "Csak akkor folytasd, ha a fájl a saját, megbízható mentésed! " +
-                "A fájl adatait és szerkezetét továbbra is ellenőrizzük.",
-                "Visszaállítás így is", "Mégse")) return false;
+            if (!await page.DisplayAlertAsync(AppLocalization.Text("SettingsUi072"),
+                AppLocalization.Text("SettingsUi073") +
+                AppLocalization.Text("SettingsUi074") +
+                AppLocalization.Text("SettingsUi075") +
+                AppLocalization.Text("SettingsUi076") +
+                AppLocalization.Text("SettingsUi077"),
+                AppLocalization.Text("SettingsUi078"), AppLocalization.Text("Cancel"))) return false;
             using var recoveryStream = new MemoryStream(bytes, writable: false);
             await state.RestoreUserBackupAsync(recoveryStream, recoveryAfterReinstall: true);
             restoredWithoutKey = true;
         }
 
         var details = restoredWithoutKey
-            ? "A régi profil és haladás betöltődött. Készíts új teljes adatmentést a Profil oldalon: az már az új telepítés kulcsával lesz hitelesítve."
-            : "A hitelesített mentésből a korábbi profil és haladás betöltődött.";
+            ? AppLocalization.Text("SettingsUi079")
+            : AppLocalization.Text("SettingsUi080");
         var check = state.LastAudioRestoreCheck;
         if (check is { RemovedCount: > 0 })
-            details += $"\n\n{check.RemovedCount} saját zenefájl nem található vagy nem olvasható, ezért nem került be a listába. " +
-                "A meglévő zenék megmaradtak. A hiányzó fájlokat a Profil szerkesztése oldalon választhatod ki újra.";
+            details += AppLocalization.Format("SettingsUi121", check.RemovedCount) +
+                AppLocalization.Text("SettingsUi081");
 #if ANDROID
         if (state.Preferences.DailyReminderEnabled)
         {
@@ -79,32 +79,32 @@ internal static class BackupRestoreFlow
                     Mozdulj.Maui.Platforms.Android.StreakNotificationPermission>();
                 if (permission != Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
                 {
-                    details += "\n\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.";
-                    if (await page.DisplayAlertAsync("Emlékeztető engedélye",
-                        "A visszaállított napi emlékeztetőhöz engedélyezed az értesítéseket?", "Engedélyezés", "Most nem"))
+                    details += AppLocalization.Text("SettingsUi122");
+                    if (await page.DisplayAlertAsync(AppLocalization.Text("SettingsUi082"),
+                        AppLocalization.Text("SettingsUi083"), AppLocalization.Text("SettingsUi084"), AppLocalization.Text("SettingsUi085")))
                     {
                         permission = await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<
                             Mozdulj.Maui.Platforms.Android.StreakNotificationPermission>();
                         if (permission == Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
                         {
                             details = details.Replace(
-                                "\n\nAz értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.", "");
+                                AppLocalization.Text("SettingsUi122"), "");
                         }
                     }
                 }
             }
             catch (Exception)
             {
-                details += "\n\nAz emlékeztető engedélyét nem sikerült ellenőrizni. Ellenőrizd az alkalmazás értesítési engedélyét a telefon beállításaiban.";
+                details += AppLocalization.Text("SettingsUi123");
             }
         }
         if (state.Preferences.RelaxationMusicEnabled &&
             state.Preferences.RelaxationMusicSource == RelaxationAudioReferences.YouTubeMusic &&
             (!YouTubeMusicSupport.IsInstalled() ||
              !state.Preferences.RelaxationYouTubeMusicPremiumConfirmed))
-            details += "\n\nA YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást és a Premium-beállítást a Profil oldalon.";
+            details += AppLocalization.Text("SettingsUi124");
 #endif
-        await page.DisplayAlertAsync("Visszaállítás eredménye", details, "Rendben");
+        await page.DisplayAlertAsync(AppLocalization.Text("SettingsUi086"), details, AppLocalization.Text("OK"));
         return true;
     }
 }

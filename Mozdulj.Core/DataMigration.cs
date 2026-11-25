@@ -11,7 +11,7 @@ public static class LocalDataMigrations
     public static LocalData Upgrade(LocalData data)
     {
         if (data.SchemaVersion is < 1 or > CurrentVersion)
-            throw new InvalidDataException($"Ismeretlen felhasználói sémaverzió: {data.SchemaVersion}");
+            throw new InvalidDataException(AppLocalization.Format("Validation124", data.SchemaVersion));
         if (data.SchemaVersion == 1)
         {
             data.Preferences ??= new UserPreferences();
@@ -40,6 +40,10 @@ public static class LocalDataMigrations
         data.Preferences.AvailableEquipment ??= [];
         data.Preferences.AvailableEquipment.RemoveAll(x =>
             string.Equals(x, "törölköző", StringComparison.OrdinalIgnoreCase));
+        data.Preferences.FocusRegions = RegionTaxonomy.NormalizeFocus(data.Preferences.FocusRegions);
+        if (data.DeferredTodayPreferences is not null)
+            data.DeferredTodayPreferences.FocusRegions = RegionTaxonomy.NormalizeFocus(data.DeferredTodayPreferences.FocusRegions);
+        data.ApplicationLanguage = AppLanguage.AfterUpgrade(data.ApplicationLanguage, data.OnboardingCompleted);
         data.SchemaVersion = CurrentVersion;
         return data;
     }
@@ -75,7 +79,7 @@ public static class BackupIntegrity
         Encoding.UTF8.GetBytes(JsonSerializer.Serialize(data, CatalogCodec.JsonOptions));
     public static byte[] Sign(LocalData data, byte[] key)
     {
-        if (key.Length != 32) throw new InvalidDataException("Hibás mentés-hitelesítő kulcs.");
+        if (key.Length != 32) throw new InvalidDataException(AppLocalization.Text("Validation090"));
         var envelope = new FullBackup { Data=data, IntegrityAlgorithm=Algorithm,
             Integrity=Convert.ToBase64String(HMACSHA256.HashData(key, Payload(data))) };
         return Encoding.UTF8.GetBytes(JsonSerializer.Serialize(envelope, CatalogCodec.JsonOptions));
@@ -84,10 +88,10 @@ public static class BackupIntegrity
     {
         if (key.Length != 32 || backup.IntegrityAlgorithm != Algorithm ||
             string.IsNullOrWhiteSpace(backup.Integrity))
-            throw new InvalidDataException("Ez a mentés nem tartalmaz ellenőrizhető hitelesítést. A haladás nem tölthető vissza.");
+            throw new InvalidDataException(AppLocalization.Text("Validation091"));
         byte[] actual;
         try { actual=Convert.FromBase64String(backup.Integrity); }
-        catch (FormatException) { throw new InvalidDataException("A mentés hitelesítése sérült."); }
+        catch (FormatException) { throw new InvalidDataException(AppLocalization.Text("Validation092")); }
         var expected=HMACSHA256.HashData(key, Payload(backup.Data));
         if (!CryptographicOperations.FixedTimeEquals(actual, expected))
             throw new BackupSignatureMismatchException(
@@ -126,11 +130,11 @@ public static class LocalBackupCodec
         try
         {
             if (Convert.FromBase64String(envelope.Integrity).Length != 32)
-                throw new InvalidDataException("Érvénytelen mentés-hitelesítési mező.");
+                throw new InvalidDataException(AppLocalization.Text("Validation093"));
         }
         catch (FormatException)
         {
-            throw new InvalidDataException("A mentés hitelesítési mezője sérült.");
+            throw new InvalidDataException(AppLocalization.Text("Validation094"));
         }
         // We cannot verify the original HMAC without the removed install's key.
         // Manual user confirmation is required by the UI before calling here.
@@ -140,12 +144,12 @@ public static class LocalBackupCodec
     private static FullBackup ReadEnvelope(string json)
     {
         if (Encoding.UTF8.GetByteCount(json) > MaxBackupBytes)
-            throw new InvalidDataException("Túl nagy biztonsági mentés.");
+            throw new InvalidDataException(AppLocalization.Text("Validation095"));
         var envelope = JsonSerializer.Deserialize<FullBackup>(json, CatalogCodec.JsonOptions)
-            ?? throw new InvalidDataException("Üres biztonsági mentés.");
+            ?? throw new InvalidDataException(AppLocalization.Text("Validation096"));
         if (envelope.Format != "mozdulj.user-backup.v1" ||
             envelope.BackupVersion != 1 || envelope.Data is null)
-            throw new InvalidDataException("Ismeretlen mentési formátum.");
+            throw new InvalidDataException(AppLocalization.Text("Validation097"));
         return envelope;
     }
 
@@ -153,13 +157,13 @@ public static class LocalBackupCodec
     {
         data = LocalDataMigrations.Upgrade(data);
         if (data.Preferences is null || string.IsNullOrWhiteSpace(data.Preferences.UserId))
-            throw new InvalidDataException("A mentésben nincs érvényes profilazonosító.");
+            throw new InvalidDataException(AppLocalization.Text("Validation098"));
         var builtIds = installedBase.Exercises.Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
         if (data.DisabledBuiltInIds.Any(id => !builtIds.Contains(id)))
-            throw new InvalidDataException("A mentésben ismeretlen kikapcsolt alapgyakorlat található.");
+            throw new InvalidDataException(AppLocalization.Text("Validation099"));
         if (data.BuiltInContentOverrides.Select(x => x.ExerciseId)
             .Distinct(StringComparer.Ordinal).Count() != data.BuiltInContentOverrides.Count)
-            throw new InvalidDataException("Duplikált alapgyakorlat-korrektúra.");
+            throw new InvalidDataException(AppLocalization.Text("Validation069"));
         foreach (var patch in data.BuiltInContentOverrides)
             BuiltInContentRules.Validate(patch, installedBase);
         ExerciseLibraryRules.BuildEffectiveCatalog(installedBase, data);

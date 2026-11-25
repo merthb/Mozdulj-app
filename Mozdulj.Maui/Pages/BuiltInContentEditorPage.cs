@@ -17,7 +17,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
     private readonly Editor _mistakes = new(){ AutoSize=EditorAutoSizeOption.TextChanges };
     private readonly Editor _safety = new(){ AutoSize=EditorAutoSizeOption.TextChanges };
     private readonly Label _poseInfo=UI.Label("",13,color:UI.Muted);
-    private readonly Button _save=UI.Button("Korrektúra mentése");
+    private readonly Button _save=UI.Button(AppLocalization.Text("WorkoutUi085"));
     private bool _saving;
     private readonly bool _open3dImmediately;
     private bool _opened3d;
@@ -29,7 +29,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
             ?? throw new InvalidOperationException("Ismeretlen alapgyakorlat.");
         var effective=state.GetBuiltInEffective(exerciseId);
         _draft=BuiltInContentRules.FromExercise(effective);
-        UI.Setup(this,"Alapgyakorlat korrektúrája");
+        UI.Setup(this,AppLocalization.Text("WorkoutUi086"));
         _summary.Text=_draft.Summary;
         _position.Text=_draft.StartingPosition;
         _steps.Text=string.Join("\n",_draft.Steps);
@@ -38,16 +38,16 @@ public sealed class BuiltInContentEditorPage : ContentPage
         var body=UI.Stack();
         body.Children.Add(UI.Label(baseExercise.Name,23,true));
         body.Children.Add(UI.Label($"{baseExercise.Category} · {baseExercise.RegionLabel} · {baseExercise.TargetLabel}",13,color:UI.Teal));
-        body.Children.Add(UI.Label("A név, testtájak, nehézség, kategória, fázis, eszközök és célértékek védettek. Csak a leírás és az ábra módosítható.",13,color:UI.Muted));
-        body.Children.Add(Field("Rövid leírás *",_summary));
-        body.Children.Add(Field("Kiinduló helyzet *",_position));
-        body.Children.Add(Field("Végrehajtási lépések (soronként) *",_steps));
-        body.Children.Add(Field("Gyakori hibák",_mistakes));
-        body.Children.Add(Field("Biztonsági megjegyzés *",_safety));
-        body.Children.Add(UI.Label("Illusztráció",19,true));
+        body.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi087"),13,color:UI.Muted));
+        body.Children.Add(Field(AppLocalization.Text("WorkoutUi088"),_summary));
+        body.Children.Add(Field(AppLocalization.Text("WorkoutUi089"),_position));
+        body.Children.Add(Field(AppLocalization.Text("WorkoutUi090"),_steps));
+        body.Children.Add(Field(AppLocalization.Text("WorkoutUi050"),_mistakes));
+        body.Children.Add(Field(AppLocalization.Text("WorkoutUi091"),_safety));
+        body.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi092"),19,true));
         body.Children.Add(_poseInfo);
         UpdateFigure();
-        var draw=UI.Button("✎ 3D csontváz és eszközök szerkesztése",false);
+        var draw=UI.Button(AppLocalization.Text("WorkoutUi080"),false);
         draw.Clicked+=async (_,_)=>await Navigation.PushAsync(new Rig3DEditorPage(_draft.Pose,p=>
         {
             _draft.Pose=BuiltInContentRules.ClonePose(p);
@@ -56,19 +56,19 @@ public sealed class BuiltInContentEditorPage : ContentPage
         body.Children.Add(draw);
         if(state.HasBuiltInContentOverride(exerciseId))
         {
-            var reset=UI.Button("Eredeti leírás és ábra visszaállítása",false);
+            var reset=UI.Button(AppLocalization.Text("WorkoutUi093"),false);
             reset.Clicked+=async (_,_)=>
             {
-                if(!await DisplayAlertAsync("Eredeti tartalom visszaállítása?",
-                    "A helyi korrektúra törlődik. A beépített gyakorlat eredeti szövege és ábrája visszaáll.",
-                    "Visszaállítás","Mégse"))return;
+                if(!await DisplayAlertAsync(AppLocalization.Text("WorkoutUi094"),
+                    AppLocalization.Text("WorkoutUi095"),
+                    AppLocalization.Text("WorkoutUi096"),AppLocalization.Text("Cancel")))return;
                 try{await _state.ResetBuiltInContentAsync(exerciseId);await Navigation.PopModalAsync();}
-                catch(Exception ex){await DisplayAlertAsync("Nem sikerült",ex.Message,"Rendben");}
+                catch(Exception ex){await DisplayAlertAsync(AppLocalization.Text("WorkoutUi030"),ex.Message,AppLocalization.Text("OK"));}
             };
             body.Children.Add(reset);
         }
         _save.Clicked+=async (_,_)=>await SaveAsync();
-        var cancel=UI.Button("Mégse",false);
+        var cancel=UI.Button(AppLocalization.Text("Cancel"),false);
         cancel.Clicked+=async (_,_)=>await Navigation.PopModalAsync();
         var footer=new Grid{BackgroundColor=UI.CardColor,Padding=new Thickness(16,10,16,14),ColumnSpacing=10,
             ColumnDefinitions={new ColumnDefinition{Width=new GridLength(1,GridUnitType.Star)},
@@ -96,8 +96,8 @@ public sealed class BuiltInContentEditorPage : ContentPage
     private static List<string> Lines(string? text) => (text??"").Split('\n',
         StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
     private void UpdateFigure() => _poseInfo.Text=_draft.Pose.Rig3D is null
-        ? "Nincs 3D ábra. Ez megengedett."
-        : $"{_draft.Pose.Rig3D.Frames.Count} fázisú 3D póz · preset: {_draft.Pose.Rig3D.Preset}";
+        ? AppLocalization.Text("WorkoutUi097")
+        : AppLocalization.Format("WorkoutUi263", _draft.Pose.Rig3D.Frames.Count, _draft.Pose.Rig3D.Preset);
     private async Task SaveAsync()
     {
         if(_saving)return;
@@ -112,7 +112,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
             await _state.SaveBuiltInContentAsync(_draft);
             await Navigation.PopModalAsync();
         }
-        catch(Exception ex){await DisplayAlertAsync("Nem menthető",ex.Message,"Rendben");}
+        catch(Exception ex){await DisplayAlertAsync(AppLocalization.Text("WorkoutUi098"),ex.Message,AppLocalization.Text("OK"));}
         finally{_save.IsEnabled=true;_saving=false;}
     }
 }

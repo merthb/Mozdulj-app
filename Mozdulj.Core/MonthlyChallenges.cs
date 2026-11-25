@@ -64,17 +64,16 @@ public static class MonthlyChallengePlanner
         var selectable = catalog.Exercises.Where(x => x.ReviewStatus != "withdrawn" &&
             x.Difficulty <= data.Preferences.MaximumDifficulty &&
             x.Equipment.All(data.Preferences.AvailableEquipment.Contains)).ToArray();
-        var focus = data.Preferences.FocusRegions.Where(x => !string.IsNullOrWhiteSpace(x) &&
-            selectable.Any(e => e.Regions.Contains(x, StringComparer.OrdinalIgnoreCase)))
-            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        var regions = focus.Length > 0 ? focus : selectable.SelectMany(x => x.Regions)
-            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray();
+        var focus = RegionTaxonomy.NormalizeFocus(data.Preferences.FocusRegions)
+            .Where(x => selectable.Any(e => RegionTaxonomy.Matches(e,x))).ToArray();
+        var regions = focus.Length > 0 ? focus : RegionTaxonomy.Areas
+            .Where(a => selectable.Any(e => RegionTaxonomy.Matches(e,a.Id))).Select(a => a.Id).ToArray();
         if (regions.Length > 0)
         {
             var region = regions[(day.Year * 12 + day.Month - 1) % regions.Length];
             var baseGoal = Math.Clamp(data.Preferences.WeeklyTargetDays * 3 + 3, 6, 20);
             month.Goals.Add(NewGoal("region", MonthlyChallengeKinds.RegionExercises, region,
-                "🎯", $"{UpperInitial(region)} fókusz", "különböző gyakorlat", baseGoal, 4, 30,
+                "🎯", $"{RegionTaxonomy.FindArea(region)!.Hungarian} fókusz", "különböző gyakorlat", baseGoal, 4, 30,
                 previous, data, catalog));
         }
 
@@ -178,8 +177,7 @@ public static class MonthlyChallengePlanner
             return goal.Kind switch
             {
                 MonthlyChallengeKinds.RegionExercises =>
-                    (record.Regions.Count > 0 ? record.Regions : exercise?.Regions ?? [])
-                    .Contains(goal.TargetKey, StringComparer.OrdinalIgnoreCase),
+                    RegionTaxonomy.Matches(record.Regions.Count > 0 ? record.Regions : exercise?.Regions ?? [], goal.TargetKey),
                 MonthlyChallengeKinds.EquipmentDays =>
                     (record.Equipment.Count > 0 ? record.Equipment : exercise?.Equipment ?? [])
                     .Contains(goal.TargetKey, StringComparer.OrdinalIgnoreCase),
