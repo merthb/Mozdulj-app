@@ -76,6 +76,18 @@ public sealed class Rig3DFrame
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public float? RightShoulderProtraction { get; set; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LeftScapulaElevation { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LeftScapulaProtraction { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LeftScapulaRotation { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? RightScapulaElevation { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? RightScapulaProtraction { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? RightScapulaRotation { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public float? RightWristDeviation { get; set; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public float? RightAnkleYaw { get; set; }
@@ -212,7 +224,7 @@ public static class Rig3DValidator
             foreach(var curl in new[]{f.LeftHandCurl,f.RightHandCurl})
                 if(curl is float amount && (!float.IsFinite(amount)||amount<0||amount>1))
                     throw new InvalidDataException(AppLocalization.Text("RigInvalidHandPose"));
-            foreach(var (angle,degrees) in new (float? Angle,int Degrees)[]{(f.PelvisPitch,30),(f.PelvisYaw,35),(f.PelvisRoll,25),(f.LumbarBend,30),(f.LumbarSideBend,25),(f.ThoracicBend,35),(f.ThoracicSideBend,25),(f.LumbarYaw,10),(f.ThoracicYaw,30),(f.CervicalPitch,30),(f.CervicalYaw,35),(f.CervicalRoll,25),(f.LeftShoulderElevation,20),(f.LeftShoulderProtraction,25),(f.LeftWristDeviation,25),(f.LeftAnkleYaw,30),(f.LeftAnkleRoll,25),(f.RightShoulderElevation,20),(f.RightShoulderProtraction,25),(f.RightWristDeviation,25),(f.RightAnkleYaw,30),(f.RightAnkleRoll,25),(f.LeftWristPitch,59),(f.RightWristPitch,59),(f.LeftPalmTurn,90),(f.RightPalmTurn,90)})
+            foreach(var (angle,degrees) in new (float? Angle,int Degrees)[]{(f.PelvisPitch,30),(f.PelvisYaw,35),(f.PelvisRoll,25),(f.LumbarBend,30),(f.LumbarSideBend,25),(f.ThoracicBend,35),(f.ThoracicSideBend,25),(f.LumbarYaw,10),(f.ThoracicYaw,30),(f.CervicalPitch,30),(f.CervicalYaw,35),(f.CervicalRoll,25),(f.LeftShoulderElevation,20),(f.LeftShoulderProtraction,25),(f.LeftWristDeviation,25),(f.LeftAnkleYaw,30),(f.LeftAnkleRoll,25),(f.RightShoulderElevation,20),(f.RightShoulderProtraction,25),(f.LeftScapulaElevation,15),(f.LeftScapulaProtraction,20),(f.LeftScapulaRotation,30),(f.RightScapulaElevation,15),(f.RightScapulaProtraction,20),(f.RightScapulaRotation,30),(f.RightWristDeviation,25),(f.RightAnkleYaw,30),(f.RightAnkleRoll,25),(f.LeftWristPitch,59),(f.RightWristPitch,59),(f.LeftPalmTurn,90),(f.RightPalmTurn,90)})
                 if(angle is float value && (!float.IsFinite(value)||Math.Abs(value)>degrees*Math.PI/180+1e-6))
                     throw new InvalidDataException(AppLocalization.Text("RigInvalidArticulation"));
             if(f.BodyPointLinks is not null)
