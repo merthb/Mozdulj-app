@@ -690,4 +690,25 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="Validation132" xml:space="preserve"><value>Hiányos referenciapontok: {0}</value></data>
   <data name="Validation133" xml:space="preserve"><value>Érvénytelen ízületi koordináta: {0}/{1}</value></data>
   <data name="Validation134" xml:space="preserve"><value>Valószínűtlen szegmenshossz: {0}/{1}-{2}</value></data>
+  <data name="RepTargets" xml:space="preserve"><value>Ismétléscélok</value></data>
+  <data name="RepCount" xml:space="preserve"><value>Darabszám</value></data>
+  <data name="RepDirection" xml:space="preserve"><value>Irány</value></data>
+  <data name="RepAdd" xml:space="preserve"><value>＋ Ismétléscél hozzáadása</value></data>
+  <data name="RepRemove" xml:space="preserve"><value>Ismétléscél eltávolítása</value></data>
+  <data name="RepLegacy" xml:space="preserve"><value>Korábbi irány: {0}. Válassz helyette a listából.</value></data>
+  <data name="RepInvalid" xml:space="preserve"><value>Minden ismétléscélhoz válassz irányt és adj meg 1–200 közötti egész darabszámot.</value></data>
+  <data name="RepImportInvalid" xml:space="preserve"><value>Az importált gyakorlat nem támogatott ismétlésirányt vagy darabszámot tartalmaz: {0}</value></data>
+  <data name="RepHelp" xml:space="preserve"><value>Az irány és a darabszám mindkét nyelven közös.</value></data>
+  <data name="RepDirection_all" xml:space="preserve"><value>ismétlés</value></data>
+  <data name="RepDirection_left" xml:space="preserve"><value>bal oldal</value></data>
+  <data name="RepDirection_right" xml:space="preserve"><value>jobb oldal</value></data>
+  <data name="RepDirection_forward" xml:space="preserve"><value>előre</value></data>
+  <data name="RepDirection_backward" xml:space="preserve"><value>hátra</value></data>
+  <data name="RepDirection_up" xml:space="preserve"><value>felfelé</value></data>
+  <data name="RepDirection_down" xml:space="preserve"><value>lefelé</value></data>
+  <data name="RepDirection_inward" xml:space="preserve"><value>befelé</value></data>
+  <data name="RepDirection_outward" xml:space="preserve"><value>kifelé</value></data>
+  <data name="RepDirection_clockwise" xml:space="preserve"><value>óramutató járásával megegyezően</value></data>
+  <data name="RepDirection_counterclockwise" xml:space="preserve"><value>óramutató járásával ellentétesen</value></data>
+  <data name="RepDirection_each_side" xml:space="preserve"><value>oldalanként</value></data>
 </root>

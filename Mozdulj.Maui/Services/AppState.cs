@@ -755,6 +755,9 @@ public sealed class AppState
 
     public async Task SaveCustomExerciseAsync(Exercise draft, string status)
     {
+        if (!RepetitionDirections.TryCanonicalize(draft.RepTargets ?? [],out var canonicalTargets))
+            throw new InvalidOperationException(AppLocalization.Text("RepInvalid"));
+        draft.RepTargets=canonicalTargets;
         if (draft.Regions.Any(r=>!RegionTaxonomy.IsDetail(r)))
             throw new InvalidOperationException(AppLocalization.IsEnglish ? "Choose body parts from the fixed list." : "A testrészeket a fix listából válaszd ki.");
         if (status is not (LibraryStatuses.Draft or LibraryStatuses.Active or LibraryStatuses.Disabled))
@@ -852,6 +855,12 @@ public sealed class AppState
             }
         }
         ExerciseLibraryRules.ValidateLibraryPackage(package,_baseCatalog);
+        foreach(var entry in package.UserExercises)
+        {
+            if (!RepetitionDirections.TryCanonicalize(entry.Exercise.RepTargets,out var canonicalTargets))
+                throw new InvalidDataException(AppLocalization.Format("RepImportInvalid",entry.Exercise.DisplayName));
+            entry.Exercise.RepTargets=canonicalTargets;
+        }
         if (package.UserExercises.Any(x=>x.Exercise.Regions.Any(r=>!RegionTaxonomy.IsDetail(r))))
             throw new InvalidDataException(AppLocalization.IsEnglish ? "The imported library contains unsupported body parts." : "Az importált gyakorlattár nem támogatott testrészeket tartalmaz.");
         var previous=Catalog.Exercises.Count;

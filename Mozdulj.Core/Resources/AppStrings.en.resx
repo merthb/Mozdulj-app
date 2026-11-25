@@ -690,4 +690,25 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="Validation132" xml:space="preserve"><value>Incomplete reference points: {0}</value></data>
   <data name="Validation133" xml:space="preserve"><value>Invalid joint coordinate: {0}/{1}</value></data>
   <data name="Validation134" xml:space="preserve"><value>Implausible segment length: {0}/{1}-{2}</value></data>
+  <data name="RepTargets" xml:space="preserve"><value>Repetition targets</value></data>
+  <data name="RepCount" xml:space="preserve"><value>Count</value></data>
+  <data name="RepDirection" xml:space="preserve"><value>Direction</value></data>
+  <data name="RepAdd" xml:space="preserve"><value>＋ Add repetition target</value></data>
+  <data name="RepRemove" xml:space="preserve"><value>Remove repetition target</value></data>
+  <data name="RepLegacy" xml:space="preserve"><value>Previous direction: {0}. Choose a replacement from the list.</value></data>
+  <data name="RepInvalid" xml:space="preserve"><value>For each repetition target, select a direction and enter a whole number from 1 to 200.</value></data>
+  <data name="RepImportInvalid" xml:space="preserve"><value>The imported exercise contains an unsupported repetition direction or count: {0}</value></data>
+  <data name="RepHelp" xml:space="preserve"><value>The direction and count are shared between both languages.</value></data>
+  <data name="RepDirection_all" xml:space="preserve"><value>reps</value></data>
+  <data name="RepDirection_left" xml:space="preserve"><value>left side</value></data>
+  <data name="RepDirection_right" xml:space="preserve"><value>right side</value></data>
+  <data name="RepDirection_forward" xml:space="preserve"><value>forward</value></data>
+  <data name="RepDirection_backward" xml:space="preserve"><value>backward</value></data>
+  <data name="RepDirection_up" xml:space="preserve"><value>upward</value></data>
+  <data name="RepDirection_down" xml:space="preserve"><value>downward</value></data>
+  <data name="RepDirection_inward" xml:space="preserve"><value>inward</value></data>
+  <data name="RepDirection_outward" xml:space="preserve"><value>outward</value></data>
+  <data name="RepDirection_clockwise" xml:space="preserve"><value>clockwise</value></data>
+  <data name="RepDirection_counterclockwise" xml:space="preserve"><value>counterclockwise</value></data>
+  <data name="RepDirection_each_side" xml:space="preserve"><value>each side</value></data>
 </root>

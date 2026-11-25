@@ -46,7 +46,7 @@ public sealed class Exercise
     public string ReviewStatus { get; set; } = "draft"; // draft/reviewed/withdrawn
     public MotionPose Pose { get; set; } = new();
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {PresentationText.Known(x.Label)}"));
+        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
     [JsonIgnore] public string EquipmentLabel => Equipment.Count == 0 ? AppLocalization.Text("WorkoutUi200") : string.Join(", ", Equipment.Select(PresentationText.Known));
     [JsonIgnore] public IReadOnlyList<string> RegionAreaIds => RegionTaxonomy.AreaIds(Regions);
     [JsonIgnore] public string RegionAreaLabel => RegionTaxonomy.AreaLabels(Regions);
@@ -239,7 +239,7 @@ public sealed class WorkoutItem
     /// <summary>Unpaused seconds in this exercise, excluding transitions.</summary>
     public int ActiveSeconds { get; set; }
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {PresentationText.Known(x.Label)}"));
+        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
 }
 public sealed class CompletionRecord
 {

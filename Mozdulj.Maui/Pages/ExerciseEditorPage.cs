@@ -20,7 +20,9 @@ public sealed class ExerciseEditorPage : ContentPage
     private readonly Picker _difficulty = new() { Title = AppLocalization.Text("Difficulty") };
     private readonly Picker _measure = new() { Title = AppLocalization.Text("WorkoutUi056") };
     private readonly Entry _seconds = new() { Placeholder = AppLocalization.Text("WorkoutUi057"), Keyboard = Keyboard.Numeric };
-    private readonly Entry _reps = new() { Placeholder = AppLocalization.Text("WorkoutUi058") };
+    private readonly VerticalStackLayout _repRows = new() { Spacing = 8 };
+    private readonly List<(Picker Direction, Entry Count, View Row)> _repInputs = [];
+    private readonly VerticalStackLayout _repPanel = new() { Spacing = 8 };
     private readonly Entry _estimate = new() { Placeholder = AppLocalization.Text("WorkoutUi059"), Keyboard = Keyboard.Numeric };
     private readonly Entry _equipment = new() { Placeholder = AppLocalization.Text("WorkoutUi060") };
     private readonly Editor _summary = new() { Placeholder = "Rövid végrehajtási leírás", AutoSize = EditorAutoSizeOption.TextChanges };
@@ -65,7 +67,7 @@ public sealed class ExerciseEditorPage : ContentPage
         _difficulty.SelectedIndex = Math.Clamp(_draft.Difficulty-1,0,2);
         _measure.SelectedIndex = _draft.Measure=="time"?1:0;
         _seconds.Text = _draft.TargetSeconds?.ToString() ?? "";
-        _reps.Text = string.Join("; ",_draft.RepTargets.Select(r=>$"{r.Count} {r.Label}"));
+        foreach (var target in _draft.RepTargets) AddRepRow(target);
         _estimate.Text = _draft.EstimatedSeconds.ToString();
         _equipment.Text = string.Join(", ",_draft.Equipment);
         _summary.Text = _draft.Summary; _position.Text = _draft.StartingPosition;
@@ -131,8 +133,23 @@ public sealed class ExerciseEditorPage : ContentPage
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi072"),_phase));
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi073"),_difficulty));
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi074"),_measure));
-        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi075"),_seconds));
-        _content.Children.Add(Field(AppLocalization.Text("WorkoutUi076"),_reps));
+        var timeField = Field(AppLocalization.Text("WorkoutUi075"),_seconds);
+        _content.Children.Add(timeField);
+        _repPanel.Children.Add(UI.Label(AppLocalization.Text("RepTargets"), 15, true));
+        _repPanel.Children.Add(UI.Label(AppLocalization.Text("RepHelp"), 12, color:UI.Muted));
+        _repPanel.Children.Add(_repRows);
+        var addRep = UI.Button(AppLocalization.Text("RepAdd"),false);
+        addRep.Clicked += (_,_)=>AddRepRow();
+        _repPanel.Children.Add(addRep);
+        _content.Children.Add(_repPanel);
+        void UpdateMeasureFields()
+        {
+            var timed = _measure.SelectedIndex == 1;
+            timeField.IsVisible = timed;
+            _repPanel.IsVisible = !timed;
+        }
+        _measure.SelectedIndexChanged += (_,_)=>UpdateMeasureFields();
+        UpdateMeasureFields();
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi077"),_estimate));
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi078"),_equipment));
         _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Description and safety" : "Leírás és biztonság",20,true));
@@ -204,7 +221,48 @@ public sealed class ExerciseEditorPage : ContentPage
             RegionTaxonomy.AreaLabels(_details);
     }
 
-    private void Gather()
+    private void AddRepRow(RepTarget? existing = null)
+    {
+        var direction = new Picker { Title = AppLocalization.Text("RepDirection") };
+        foreach (var option in RepetitionDirections.Options) direction.Items.Add(option.DisplayLabel);
+        var resolved = existing is null ? RepetitionDirections.Options[0] : RepetitionDirections.Resolve(existing);
+        direction.SelectedIndex = resolved is null ? -1 : RepetitionDirections.Options.ToList().FindIndex(x=>x.Id==resolved.Id);
+        var count = new Entry { Keyboard=Keyboard.Numeric, Placeholder=AppLocalization.Text("RepCount"),
+            Text=existing?.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "" };
+        var remove = UI.Button("×",false);
+        SemanticProperties.SetDescription(remove, AppLocalization.Text("RepRemove"));
+        var row = new VerticalStackLayout { Spacing=4 };
+        var grid = new Grid { ColumnSpacing=6, ColumnDefinitions={
+            new ColumnDefinition { Width=new GridLength(2,GridUnitType.Star) },
+            new ColumnDefinition { Width=new GridLength(5,GridUnitType.Star) },
+            new ColumnDefinition { Width=GridLength.Auto } }};
+        grid.Add(Field(AppLocalization.Text("RepCount"),count),0,0);
+        grid.Add(Field(AppLocalization.Text("RepDirection"),direction),1,0);
+        grid.Add(remove,2,0);
+        row.Children.Add(grid);
+        if (existing is not null && resolved is null)
+            row.Children.Add(UI.Label(AppLocalization.Format("RepLegacy",existing.Label),12,color:UI.Muted));
+        _repInputs.Add((direction,count,row));
+        _repRows.Children.Add(row);
+        remove.Clicked += (_,_) => { _repInputs.RemoveAll(x=>ReferenceEquals(x.Row,row)); _repRows.Children.Remove(row); };
+    }
+
+    private bool TryReadRepTargets(out List<RepTarget> targets)
+    {
+        targets=[];
+        if (_measure.SelectedIndex==1) return true;
+        foreach (var row in _repInputs)
+        {
+            var index=row.Direction.SelectedIndex;
+            if(index<0 || index>=RepetitionDirections.Options.Count ||
+                !int.TryParse(row.Count.Text,out var count) || count is <1 or >200)
+                return false;
+            targets.Add(RepetitionDirections.Create(RepetitionDirections.Options[index].Id,count));
+        }
+        return true;
+    }
+
+    private void Gather(List<RepTarget> targets)
     {
         _draft.Name=_name.Text?.Trim()??"";
         _draft.Category=_category.SelectedIndex>=0 ? ExerciseLibraryRules.Categories[_category.SelectedIndex] : "";
@@ -214,17 +272,7 @@ public sealed class ExerciseEditorPage : ContentPage
         _draft.Difficulty=_difficulty.SelectedIndex+1;
         _draft.Measure=_measure.SelectedIndex==1?"time":"reps";
         _draft.TargetSeconds = _draft.Measure=="time" && int.TryParse(_seconds.Text,out var sec)?sec:null;
-        _draft.RepTargets=[];
-        if(_draft.Measure=="reps")
-        {
-            foreach(var (piece,i) in (_reps.Text??"").Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).Select((x,i)=>(x,i)))
-            {
-                var parts=piece.Split(' ',2,StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries);
-                if(parts.Length>=1 && int.TryParse(parts[0],out var count))
-                    _draft.RepTargets.Add(new RepTarget {Code=$"segment-{i}",Count=count,
-                        Label=parts.Length>1?parts[1]:"ismétlés"});
-            }
-        }
+        _draft.RepTargets=targets;
         _draft.EstimatedSeconds=int.TryParse(_estimate.Text,out var estimated)?estimated:0;
         _draft.Equipment=Csv(_equipment.Text);
         _draft.Summary=_summary.Text?.Trim()??"";
@@ -239,7 +287,12 @@ public sealed class ExerciseEditorPage : ContentPage
     }
     private async Task Save(string status)
     {
-        Gather();
+        if (!TryReadRepTargets(out var targets))
+        {
+            await DisplayAlertAsync(AppLocalization.Text("WorkoutUi084"),AppLocalization.Text("RepInvalid"),AppLocalization.Text("OK"));
+            return;
+        }
+        Gather(targets);
         var derived = RegionTaxonomy.AreaIds(_details);
         if (_areas.Any(id => !derived.Contains(id)) || (_legacyDetails.Count > 0 && _details.Count == 0))
         {
