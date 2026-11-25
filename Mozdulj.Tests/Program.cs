@@ -10,6 +10,7 @@ RepetitionDirectionsRegression.Run();
 TimedTargetsRegression.Run();
 AtomicExerciseRegression.Run();
 RigDraftRegression.Run();
+RigPhaseTimingRegression.Run();
 
 // Targeted recovery check. The historical full suite contains catalog-version
 // assertions that are independent from the backup-import path.

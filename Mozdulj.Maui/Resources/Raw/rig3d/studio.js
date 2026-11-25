@@ -5,11 +5,11 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
 const history=new MozduljPoseHistory();
 let selectedTarget=null,gesture=null,controlGesture=null;
-let animation=null, draftBaseline=null, pendingPreset=null,activeIssue=null;
+let animation=null, timelineSignature='', draftBaseline=null, pendingPreset=null,activeIssue=null;
 const pointers=new Map();let pinch=null, multiGesture=false;
 const snapshot=()=>{const data=clone(pose);delete data.camera;return {pose:data,frameIndex};};
 function syncHistory(){ $('undoPose').disabled=!history.canUndo; $('redoPose').disabled=!history.canRedo; }
-function closeGesture(){if(pose&&history.pending!==null)history.finish(snapshot());gesture=null;controlGesture=null;syncHistory();}
+function closeGesture(){if(pose&&history.pending!==null)history.finish(snapshot());gesture=null;controlGesture=null;syncHistory();if(pose&&$('tab-phases').getAttribute('aria-selected')==='true')syncTimeline();}
 function beginGesture(owner){if(gesture!==owner){closeGesture();gesture=owner;history.begin(snapshot());}}
 function tracked(change){
  activeIssue=null;
@@ -45,6 +45,7 @@ function selectTab(name){
    $(tab.getAttribute('aria-controls')).hidden=!active;
  }
  if(!alreadyActive)$('workspaceScroll').scrollTop=0;
+ if(name==='phases'&&pose)syncTimeline();
 }
 function focusBody(value,open=true){
  $('bodyFocus').value=value;
@@ -167,6 +168,32 @@ function discreteEdit(build,validate,insert=false){
  });
  sync();msg('A pózmódosítás elkészült.');
 }
+const phaseTypeLabels={start:'Kiindulás',movement:'Mozdulat',hold:'Kitartás'};
+function syncTimeline(){
+ const timeline=$('phaseTimeline');
+ const signature=JSON.stringify(pose.frames);
+ if(signature!==timelineSignature){
+   timelineSignature=signature;
+   const thumbnails=MozduljRig.phaseThumbnailData(pose.frames);
+   timeline.replaceChildren();
+   function svgNode(tag,attrs){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));return el;}
+   pose.frames.forEach((frame,i)=>{
+     const button=document.createElement('button');button.type='button';button.className='phase-tile';button.dataset.index=String(i);
+     const data=thumbnails[i],svg=svgNode('svg',{viewBox:'0 0 100 86','aria-hidden':'true'});
+     for(const [a,b] of data.lines)svg.appendChild(svgNode('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'currentColor','stroke-width':3,'stroke-linecap':'round'}));
+     svg.appendChild(svgNode('circle',{cx:data.head[0],cy:data.head[1],r:data.headRadius,fill:'currentColor'}));
+     const name=document.createElement('span');name.className='phase-tile-name';name.textContent=(i+1)+'. '+window.rigText(frame.name||'Fázis');
+     const meta=document.createElement('span');meta.className='phase-tile-meta';
+     const t=MozduljRig.phaseTiming(frame);
+     meta.textContent=window.rigText(phaseTypeLabels[frame.phaseType]||'Automatikus')+' · '+t.hold+' s';
+     button.append(svg,name,meta);button.onclick=()=>switchFrame(i);timeline.appendChild(button);
+   });
+ }
+ for(const tile of timeline.children){const active=Number(tile.dataset.index)===frameIndex;tile.setAttribute('aria-current',active?'step':'false');}
+ // Only scroll the strip, not the whole inspector or persistent viewport.
+ const active=timeline.children[frameIndex];
+ if(active&&timeline.clientWidth){if(active.offsetLeft<timeline.scrollLeft)timeline.scrollLeft=active.offsetLeft;else if(active.offsetLeft+active.offsetWidth>timeline.scrollLeft+timeline.clientWidth)timeline.scrollLeft=active.offsetLeft+active.offsetWidth-timeline.clientWidth;}
+}
 function updatePhaseControls(){
  if(!pose)return;
  const n=pose.frames.length;
@@ -180,6 +207,10 @@ function updatePhaseControls(){
  $('phaseUp').disabled=frameIndex===0;$('phaseDown').disabled=frameIndex===n-1;
  $('copyPhase').disabled=n>=MozduljRig.MAX_PHASES;
  $('phaseDirection').value=current().direction||'';
+ $('phaseType').value=current().phaseType||'';
+ $('transitionSeconds').value=current().transitionSeconds??'';
+ $('holdSeconds').value=current().holdSeconds??'';
+ syncTimeline();
  const list=$('phaseList');list.replaceChildren();
  pose.frames.forEach((frame,i)=>{
    const opt=document.createElement('option');opt.value=String(i);
@@ -296,45 +327,51 @@ window.setReadOnlyMode=()=>{
   updatePhaseControls();show();
 };
 const directionNames={all:'Irány nélkül',left:'Bal oldal',right:'Jobb oldal',forward:'Előre',backward:'Hátra',up:'Felfelé',down:'Lefelé',inward:'Befelé',outward:'Kifelé',clockwise:'Óramutató járásával megegyezően',counterclockwise:'Óramutató járásával ellentétesen',each_side:'Oldalanként'};
+function playbackButtons(){
+ const paused=animation?.paused;
+ $('playPreview').textContent=animation?(paused?'▶ Folytatás':'Ⅱ Szünet'):'▶ Előnézet';
+ $('quickPreview').textContent=animation&&!paused?'Ⅱ':'▶';
+ $('stopPreview').disabled=!animation;
+ $('previewSpeed').disabled=!!animation;$('previewLoop').disabled=!!animation;
+}
 function stopPreview(){
  if(!animation)return;
  cancelAnimationFrame(animation.request);animation=null;
- $('playPreview').textContent='▶ Előnézet';$('quickPreview').textContent='▶';$('previewStatus').textContent='';
+ playbackButtons();$('previewStatus').textContent='';$('previewProgress').value=0;
  if(studio&&pose)show();
 }
+function playbackTick(now){
+ const a=animation;if(!a||a.paused)return;
+ if(a.last!==null)a.elapsed+=(now-a.last)*a.speed;
+ a.last=now;
+ const state=MozduljRig.previewAt(a.plan,a.elapsed);
+ a.display=state.frame;show();
+ $('previewProgress').value=state.progress;
+ const label=state.kind==='hold'?window.rigText('Kitartás')+' · '+(state.from+1): (state.from+1)+' → '+(state.to+1);
+ if(label!==a.label){a.label=label;$('previewStatus').textContent=window.rigText('Ellenőrzött animációs előnézet')+' · '+label;}
+ if(state.finished){
+   // Leave the final phase visible; navigation is not a saved pose edit.
+   stopPreview();switchFrame(pose.frames.length-1);return;
+ }
+ a.request=requestAnimationFrame(playbackTick);
+}
 function playPreview(){
- if(animation){stopPreview();return;}
+ if(animation){
+   if(animation.paused){animation.paused=false;animation.last=null;animation.request=requestAnimationFrame(playbackTick);}
+   else {animation.paused=true;cancelAnimationFrame(animation.request);animation.last=null;}
+   playbackButtons();return;
+ }
  closeGesture();
- if(pose.frames.length<2){msg('Az előnézethez legalább két fázis szükséges.');return;}
- const transitions=[];
- for(let i=0;i<pose.frames.length-1;i++){
-   const result=MozduljRig.Collision.previewTransition(pose.frames[i],pose.frames[i+1]);
-   if(!result.ok){
-     $('previewStatus').textContent=window.rigText('Nem lejátszható átmenet: ')+(i+1)+' → '+(i+2)+' · '+(result.issue==='representation'?window.rigText('Eltérő vezérlés vagy rögzítés'):result.issue);
-     return;
-   }
-   transitions.push(result.samples);
+ const plan=MozduljRig.previewPlan(pose.frames,$('previewLoop').checked);
+ if(!plan.ok){
+   const detail=plan.issue==='representation'?window.rigText('Eltérő vezérlés vagy rögzítés'):plan.issue==='empty'?window.rigText('Nincs lejátszható időtartam.'):plan.issue;
+   const message=window.rigText('Nem lejátszható átmenet: ')+(plan.from!=null?(plan.from+1)+' → '+(plan.to+1)+' · ':'')+detail;
+   $('previewStatus').textContent=message;msg(message);
+   if(!document.body.classList.contains('view-only'))selectTab('phases');
+   return;
  }
- animation={transitions,start:null,display:transitions[0][0],request:0};
- $('playPreview').textContent='■ Leállítás';$('quickPreview').textContent='■';
- $('previewStatus').textContent=window.rigText('Ellenőrzött animációs előnézet');
- function tick(now){
-   if(!animation)return;
-   const a=animation;if(a.start===null)a.start=now;
-   const interval=1200/Number($('previewSpeed').value||1),duration=interval*transitions.length;
-   let elapsed=now-a.start;
-   if(elapsed>=duration){
-     if(!$('previewLoop').checked){stopPreview();return;}
-     // Repeat the sequence from its start; the return is not an interpolated phase.
-     a.start=now;elapsed=0;
-   }
-   const index=Math.min(transitions.length-1,Math.floor(elapsed/interval));
-   const sample=Math.min(48,Math.floor((elapsed-index*interval)/interval*48));
-   a.display=transitions[index][sample];show();
-   $('previewStatus').textContent=window.rigText('Ellenőrzött animációs előnézet')+' · '+(index+1)+' → '+(index+2);
-   a.request=requestAnimationFrame(tick);
- }
- animation.request=requestAnimationFrame(tick);
+ animation={plan,elapsed:0,last:null,paused:false,speed:Number($('previewSpeed').value||1),display:plan.segments[0].samples[0],request:0,label:null};
+ playbackButtons();animation.request=requestAnimationFrame(playbackTick);
 }
 // Reports are based on the same geometry as the editor, including band routing.
 function reviewPose(){
@@ -458,7 +495,15 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]),null,true);sync();
  };
  $('playPreview').onclick=playPreview;
+ $('stopPreview').onclick=stopPreview;
  $('previewSpeed').onchange=stopPreview;
+ $('phaseType').onchange=e=>{stopPreview();closeGesture();tracked(()=>{if(e.target.value)current().phaseType=e.target.value;else delete current().phaseType;});sync();};
+ for(const id of ['transitionSeconds','holdSeconds'])$(id).onchange=e=>{
+   stopPreview();closeGesture();const input=e.target,value=input.value===''?null:input.valueAsNumber;
+   const candidate=clone(current());if(value===null)delete candidate[id];else candidate[id]=value;
+   if(!MozduljRig.validPhaseTiming(candidate)){sync();msg('Érvénytelen fázisidőzítés.');return;}
+   tracked(()=>{if(value===null)delete current()[id];else current()[id]=value;});sync();
+ };
  $('phaseList').onchange=e=>switchFrame(+e.target.value);
  $('phaseDirection').onchange=e=>{
    stopPreview();closeGesture();tracked(()=>{if(e.target.value)current().direction=e.target.value;else delete current().direction;});sync();
@@ -491,7 +536,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('phaseName').addEventListener('input',e=>{
    if(!pose)return;
    stopPreview();beginGesture($('phaseName'));current().name=e.target.value.slice(0,64);
-   $('phaseLabel').textContent=current().name||('Fázis '+(frameIndex+1));
+   $('phaseLabel').textContent=current().name||('Fázis '+(frameIndex+1));syncTimeline();
  });
 
  document.addEventListener('keydown',e=>{

@@ -1,6 +1,19 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Mozgás idővonala":"Movement timeline",
+  "Fázis típusa":"Phase type",
+  "Automatikus":"Automatic",
+  "Mozdulat":"Movement",
+  "Kitartás":"Hold",
+  "Átmenet a következő fázisba (mp)":"Transition to next phase (sec)",
+  "Kitartás ebben a fázisban (mp)":"Hold this phase (sec)",
+  "Üres értéknél az átmenet 1,2 mp, a kitartás 0 mp (Kitartás típusnál 2 mp). Ezek az animáció időzítései, nem az edzés időtartamai.":"Blank values default to 1.2 sec transition and 0 sec hold (2 sec for Hold phases). These are animation timings, not workout durations.",
+  "Animáció előrehaladása":"Animation progress",
+  "▶ Folytatás":"▶ Resume",
+  "Ⅱ Szünet":"Ⅱ Pause",
+  "Érvénytelen fázisidőzítés.":"Invalid phase timing.",
+  "Nincs lejátszható időtartam.":"No playable duration.",
   "Automatikus támaszfelületi illesztés":"Automatic support alignment",
   "Illesztési művelet":"Alignment action",
   "Lábfejek a talajra":"Feet to floor",

@@ -11,6 +11,9 @@ public static class Rig3DMovement
         var copy = JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose, CatalogCodec.JsonOptions), CatalogCodec.JsonOptions)!;
         var starting = JsonSerializer.Deserialize<Rig3DFrame>(JsonSerializer.Serialize(copy.Frames[0], CatalogCodec.JsonOptions), CatalogCodec.JsonOptions)!;
         starting.Name = "Visszatérés";
+        // Synthetic legacy return is for display only, not a second authored hold.
+        starting.HoldSeconds = 0;
+        starting.PhaseType = null;
         copy.Frames.Add(starting);
         return copy;
     }

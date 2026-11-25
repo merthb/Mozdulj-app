@@ -337,3 +337,35 @@ test('already aligned hand can be fitted and locked without moving the source',(
  assert.ok(Math.abs(rig.contactDistance(final,'rightHand',surface)-.002)<=.005);
  assert.ok(result.frame.pointLocks.rightHand);
 });
+
+test('authored hold and outgoing transition times produce a checked continuous loop',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
+ a.name='A';a.holdSeconds=.5;a.transitionSeconds=2;
+ b.name='B';b.phaseType='hold';b.transitionSeconds=1;
+ const before=JSON.stringify([a,b]),calls=[];
+ const checked=(x,y)=>{calls.push(x.name+y.name);return {ok:true,samples:[x,y]};};
+ const plan=rig.previewPlan([a,b],true,checked);
+ assert.equal(plan.ok,true);assert.equal(plan.duration,5500);
+ assert.equal(JSON.stringify(calls),JSON.stringify(['AB','BA']));
+ assert.equal(rig.previewAt(plan,100).kind,'hold');
+ assert.equal(rig.previewAt(plan,700).kind,'move');
+ assert.equal(rig.previewAt(plan,3000).frame.name,'B');
+ assert.equal(rig.previewAt(plan,5500).frame.name,'A');
+ assert.equal(JSON.stringify([a,b]),before);
+ const noLoop=rig.previewPlan([a,b],false,checked);
+ assert.equal(noLoop.duration,4500);assert.equal(rig.previewAt(noLoop,4500).finished,true);
+ const blocked=rig.previewPlan([a,b],true,(x,y)=>x===b?{ok:false,issue:'blocked'}:checked(x,y));
+ assert.equal(blocked.ok,false);assert.equal(blocked.from,1);assert.equal(blocked.to,0);
+});
+test('old phase timings stay implicit, invalid timing fails validation, thumbnail coordinates are finite',()=>{
+ const rig=loadRig(),pose=rig.initialPose('stand');
+ assert.equal(rig.phaseTiming(pose.frames[0]).transition,1.2);
+ assert.equal(rig.phaseTiming(pose.frames[0]).hold,0);
+ assert.equal(pose.frames[0].transitionSeconds,undefined);
+ const previews=rig.phaseThumbnailData(pose.frames);
+ assert.equal(previews.length,pose.frames.length);
+ assert.ok(previews.every(p=>p.lines.flat(2).every(Number.isFinite)&&p.headRadius>0));
+ pose.frames[0].holdSeconds=-1;assert.throws(()=>rig.checkPose(pose));
+ pose.frames[0].holdSeconds=0;pose.frames[0].transitionSeconds=0;assert.throws(()=>rig.checkPose(pose));
+ pose.frames[0].transitionSeconds=1;pose.frames[0].phaseType='hold';assert.doesNotThrow(()=>rig.checkPose(pose));
+});

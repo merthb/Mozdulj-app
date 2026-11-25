@@ -342,6 +342,61 @@ function editLimbAngle(frame,kind,side,field,value,symmetric=false){
  }
  controls[side][field]=old+delta;
 }
+const PHASE_TYPES=['start','movement','hold'];
+function phaseTiming(frame){
+ return {transition:frame.transitionSeconds??1.2,hold:frame.holdSeconds??(frame.phaseType==='hold'?2:0)};
+}
+function validPhaseTiming(frame){
+ return (frame.phaseType==null||PHASE_TYPES.includes(frame.phaseType))&&
+   (frame.transitionSeconds==null||(Number.isFinite(frame.transitionSeconds)&&frame.transitionSeconds>=.1&&frame.transitionSeconds<=30))&&
+   (frame.holdSeconds==null||(Number.isFinite(frame.holdSeconds)&&frame.holdSeconds>=0&&frame.holdSeconds<=120));
+}
+// Time is in milliseconds of the authored sequence, independent of playback speed.
+function previewPlan(frames,loop=false,check=Collision3D.previewTransition){
+ if(!frames.length||frames.some(f=>!validPhaseTiming(f)))return {ok:false,issue:'timing'};
+ const segments=[];let duration=0;
+ const append=(segment,seconds)=>{if(seconds<=0)return;const ms=seconds*1000;segments.push({...segment,start:duration,end:duration+ms});duration+=ms;};
+ for(let i=0;i<frames.length;i++){
+   const timing=phaseTiming(frames[i]);
+   append({kind:'hold',from:i,to:i,samples:[cloneFrame(frames[i])]},timing.hold);
+   const to=i+1<frames.length?i+1:loop&&frames.length>1?0:null;
+   if(to===null)continue;
+   const result=check(frames[i],frames[to]);
+   if(!result.ok)return {ok:false,issue:result.issue,from:i,to};
+   append({kind:'move',from:i,to,samples:result.samples},timing.transition);
+ }
+ if(duration===0)return {ok:false,issue:'empty'};
+ return {ok:true,segments,duration,loop};
+}
+function previewAt(plan,elapsed){
+ const finished=!plan.loop&&elapsed>=plan.duration;
+ const time=plan.loop?Math.max(0,elapsed)%plan.duration:clamp(elapsed,0,plan.duration);
+ const segment=plan.segments.find(s=>time<s.end)||plan.segments.at(-1);
+ const progress=clamp((time-segment.start)/(segment.end-segment.start),0,1);
+ const index=Math.min(segment.samples.length-1,Math.floor(progress*(segment.samples.length-1)));
+ return {frame:segment.samples[index],from:segment.from,to:segment.to,kind:segment.kind,finished,progress:time/plan.duration};
+}
+// Lightweight, deterministic thumbnails based on the actual joint geometry.
+// Shared bounds across all frames prevent apparent scale jumps.
+function phaseThumbnailData(frames){
+ const basis=cameraBasis({azimuth:.58,elevation:.20});
+ const projected=p=>[dot(p,basis.right),-dot(p,basis.up)];
+ const result=frames.map(frame=>{
+   const j=joints(frame),lines=[[j.root,j.spineMid],[j.spineMid,j.spineUpper],[j.spineUpper,j.neck],[j.neck,j.head]];
+   for(const side of ['left','right']){
+     lines.push([j.spineUpper,j.shoulder[side]],[j.shoulder[side],j.elbow[side]],[j.elbow[side],j.hands[side]],[j.hands[side],j.palms[side]],
+       [j.root,j.hip[side]],[j.hip[side],j.knee[side]],[j.knee[side],j.feet[side]],[j.feet[side],j.toes[side]]);
+   }
+   return {lines:lines.map(l=>l.map(projected)),head:projected(j.head)};
+ });
+ const points=result.flatMap(r=>r.lines.flat());
+ if(!points.length)return [];
+ const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
+ const minX=Math.min(...xs)-.16,maxX=Math.max(...xs)+.16,minY=Math.min(...ys)-.18,maxY=Math.max(...ys)+.18;
+ const scale=Math.min(84/Math.max(.01,maxX-minX),70/Math.max(.01,maxY-minY));
+ const map=p=>[50+(p[0]-(minX+maxX)/2)*scale,43+(p[1]-(minY+maxY)/2)*scale];
+ return result.map(r=>({lines:r.lines.map(l=>l.map(map)),head:map(r.head),headRadius:.13*scale}));
+}
 function movePhase(frames,from,to){
  if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=frames.length||to>=frames.length)return false;
  if(from===to)return false;
@@ -991,7 +1046,7 @@ function shaded3D(canvas){
  frame[key][sel.side]=point;return joints(frame).clamped;}
  return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
-function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
+function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
 if(f.pointLocks!=null){
  if(typeof f.pointLocks!=='object'||Array.isArray(f.pointLocks))throw Error('Érvénytelen rögzítési pont.');
  for(const [key,pos] of Object.entries(f.pointLocks))if(!LOCK_KEYS.includes(key)||!Array.isArray(pos)||pos.length!==3||pos.some(x=>!Number.isFinite(x)||Math.abs(x)>10))throw Error('Érvénytelen rögzítési pont.');
@@ -1023,5 +1078,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

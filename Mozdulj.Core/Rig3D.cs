@@ -20,6 +20,12 @@ public sealed class Rig3DFrame
     public string Name { get; set; } = "";
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Direction { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? PhaseType { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? TransitionSeconds { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? HoldSeconds { get; set; }
     public float[] Root { get; set; } = [0,1.01f,0];
     public float[] Euler { get; set; } = [0,0,0];
     public float HeadYaw { get; set; }
@@ -115,6 +121,10 @@ public static class Rig3DValidator
         {
             if(f.Direction is not null && !RepetitionDirections.Options.Any(d=>d.Id==f.Direction))
                 throw new InvalidDataException(AppLocalization.Text("RigInvalidPhaseDirection"));
+            if((f.PhaseType is not null && f.PhaseType is not ("start" or "movement" or "hold")) ||
+               (f.TransitionSeconds is float transition && (!float.IsFinite(transition)||transition<.1f||transition>30f)) ||
+               (f.HoldSeconds is float hold && (!float.IsFinite(hold)||hold<0f||hold>120f)))
+                throw new InvalidDataException(AppLocalization.Text("RigInvalidPhaseTiming"));
             CheckVector(f.Root,"testgyökér");CheckVector(f.Euler,"forgásszög");
             if(f.PointLocks is not null)
                 foreach(var (key,position) in f.PointLocks)
