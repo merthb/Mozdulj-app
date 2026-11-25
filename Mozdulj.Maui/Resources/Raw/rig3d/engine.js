@@ -697,6 +697,27 @@ function previewAt(plan,elapsed){
  const index=Math.min(segment.samples.length-1,Math.floor(progress*(segment.samples.length-1)));
  return {frame:segment.samples[index],from:segment.from,to:segment.to,kind:segment.kind,finished,progress:time/plan.duration};
 }
+// Workout playback uses only explicitly authored direction tags. Never
+// infer an opposite-side movement from an untagged or asymmetric pose.
+function workoutGuidePlan(frames,direction){
+ const neutral=f=>f.direction==null||f.direction===''||f.direction==='all';
+ const exact=direction!=='all'&&frames.some(f=>f.direction===direction);
+ const chosen=frames.filter(f=>neutral(f)||(exact&&f.direction===direction));
+ if(direction!=='all'&&!exact)return {kind:'unassigned',frame:chosen[0]||null};
+ if(!chosen.length)return {kind:'unassigned',frame:null};
+ // A timed authored hold stays on that pose until the active interval ends.
+ const hold=chosen.findIndex(f=>f.phaseType==='hold'&&
+   (direction==='all'||f.direction===direction));
+ const sequence=hold>=0?chosen.slice(0,hold+1):chosen;
+ if(sequence.length===1)return {kind:'static',frame:sequence[0]};
+ const plan=previewPlan(sequence,hold<0);
+ if(!plan.ok)return {kind:'blocked',frame:sequence.find(f=>f.direction===direction)||sequence[0],issue:plan.issue};
+ return {kind:hold>=0?'hold':'loop',plan};
+}
+function workoutGuideAt(guide,elapsedMs){
+ if(!guide?.plan)return guide?.frame||null;
+ return previewAt(guide.plan,Math.max(0,elapsedMs)).frame;
+}
 // Lightweight, deterministic thumbnails based on the actual joint geometry.
 // Shared bounds across all frames prevent apparent scale jumps.
 function phaseThumbnailData(frames){
@@ -1970,5 +1991,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
