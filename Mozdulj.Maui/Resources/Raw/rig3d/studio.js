@@ -125,7 +125,7 @@ function syncLocks(){
    lockOption(input,'free','Szabad');
    lockOption(input,'world','Térben rögzített ●');
    for(const [i,prop] of (f.equipment||[]).entries()){
-     if(POSITIONABLE.includes(prop.type))lockOption(input,'equipment:'+i,'◆ '+equipmentLabel(prop,i));
+     if(POSITIONABLE.includes(prop.type))lockOption(input,'equipment:'+i,'✚ '+equipmentLabel(prop,i));
    }
    const index=binding?(f.equipment||[]).findIndex(p=>p.id===binding.equipmentId&&p.type===binding.equipmentType):-1;
    input.value=binding&&index>=0?'equipment:'+index:f.pointLocks?.[key]?'world':'free';
@@ -813,10 +813,10 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      if(POSITIONABLE.includes(type)&&!pos){msg('Az eszköznek nem találtam akadálymentes helyet. Módosítsd a pózt vagy válassz másik eszközt.');return;}
      const id=MozduljRig.newEquipmentId(pose.frames);
      const result=guardedEdit(f=>f.equipment.push(pos?{type,id,position:pos}:{type,id}));
-     if(!result.limited){syncProps(String(current().equipment.length-1));syncEquipmentSelection();msg(window.rigText('Eszköz hozzáadva: ')+$('equip').selectedOptions[0].textContent);}
+     if(!result.limited){syncProps(String(current().equipment.length-1));syncLocks();syncEquipmentSelection();msg(window.rigText('Eszköz hozzáadva: ')+$('equip').selectedOptions[0].textContent);}
    }else msg('Ez az eszköz már szerepel ebben a fázisban.');
  };
- $('clearEquipment').onclick=()=>{selectedEquipment=null;stopPreview();closeGesture();tracked(()=>{const bound=new Set(Object.values(current().equipmentPointLocks||{}).map(b=>b.equipmentId));current().equipment=current().equipment.filter(p=>p.locked||bound.has(p.id));});syncBands('new');syncProps('none');syncEquipmentSelection();show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
+ $('clearEquipment').onclick=()=>{selectedEquipment=null;stopPreview();closeGesture();tracked(()=>{const bound=new Set(Object.values(current().equipmentPointLocks||{}).map(b=>b.equipmentId));current().equipment=current().equipment.filter(p=>p.locked||bound.has(p.id));});syncBands('new');syncProps('none');syncLocks();syncEquipmentSelection();show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
  $('propSelect').onchange=()=>{fillProp();chooseEquipment('prop:'+$('propSelect').value);};
  function propLocations(){
    const i=Number($('propSelect').value);
