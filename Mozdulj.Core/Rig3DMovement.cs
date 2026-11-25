@@ -15,6 +15,31 @@ public static class Rig3DMovement
         return new WorkoutGuideTiming(direction,Math.Clamp(total-workout.RemainingSeconds,0,total),total,!paused);
     }
 
+    // Display-only directions; no repetitions are counted or credited here.
+    public static List<RepGuideTarget> RepetitionGuideTargets(WorkoutItem item)
+    {
+        var result=new List<RepGuideTarget>();
+        if(item.Measure!="reps")return result;
+        foreach(var target in item.RepTargets)
+        {
+            if(target.Count<=0)continue;
+            var direction=RepetitionDirections.Resolve(target)?.Id;
+            if(direction=="each_side")
+            {
+                result.Add(new("left",target.Count));
+                result.Add(new("right",target.Count));
+            }
+            else if(direction is not null)result.Add(new(direction,target.Count));
+        }
+        return result;
+    }
+
+    public static WorkoutGuideTiming? ForRepetitionWorkout(Workout workout,WorkoutItem item,RepGuideTarget? target,int startedAt,bool paused)
+    {
+        if(workout.PlaybackPhase!="exercise" || workout.Kind=="recovery" || item.Measure!="reps" || target is null)return null;
+        return new WorkoutGuideTiming(target.Direction,Math.Max(0,item.ActiveSeconds-startedAt),int.MaxValue,!paused,true);
+    }
+
     /// <summary>Display a 2-frame movement as start/action/return; never mutate saved user poses.</summary>
     public static Rig3DPose ForDisplay(Rig3DPose pose)
     {
@@ -30,4 +55,5 @@ public static class Rig3DMovement
     }
 }
 
-public sealed record WorkoutGuideTiming(string Direction,int ElapsedSeconds,int TotalSeconds,bool Playing);
+public sealed record WorkoutGuideTiming(string Direction,int ElapsedSeconds,int TotalSeconds,bool Playing,bool Repetitions=false);
+public sealed record RepGuideTarget(string Direction,int Count);
