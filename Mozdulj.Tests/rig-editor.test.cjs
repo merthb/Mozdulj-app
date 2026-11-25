@@ -1040,3 +1040,26 @@ test('body links reject cycles, conflicting locks and independent follower edits
  const pose=rig.initialPose('stand');pose.frames[0]=b;b.bodyPointLinks.leftHand={leader:'rightHand',offset:[0,0,0]};
  assert.throws(()=>rig.checkPose(pose));
 });
+
+test('independent neck articulation moves head and neck without disturbing shoulders or hips',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math,j=rig.joints(f);
+ const next={...f,cervicalPitch:.17,cervicalYaw:.2,cervicalRoll:.12},q=rig.joints(next);
+ for(const key of ['root','hip','shoulder','elbow','hands','feet'])assert.deepEqual(q[key],j[key]);
+ assert.ok(m.len(m.sub(q.neck,j.neck))>.005);
+ assert.ok(m.len(m.sub(q.head,j.head))>.02);
+ assert.ok(Math.abs(m.len(m.sub(q.head,q.neck))-m.len(m.sub(j.head,j.neck)))<1e-8);
+ const mirror=rig.mirrorFrame(next);assert.equal(mirror.cervicalYaw,-.2);assert.equal(mirror.cervicalRoll,-.12);assert.equal(mirror.cervicalPitch,.17);
+ const restored=rig.resetBodyPart(next,f,'head');assert.equal(restored.cervicalPitch,undefined);
+ assert.equal(rig.validArticulation({...f,cervicalYaw:2}),false);
+});
+test('segmental spine twists preserve hip and clavicle distances and mirror direction',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),m=rig.math,j=rig.joints(f);
+ const next={...f,lumbarYaw:.1,thoracicYaw:.3},q=rig.joints(next);
+ assert.deepEqual(q.hip,j.hip);
+ assert.ok(m.len(m.sub(q.shoulder.left,j.shoulder.left))>.02);
+ assert.ok(Math.abs(m.len(m.sub(q.shoulder.left,q.shoulder.right))-m.len(m.sub(j.shoulder.left,j.shoulder.right)))<1e-8);
+ const mirror=rig.mirrorFrame(next);assert.equal(mirror.lumbarYaw,-.1);assert.equal(mirror.thoracicYaw,-.3);
+ const restored=rig.resetBodyPart(next,f,'trunk');assert.equal(restored.thoracicYaw,undefined);
+ const half=rig.Collision.interpolate(next,f,.5);assert.equal(half.thoracicYaw,.15);
+ assert.equal(rig.validArticulation({...f,lumbarYaw:.5}),false);
+});
