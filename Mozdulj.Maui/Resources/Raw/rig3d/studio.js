@@ -57,7 +57,7 @@ function focusBody(value,open=true){
    detail.hidden=group!=='all'&&detail.dataset.bodyGroup!==group;
    if(group!=='all'&&!detail.hidden)detail.open=true;
  }
- const centralFields={root:['rootHeight','pelvicTilt','pelvisPitch','pelvisYaw','pelvisRoll'],head:['yaw','pitch','roll'],trunk:['shoulderLift','torso','upperYaw','spineBend','lumbarBend','lumbarSideBend','thoracicBend','thoracicSideBend']};
+ const centralFields={root:['rootHeight','pelvicTilt','pelvisPitch','pelvisYaw','pelvisRoll'],head:['yaw','pitch','roll','cervicalPitch','cervicalYaw','cervicalRoll'],trunk:['shoulderLift','torso','upperYaw','spineBend','lumbarBend','lumbarSideBend','thoracicBend','thoracicSideBend','lumbarYaw','thoracicYaw']};
  for(const field of document.querySelectorAll('[data-central-field]'))
    field.hidden=group==='central'&&!centralFields[value]?.includes(field.dataset.centralField);
  if(group==='all')for(const field of document.querySelectorAll('[data-central-field]'))field.hidden=false;
