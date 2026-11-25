@@ -170,3 +170,8 @@ html.dark.high-contrast :is(button,input,select,textarea,summary):focus-visible 
 .lock-grid label{display:flex;align-items:center;gap:8px;min-height:44px;padding:7px;border:1px solid var(--outline);border-radius:9px;background:var(--surface);overflow-wrap:anywhere}
 .lock-grid input{accent-color:var(--purple);width:21px;height:21px;flex:0 0 auto}
 .target-controls button{min-height:44px;border:1px solid var(--outline);background:var(--surface);color:var(--purple-dark);border-radius:9px;padding:8px;font:inherit;width:100%}
+
+.preview-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--outline);background:var(--surface)}
+.preview-tools button,.preview-tools select,.phase-editor select{min-height:44px;border:1px solid var(--outline);border-radius:9px;background:var(--surface);color:inherit;padding:8px;font:inherit}
+.preview-tools .hint{flex-basis:100%}.symmetry-toggle{display:flex;align-items:center;gap:8px;min-height:44px}.symmetry-toggle input,.preview-tools input{width:21px;height:21px;accent-color:var(--purple)}
+.phase-editor select{width:100%}

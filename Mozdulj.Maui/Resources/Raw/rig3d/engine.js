@@ -17,6 +17,8 @@ function solve2(a,target,upper,lower,pole,minBend=0.04,maxBend=2.62){
   const along=(upper*upper-lower*lower+d*d)/(2*d),h=Math.sqrt(Math.max(0,upper*upper-along*along));
   return {mid:add(add(a,mul(u,along)),mul(p,h)),end,reachClamped:len(sub(target,end))>.025};
 }
+const MAX_PHASES=16;
+const PHASE_DIRECTIONS=['all','left','right','forward','backward','up','down','inward','outward','clockwise','counterclockwise','each_side'];
 const bones={armUpper:.31,armLower:.28,thigh:.45,shin:.43};
 function baseFrame(preset){
  const b={name:'Kiindulás',root:[0,.94,0],euler:[0,0,0],headYaw:0,headPitch:0,headRoll:0,upperYaw:0,spineBend:0,pelvicTilt:0,footPitch:{left:0,right:0},legAngles:{},armAngles:{},hands:{left:[-.34,.96,.02],right:[.34,.96,.02]},feet:{left:[-.14,.075,0],right:[.14,.075,0]},poles:{elbowLeft:[-.7,.6,.14],elbowRight:[.7,.6,.14],kneeLeft:[-.18,.5,.3],kneeRight:[.18,.5,.3]},equipment:[]};
@@ -241,6 +243,9 @@ function mirrorControls(a){
 }
 function mirrorFrame(frame){
  const f=cloneFrame(frame);
+ if(f.direction==='left'||f.direction==='right')f.direction=swapSide(f.direction);
+ else if(f.direction==='clockwise')f.direction='counterclockwise';
+ else if(f.direction==='counterclockwise')f.direction='clockwise';
  f.root=reflectX(f.root);f.euler=[f.euler[0],-f.euler[1],-f.euler[2]];
  for(const key of ['headYaw','headRoll','upperYaw'])if(f[key]!=null)f[key]=-f[key];
  for(const key of ['hands','feet','poles','pointLocks']){
@@ -285,6 +290,32 @@ function mirrorIssue(source,result){
    baseline.set(mirrored,depth);
  }
  return Collision3D.worse(Collision3D.overlaps(result),baseline,1e-6);
+}
+// Apply mirrored *deltas*, not absolute positions, to preserve the other limb's
+// existing pose when symmetric editing is enabled.
+function mirrorTargetDelta(frame,before,kind,side){
+ const other=swapSide(side),delta=sub(frame[kind][side],before[kind][side]);
+ const mirrored=rotate(reflectX(unrotate(delta,before.euler)),before.euler);
+ frame[kind][other]=add(before[kind][other],mirrored);
+}
+const ANGLE_LIMITS={arm:{flexion:[-.52,3.05],abduction:[0,2.70],elbowFlexion:[0,2.62],wristFlexion:[-1.04,1.04],forearmRotation:[-1.57,1.57],axialRotation:[-Math.PI/2,Math.PI/2]},leg:{flexion:[-.3,2.36],abduction:[-.7,.7],kneeFlexion:[0,2.36],axialRotation:[-Math.PI/2,Math.PI/2]}};
+function editLimbAngle(frame,kind,side,field,value,symmetric=false){
+ const controls=frame[modeKeys[kind]],other=swapSide(side),limits=ANGLE_LIMITS[kind][field];
+ const old=controls[side][field]||0;
+ let delta=clamp(value,...limits)-old;
+ if(symmetric){
+   const sign=['axialRotation','forearmRotation'].includes(field)?-1:1;
+   const otherOld=controls[other][field]||0;
+   const lo=(limits[0]-otherOld)*sign,hi=(limits[1]-otherOld)*sign;
+   delta=clamp(delta,Math.min(lo,hi),Math.max(lo,hi));
+   controls[other][field]=otherOld+sign*delta;
+ }
+ controls[side][field]=old+delta;
+}
+function movePhase(frames,from,to){
+ if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=frames.length||to>=frames.length)return false;
+ if(from===to)return false;
+ frames.splice(to,0,frames.splice(from,1)[0]);return true;
 }
 function copyIssue(source,result){
  const collision=Collision3D.worse(Collision3D.overlaps(result),Collision3D.overlaps(source),1e-6);
@@ -499,8 +530,37 @@ const Collision3D=(()=>{
    }
    return {frame:accepted,fraction:ratio,limited:ratio<1,issue:issue?.id||null};
  }
+ // Preview only interpolates matching rig representations. A change of IK/FK,
+ // attachment topology or lock definition needs an explicit intermediate pose.
+ function shape(v){
+   if(Array.isArray(v))return v.map(shape);
+   if(v&&typeof v==='object')return Object.fromEntries(Object.keys(v).sort().map(k=>[k,shape(v[k])]));
+   return typeof v==='number'?'number':v;
+ }
+ function previewCompatible(a,b){
+   for(const key of ['armAngles','legAngles','footPitch','poles','equipment'])
+     if(JSON.stringify(shape(a[key]??{}))!==JSON.stringify(shape(b[key]??{})))return false;
+   return JSON.stringify(a.pointLocks??{})===JSON.stringify(b.pointLocks??{});
+ }
+ function previewTransition(a,b){
+   if(!previewCompatible(a,b))return {ok:false,issue:'representation'};
+   const baseline=overlaps(a);
+   for(const [id,depth] of overlaps(b))baseline.set(id,Math.max(depth,baseline.get(id)||0));
+   const locks=a.pointLocks||{},start=lockErrors(joints(a),locks),end=lockErrors(joints(b),locks);
+   const samples=[];
+   // Precompute the exact samples that will be displayed. Never render unchecked
+   // intermediate poses. Fixed sampling is approximate, not continuous proof.
+   for(let i=0;i<=48;i++){
+     const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(a,b,i/48),j=joints(frame);
+     const err=worse(overlaps(frame,j),baseline);
+     if(err)return {ok:false,issue:err.id};
+     for(const [key,d] of lockErrors(j,locks))if(d>Math.max(.005,start.get(key)||0,end.get(key)||0)+1e-7)return {ok:false,issue:'lock:'+key};
+     samples.push(frame);
+   }
+   return {ok:true,samples};
+ }
  function report(frame){const issues=overlaps(frame);return {count:issues.size,examples:[...issues.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,depth])=>({name,depth:+depth.toFixed(4)}))};}
- return {bodyProbes,bodySegments,selfOverlaps,segmentDistance,solids,overlaps,transition,report,worse};
+ return {bodyProbes,bodySegments,selfOverlaps,segmentDistance,solids,overlaps,transition,previewTransition,report,worse};
 })();
 
 function mul4(a,b){let c=new Float32Array(16);for(let i=0;i<4;i++)for(let k=0;k<4;k++)for(let j=0;j<4;j++)c[j*4+i]+=a[k*4+i]*b[j*4+k];return c;}
@@ -688,7 +748,7 @@ function shaded3D(canvas){
  frame[key][sel.side]=point;return joints(frame).clamped;}
  return {draw,setCamera(c){camera=c;},getCamera:()=>camera,pick,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
-function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>6)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
+function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
 if(f.pointLocks!=null){
  if(typeof f.pointLocks!=='object'||Array.isArray(f.pointLocks))throw Error('Érvénytelen rögzítési pont.');
  for(const [key,pos] of Object.entries(f.pointLocks))if(!LOCK_KEYS.includes(key)||!Array.isArray(pos)||pos.length!==3||pos.some(x=>!Number.isFinite(x)||Math.abs(x)>10))throw Error('Érvénytelen rögzítési pont.');
@@ -718,5 +778,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,mirrorFrame,mirrorIssue,copyLimb,copyIssue,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

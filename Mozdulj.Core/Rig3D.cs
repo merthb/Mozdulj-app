@@ -18,6 +18,8 @@ public sealed class Rig3DPose
 public sealed class Rig3DFrame
 {
     public string Name { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Direction { get; set; }
     public float[] Root { get; set; } = [0,1.01f,0];
     public float[] Euler { get; set; } = [0,0,0];
     public float HeadYaw { get; set; }
@@ -101,11 +103,13 @@ public static class Rig3DValidator
     private static readonly HashSet<string> LockKeys = ["root", "leftHand", "rightHand", "leftFoot", "rightFoot", "leftKnee", "rightKnee", "leftElbow", "rightElbow"];
     public static void Validate(Rig3DPose rig)
     {
-        if(rig.Version != 1 || rig.Frames is null || rig.Frames.Count is < 1 or > 6 ||
+        if(rig.Version != 1 || rig.Frames is null || rig.Frames.Count is < 1 or > 16 ||
            rig.ReviewStatus is not ("illustrative" or "reviewed"))
             throw new InvalidDataException(AppLocalization.Text("Validation102"));
         foreach(var f in rig.Frames)
         {
+            if(f.Direction is not null && !RepetitionDirections.Options.Any(d=>d.Id==f.Direction))
+                throw new InvalidDataException(AppLocalization.Text("RigInvalidPhaseDirection"));
             CheckVector(f.Root,"testgyökér");CheckVector(f.Euler,"forgásszög");
             if(f.PointLocks is not null)
                 foreach(var (key,position) in f.PointLocks)

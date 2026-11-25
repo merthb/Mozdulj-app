@@ -173,3 +173,37 @@ test('copy limb transfers angles in body space without changing the source limb'
  assert.equal(f.armAngles.right.axialRotation,-.2);
  assert.ok(m.len(m.sub(a.hands.left,b.hands.left))<1e-9);
 });
+
+test('symmetric angle edits preserve the initial offset and mirror rotations',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ f.armAngles={left:{flexion:.2,abduction:.3,elbowFlexion:.4,axialRotation:.2},right:{flexion:.4,abduction:.3,elbowFlexion:.4,axialRotation:-.1}};
+ rig.editLimbAngle(f,'arm','left','flexion',.5,true);
+ assert.ok(Math.abs(f.armAngles.right.flexion-.7)<1e-8);
+ rig.editLimbAngle(f,'arm','left','axialRotation',.5,true);
+ assert.ok(Math.abs(f.armAngles.right.axialRotation+.4)<1e-8);
+});
+test('mirrored target deltas are in body space and do not overwrite the other target',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),before=JSON.parse(JSON.stringify(f));
+ f.hands.left[0]-=.05;f.hands.left[1]+=.03;
+ rig.mirrorTargetDelta(f,before,'hands','left');
+ assert.ok(Math.abs(f.hands.right[0]-before.hands.right[0]-.05)<1e-8);
+ assert.ok(Math.abs(f.hands.right[1]-before.hands.right[1]-.03)<1e-8);
+});
+test('phase direction and expanded phase limit validate, mirror and reorder',()=>{
+ const rig=loadRig(),pose=rig.initialPose('stand');
+ pose.frames[0].direction='left';assert.equal(rig.mirrorFrame(pose.frames[0]).direction,'right');
+ pose.frames[1].direction='clockwise';assert.equal(rig.mirrorFrame(pose.frames[1]).direction,'counterclockwise');
+ assert.equal(rig.movePhase(pose.frames,0,1),true);assert.equal(pose.frames[1].direction,'left');
+ while(pose.frames.length<16)pose.frames.push(JSON.parse(JSON.stringify(pose.frames[0])));
+ assert.doesNotThrow(()=>rig.checkPose(pose));
+ pose.frames.push(pose.frames[0]);assert.throws(()=>rig.checkPose(pose));pose.frames.pop();
+ pose.frames[0].direction='unknown';assert.throws(()=>rig.checkPose(pose));
+});
+test('preview is read-only, checks every displayed sample and rejects representation changes',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
+ const original=JSON.stringify(a),result=rig.Collision.previewTransition(a,b);
+ assert.equal(result.ok,true);assert.equal(result.samples.length,49);
+ assert.equal(JSON.stringify(a),original);
+ b.armAngles.left={flexion:.3,abduction:.2,elbowFlexion:.4};
+ assert.equal(rig.Collision.previewTransition(a,b).issue,'representation');
+});
