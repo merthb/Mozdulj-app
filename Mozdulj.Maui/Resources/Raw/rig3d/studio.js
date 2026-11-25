@@ -749,7 +749,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  for(const input of document.querySelectorAll('[data-lock-point]'))input.onchange=()=>changePointLock(input);
  $('clearPointLocks').onclick=()=>{closeGesture();tracked(()=>{delete current().pointLocks;delete current().equipmentPointLocks;delete current().bodyPointLinks;});sync();};
  $('linkFollower').value='rightHand';
- $('addBodyLink').onclick=()=>{stopPreview();closeGesture();const candidate=clone(current());if(!MozduljRig.setBodyLink(candidate,$('linkFollower').value,$('linkLeader').value)){msg(window.rigText('A testpontkapcsolat nem hozható létre. Ellenőrizd a rögzítéseket és a vezérlési módot.'));return;}tracked(()=>{pose.frames[frameIndex]=candidate;});sync();};
+ $('addBodyLink').onclick=()=>{stopPreview();closeGesture();const candidate=clone(current());if(!MozduljRig.setBodyLink(candidate,$('linkFollower').value,$('linkLeader').value,$('bodyLinkMode').value)){msg(window.rigText('A testpontkapcsolat nem hozható létre. Ellenőrizd a rögzítéseket és a vezérlési módot.'));return;}tracked(()=>{pose.frames[frameIndex]=candidate;});sync();};
  $('removeBodyLink').onclick=()=>{stopPreview();closeGesture();tracked(()=>MozduljRig.removeBodyLink(current(),$('linkFollower').value));sync();};
  $('rootHeight').onchange=e=>{
    const value=e.target.valueAsNumber/100;
@@ -853,7 +853,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('armSide').onchange=()=>focusBody($('armSide').value+'Arm',false);
  function editArm(field,value){const side=$('armSide').value;
    const symmetric=$('symmetricEdit').checked,other=side==='left'?'right':'left';
-   guardedEdit(frame=>MozduljRig.editLimbAngle(frame,'arm',side,field,rad(value),symmetric),f=>MozduljRig.prepareAngleMode(f,'arm',side)&&(!symmetric||MozduljRig.prepareAngleMode(f,'arm',other)));}
+   guardedEdit(frame=>MozduljRig.editLimbAngle(frame,'arm',side,field,rad(value),symmetric,$('scapulaRhythm').checked),f=>MozduljRig.prepareAngleMode(f,'arm',side)&&(!symmetric||MozduljRig.prepareAngleMode(f,'arm',other)));}
  for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])
    $(id).oninput=e=>editArm(k,+e.target.value);
  $('legSide').onchange=()=>focusBody($('legSide').value+'Leg',false);
