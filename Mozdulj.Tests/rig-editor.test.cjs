@@ -1163,3 +1163,21 @@ test('scapular rhythm is optional and reversible with explicit stored angles',()
  rig.editLimbAngle(f,'arm','left','flexion',1.4,false,false);
  assert.ok(Math.abs(f.leftScapulaRotation)<1e-8);
 });
+
+test('body map exposes every selectable point and every rotation ring maps to an existing control',()=>{
+ const rig=loadRig(),html=fs.readFileSync(path.join(root,'index.html'),'utf8'),source=fs.readFileSync(path.join(root,'studio.js'),'utf8');
+ const keys=[...html.matchAll(/data-body-map="([^"]+)"/g)].map(m=>m[1]).sort();
+ assert.deepEqual(keys,rig.BODY_TARGETS.map(p=>p.key).sort());
+ const chunk=source.slice(source.indexOf('const ringFields='),source.indexOf('let ringDrag='));
+ const {ringControls,ringSamples,nearestRingTangent}=new Function('MozduljRig',chunk+';return {ringControls,ringSamples,nearestRingTangent};')(rig);
+ for(const key of keys){
+   const controls=ringControls(key);assert.ok(controls.length,key);
+   for(const [id,axis] of controls){assert.ok(html.includes('id="'+id+'"'),id);assert.ok(axis>=0&&axis<=2);}
+ }
+ const points=ringSamples([0,0,0],[[1,0,0],[0,1,0],[0,0,1]],2,.2);
+ assert.equal(points.length,49);
+ for(const point of points)assert.ok(Math.abs(rig.math.len(point)-.2)<1e-8);
+ const p=points.map(v=>[v[0]*100,v[1]*100]);
+ const tangent=nearestRingTangent(p,20,0);assert.ok(tangent&&tangent.d<.01);
+ assert.ok(tangent.pxPerRadian>19&&tangent.pxPerRadian<21);
+});
