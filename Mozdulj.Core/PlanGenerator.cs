@@ -132,9 +132,8 @@ public sealed class PlanGenerator
                 prefs,favorites,recent,usedToday,rng);
             if(warm!=null && cool!=null)
             {
-                // A right/left movement is a single logical choice; the opposite
-                // side follows immediately, and its duration counts toward the cap.
-                var all=SidePairing.Expand(warm.Concat(mains).Concat(cool),available);
+                // Directional intervals are already included in each exercise's duration.
+                var all=warm.Concat(mains).Concat(cool).ToList();
                 var estimated=all.Sum(e=>e.EstimatedSeconds)+gap*Math.Max(0,all.Count-1);
                 var tolerance=Math.Max(40,(int)(target*.10));
                 if(estimated<=target+tolerance)
@@ -148,7 +147,7 @@ public sealed class PlanGenerator
                         workout.Items.Add(new WorkoutItem
                         {
                             ExerciseId=e.Id,Revision=e.Revision,Name=e.Name,Category=e.Category,Phase=e.Phase,
-                            IsRequired=required.Any(r=>r.Id==e.Id || SidePairing.Counterpart(catalog,e)?.Id==r.Id),Measure=e.Measure,TargetSeconds=e.TargetSeconds,
+                            IsRequired=required.Any(r=>r.Id==e.Id),Measure=e.Measure,TargetSeconds=e.TargetSeconds,
                             TimeTargets=TimedTargets.Clone(e.TimeTargets),
                             RepTargets=e.RepTargets.Select(r=>new RepTarget {Code=r.Code,Label=r.Label,Count=r.Count}).ToList(),
                             EstimatedSeconds=e.EstimatedSeconds, TransitionAfterSeconds=i==all.Count-1?0:gap
@@ -216,11 +215,6 @@ public sealed class PlanGenerator
     private static List<Exercise> Eligible(ExerciseCatalog catalog,UserPreferences prefs) =>
         catalog.Exercises.Where(e=>e.ReviewStatus!="withdrawn" && e.Difficulty<=prefs.MaximumDifficulty &&
             !prefs.ExcludedExercises.Contains(e.Id) && e.Equipment.All(prefs.AvailableEquipment.Contains))
-            .Where(e=>SidePairing.IsExplicitlyOneSided(e) ?
-                SidePairing.Counterpart(catalog,e) is { } pair &&
-                pair.ReviewStatus!="withdrawn" && pair.Difficulty<=prefs.MaximumDifficulty &&
-                !prefs.ExcludedExercises.Contains(pair.Id) && pair.Equipment.All(prefs.AvailableEquipment.Contains)
-                : true)
             .ToList();
     private static HashSet<string> Recent(IReadOnlyCollection<CompletionRecord> history,DateOnly today) =>
         history.Where(x=>DateOnly.TryParse(x.LocalDate,out var d) && d>=today.AddDays(-5))

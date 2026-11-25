@@ -8,6 +8,7 @@ RegionTaxonomyRegression.Run();
 ExerciseLanguageRegression.Run();
 RepetitionDirectionsRegression.Run();
 TimedTargetsRegression.Run();
+AtomicExerciseRegression.Run();
 
 // Targeted recovery check. The historical full suite contains catalog-version
 // assertions that are independent from the backup-import path.

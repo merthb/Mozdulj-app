@@ -20,11 +20,6 @@ public sealed class WorkoutCustomization
                 && x.Difficulty <= preferences.MaximumDifficulty
                 && !preferences.ExcludedExercises.Contains(x.Id)
                 && x.Equipment.All(preferences.AvailableEquipment.Contains)
-                && (!SidePairing.IsExplicitlyOneSided(x) ||
-                    SidePairing.Counterpart(catalog,x) is { } pair &&
-                    pair.ReviewStatus!="withdrawn" && pair.Difficulty<=preferences.MaximumDifficulty &&
-                    !preferences.ExcludedExercises.Contains(pair.Id) &&
-                    pair.Equipment.All(preferences.AvailableEquipment.Contains))
                 && !inThisWorkout.Contains(x.Id)
                 && Anatomy.Similar(original,x)
                 && CoherentAfterSwap(catalog,workout,item,x))
@@ -45,8 +40,7 @@ public sealed class WorkoutCustomization
             .Any(x => x.Id == replacement.Id))
             throw new InvalidOperationException(AppLocalization.Text("Validation039"));
 
-        // Replace both sides as one logical movement. Retain the selected item's
-        // identity and immediately insert the new opposite-side variant.
+        // Replace exactly one logical exercise, including all its directional targets.
         workout.Items=ProjectedSwap(catalog,workout,item,replacement)
             ?? throw new InvalidOperationException(AppLocalization.Text("Validation040"));
     }
@@ -68,28 +62,20 @@ public sealed class WorkoutCustomization
         if (!workout.Items.Contains(item)) return null;
         var original=catalog.Exercises.FirstOrDefault(x=>x.Id==item.ExerciseId);
         if (original is null) return null;
-        var oldCounterpart=SidePairing.Counterpart(catalog,original);
-        var oldPartner=workout.Items.FirstOrDefault(x=>x.ExerciseId==oldCounterpart?.Id);
-        if(oldPartner?.IsRequired==true)return null;
-        var newCounterpart=SidePairing.Counterpart(catalog,replacement);
-        if (SidePairing.IsExplicitlyOneSided(replacement) && newCounterpart is null)return null;
         var projected=new List<WorkoutItem>();
         foreach(var old in workout.Items)
         {
-            if(ReferenceEquals(old,oldPartner)) continue;
             if(!ReferenceEquals(old,item)){projected.Add(old);continue;}
             projected.Add(AsItem(replacement,item.Id));
-            if(newCounterpart is not null)projected.Add(AsItem(newCounterpart));
         }
         if(projected.Select(x=>x.ExerciseId).Distinct().Count()!=projected.Count)return null;
         var gap=Math.Clamp(workout.TransitionSeconds>0?workout.TransitionSeconds:7,5,10);
-        // Existing transitions do not affect anatomical or pair checks. Estimate
+        // Existing transitions do not affect anatomical checks. Estimate
         // the full prospective playback duration with a gap after each item.
         var seconds=projected.Sum(x=>x.EstimatedSeconds)+gap*Math.Max(0,projected.Count-1);
         var target=Math.Max(5,workout.TargetMinutes)*60;
         var allowed=target+Math.Max(40,(int)(target*.10));
         if(seconds>allowed || !WorkoutCoherence.IsCoherent(catalog,projected) ||
-           !SidePairing.Balanced(catalog,projected) ||
            projected.Count(x=>x.Phase=="warmup")<(workout.TargetMinutes>=10?2:1) ||
            projected.Count(x=>x.Phase=="cooldown")<(workout.TargetMinutes>=10?2:1))return null;
         // Refresh transitions only for the validated copy. Clone legacy items to

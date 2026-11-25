@@ -222,27 +222,10 @@ public sealed class WorkoutPreviewPage : ContentPage
         HorizontalOptions = LayoutOptions.Start
     };
 
-    // Partner exercises are one movable unit. This is the same pairing logic
-    // used by WorkoutPlanEditing.MoveBefore in the core library.
-    private List<WorkoutItem> PairGroup(WorkoutItem item)
-    {
-        var group = new List<WorkoutItem> { item };
-        var exercise = _state.FindExercise(item.ExerciseId);
-        var other = exercise == null ? null : SidePairing.Counterpart(_state.Catalog, exercise);
-        if (other != null)
-        {
-            var counterpart = _workout.Items.FirstOrDefault(x => x.ExerciseId == other.Id);
-            if (counterpart != null && counterpart.Id != item.Id)
-                group.Add(counterpart);
-        }
-        return group.OrderBy(x => _workout.Items.IndexOf(x)).ToList();
-    }
-
     private WorkoutItem? AdjacentItem(WorkoutItem item, int direction)
     {
         if (_workout.Status != "planned" || direction == 0) return null;
-        var unit = PairGroup(item);
-        var index = _workout.Items.IndexOf(direction < 0 ? unit[0] : unit[^1]) + Math.Sign(direction);
+        var index = _workout.Items.IndexOf(item) + Math.Sign(direction);
         if (index < 0 || index >= _workout.Items.Count) return null;
         var neighbor = _workout.Items[index];
         return neighbor.Phase == item.Phase ? neighbor : null;
@@ -262,7 +245,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 await _state.MoveWorkoutItemAsync(_workout, item.Id, adjacent.Id);
             else
                 // Move the following unit before this one: equivalent to moving
-                // this unit down by one step, including both members of a pair.
+                // this exercise down by one step.
                 await _state.MoveWorkoutItemAsync(_workout, adjacent.Id, item.Id);
 
             Draw();

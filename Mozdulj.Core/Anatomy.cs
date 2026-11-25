@@ -101,8 +101,7 @@ public static class WorkoutCoherence
         int min = workout.TargetMinutes >= 10 ? 2 : 1;
         return workout.Items.Count(x=>x.Phase=="warmup") >= min
             && workout.Items.Count(x=>x.Phase=="cooldown") >= min
-            && IsCoherent(catalog,workout.Items)
-            && SidePairing.Balanced(catalog,workout.Items);
+            && IsCoherent(catalog,workout.Items);
     }
     public static void Require(ExerciseCatalog catalog, IEnumerable<WorkoutItem> items)
     {

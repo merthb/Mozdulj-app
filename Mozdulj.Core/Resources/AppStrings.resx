@@ -231,7 +231,7 @@
   <data name="WorkoutUi103" xml:space="preserve"><value>Gyakorlatcsere</value></data>
   <data name="WorkoutUi104" xml:space="preserve"><value>Nem sikerült a csere</value></data>
   <data name="WorkoutUi105" xml:space="preserve"><value>Gyakorlat kihagyása?</value></data>
-  <data name="WorkoutUi106" xml:space="preserve"><value>A kihagyás nem jár XP-vel; az oldalpárok együtt kerülnek ki, ha szükséges. A bemelegítés és levezetés összhangja megmarad.</value></data>
+  <data name="WorkoutUi106" xml:space="preserve"><value>A kihagyás nem jár XP-vel. A gyakorlat összes iránya együtt kerül ki; a bemelegítés és levezetés összhangja megmarad.</value></data>
   <data name="WorkoutUi107" xml:space="preserve"><value>Kihagyás</value></data>
   <data name="WorkoutUi108" xml:space="preserve"><value>Nem hagyható ki</value></data>
   <data name="WorkoutUi109" xml:space="preserve"><value>Kötelező gyakorlatok</value></data>
@@ -629,9 +629,9 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="Validation071" xml:space="preserve"><value>A mozgatandó gyakorlat nem található.</value></data>
   <data name="Validation072" xml:space="preserve"><value>A célgyakorlat nem található.</value></data>
   <data name="Validation073" xml:space="preserve"><value>Csak egy blokkon belül rendezheted át a feladatokat.</value></data>
-  <data name="Validation074" xml:space="preserve"><value>A módosítás megbontaná az edzésfázisokat vagy az oldalpárokat.</value></data>
+  <data name="Validation074" xml:space="preserve"><value>A módosítás megbontaná az edzésfázisok összhangját.</value></data>
   <data name="Validation075" xml:space="preserve"><value>Ez a gyakorlat nem távolítható el.</value></data>
-  <data name="Validation076" xml:space="preserve"><value>Kötelező gyakorlat vagy annak oldalpárja nem hagyható ki.</value></data>
+  <data name="Validation076" xml:space="preserve"><value>Kötelező gyakorlat nem hagyható ki.</value></data>
   <data name="Validation077" xml:space="preserve"><value>Ezt a gyakorlatot nem lehet kivenni: nem maradna megfelelő bemelegítés, fő rész vagy levezetés.</value></data>
   <data name="Validation078" xml:space="preserve"><value>Csak a még el nem kezdett alap gyakorlatsor rendezhető át.</value></data>
   <data name="Validation079" xml:space="preserve"><value>Üres vagy olvashatatlan katalógus.</value></data>
@@ -673,7 +673,7 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="Validation115" xml:space="preserve"><value>Érvénytelen regeneráló program.</value></data>
   <data name="Validation116" xml:space="preserve"><value>A(z) {0} nem elérhető a választott nehézséggel vagy eszközökkel.</value></data>
   <data name="Validation117" xml:space="preserve"><value>Legfeljebb {0} kötelező gyakorlat férhet a választott időkeretbe.</value></data>
-  <data name="Validation118" xml:space="preserve"><value>Ebben a {0} perces tervben már csak {1} feladat hagyható ki. Az oldalpár két feladatnak számít.</value></data>
+  <data name="Validation118" xml:space="preserve"><value>Ebben a {0} perces tervben már csak {1} feladat hagyható ki.</value></data>
   <data name="Validation119" xml:space="preserve"><value>Hiányzó/duplikált azonosító: {0}</value></data>
   <data name="Validation120" xml:space="preserve"><value>Hiányos gyakorlat: {0}</value></data>
   <data name="Validation121" xml:space="preserve"><value>Hibás időcél: {0}</value></data>

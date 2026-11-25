@@ -231,7 +231,7 @@
   <data name="WorkoutUi103" xml:space="preserve"><value>Replace exercise</value></data>
   <data name="WorkoutUi104" xml:space="preserve"><value>Replacement failed</value></data>
   <data name="WorkoutUi105" xml:space="preserve"><value>Omit exercise?</value></data>
-  <data name="WorkoutUi106" xml:space="preserve"><value>Omitting earns no XP; paired sides are removed together when needed. Warm-up and cool-down remain coherent.</value></data>
+  <data name="WorkoutUi106" xml:space="preserve"><value>Omitting earns no XP. All directions of the exercise are omitted together; warm-up and cool-down remain coherent.</value></data>
   <data name="WorkoutUi107" xml:space="preserve"><value>Skip</value></data>
   <data name="WorkoutUi108" xml:space="preserve"><value>Cannot omit</value></data>
   <data name="WorkoutUi109" xml:space="preserve"><value>Required exercises</value></data>
@@ -629,9 +629,9 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="Validation071" xml:space="preserve"><value>The exercise to move was not found.</value></data>
   <data name="Validation072" xml:space="preserve"><value>The destination exercise was not found.</value></data>
   <data name="Validation073" xml:space="preserve"><value>You can only reorder exercises within the same section.</value></data>
-  <data name="Validation074" xml:space="preserve"><value>The change would disrupt workout phases or paired sides.</value></data>
+  <data name="Validation074" xml:space="preserve"><value>The change would disrupt workout phase coherence.</value></data>
   <data name="Validation075" xml:space="preserve"><value>This exercise cannot be removed.</value></data>
-  <data name="Validation076" xml:space="preserve"><value>A required exercise or its paired side cannot be omitted.</value></data>
+  <data name="Validation076" xml:space="preserve"><value>A required exercise cannot be omitted.</value></data>
   <data name="Validation077" xml:space="preserve"><value>This exercise cannot be removed because suitable warm-up, main section or cool-down would not remain.</value></data>
   <data name="Validation078" xml:space="preserve"><value>Only an unstarted standard workout can be reordered.</value></data>
   <data name="Validation079" xml:space="preserve"><value>Empty or unreadable library.</value></data>
@@ -673,7 +673,7 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="Validation115" xml:space="preserve"><value>Invalid recovery session.</value></data>
   <data name="Validation116" xml:space="preserve"><value>Exercise {0} is not available with the selected difficulty or equipment.</value></data>
   <data name="Validation117" xml:space="preserve"><value>At most {0} required exercises fit in the selected time limit.</value></data>
-  <data name="Validation118" xml:space="preserve"><value>Only {1} exercises can still be omitted from this {0}-minute workout. Paired sides count as two exercises.</value></data>
+  <data name="Validation118" xml:space="preserve"><value>Only {1} exercises can still be omitted from this {0}-minute workout.</value></data>
   <data name="Validation119" xml:space="preserve"><value>Missing or duplicate ID: {0}</value></data>
   <data name="Validation120" xml:space="preserve"><value>Incomplete exercise: {0}</value></data>
   <data name="Validation121" xml:space="preserve"><value>Invalid time target: {0}</value></data>
