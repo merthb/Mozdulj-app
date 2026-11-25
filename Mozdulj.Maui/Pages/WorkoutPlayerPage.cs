@@ -5,6 +5,7 @@ using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Mozdulj.Maui.Pages;
 
@@ -35,6 +36,11 @@ public sealed class WorkoutPlayerPage : ContentPage
     private Window? _lifecycleWindow;
     private bool _interruptedByBackground;
     private long _recoveryStartTicks;
+    private readonly Button _guideToggle=UI.Button(AppLocalization.IsEnglish?"Show 3D guide":"3D útmutató megjelenítése",false);
+    private readonly VerticalStackLayout _guideHost=new(){IsVisible=false,Spacing=4};
+    private WebView? _guideWeb;
+    private bool _guideOpen,_guideReady,_guideUpdating,_guidePending;
+    private string? _guideLoadedItem;
 
     // Ends local audio and pauses the YouTube Music session (if selected).
     // Pausing is idempotent: it never starts an already paused track.
@@ -88,6 +94,9 @@ public sealed class WorkoutPlayerPage : ContentPage
         content.Children.Add(_value);
         content.Children.Add(_guidance);
         content.Children.Add(_equipmentCue);
+        _guideToggle.Clicked+=(_,_)=>ToggleGuide();
+        content.Children.Add(_guideToggle);
+        content.Children.Add(_guideHost);
         if (_workout.Kind=="recovery" && _state.Preferences.RelaxationMusicEnabled &&
             _state.Preferences.RelaxationMusicSource=="youtube_music" &&
             _state.Preferences.RelaxationYouTubeMusicPremiumConfirmed &&
@@ -105,7 +114,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         content.Children.Add(new BoxView { HeightRequest=24, Color=Colors.Transparent });
         _action.Clicked+=async (_,_)=>await FinishCurrentAsync(false);
         _pause.Clicked+=async (_,_)=>{_paused=!_paused;_pause.Text=_paused?AppLocalization.Text("WorkoutUi159"):AppLocalization.Text("WorkoutUi156");
-            _audio.SetPaused(_paused);await _state.SaveAsync();};
+            _audio.SetPaused(_paused);RefreshGuide();await _state.SaveAsync();};
         var skip=UI.Button(AppLocalization.Text("WorkoutUi107"),false);
         skip.Clicked+=async (_,_)=>await FinishCurrentAsync(true);
         var stop=UI.Button(workout.Kind=="recovery" ? AppLocalization.Text("WorkoutUi160") : AppLocalization.Text("WorkoutUi161"),false);
@@ -156,6 +165,7 @@ public sealed class WorkoutPlayerPage : ContentPage
             if (_workout.Kind == "recovery")
                 _recoveryStartTicks = Stopwatch.GetTimestamp();
             _timer.Start();
+            RefreshGuide();
             _musicPanel?.Start();
             if (_workout.Kind == "recovery" && _state.Preferences.RelaxationMusicEnabled)
             {
@@ -194,6 +204,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         }
         _paused=true;
         _timer.Stop();
+        RefreshGuide();
         StopSessionAudio();
         _recoveryStartTicks = 0;
         DeviceDisplay.Current.KeepScreenOn=false;
@@ -258,6 +269,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         {
             _paused=true;
             _timer.Stop();
+            RefreshGuide();
             StopSessionAudio();
             if(recovery)RecoveryRoutine.Restart(_workout);
             await _state.SaveAsync();
@@ -335,6 +347,7 @@ public sealed class WorkoutPlayerPage : ContentPage
                 _timer.Stop();
                 StopSessionAudio();
                 _finished=true;
+                RefreshGuide();
                 DeviceDisplay.Current.KeepScreenOn=false;
                 _workout.CurrentIndex=_workout.Items.Count;
                 await _state.FinishWorkoutAsync(_workout);
@@ -354,6 +367,88 @@ public sealed class WorkoutPlayerPage : ContentPage
             Refresh();
         }
         finally {_busy=false;}
+    }
+    private void ToggleGuide()
+    {
+        _guideOpen=!_guideOpen;
+        if(_guideOpen && _guideWeb is null)
+        {
+            var web=new WebView{HeightRequest=260,HorizontalOptions=LayoutOptions.Fill};
+            _guideWeb=web;
+            _guideHost.Children.Add(web);
+            web.Navigated+=async (_,e)=>
+            {
+                if(e.Result!=WebNavigationResult.Success){GuideFailed();return;}
+                try
+                {
+                    await web.EvaluateJavaScriptAsync("document.documentElement.classList.toggle('dark',"+(UI.IsDark?"true":"false")+");document.documentElement.classList.toggle('high-contrast',"+(UI.HighContrast?"true":"false")+")");
+                    await web.EvaluateJavaScriptAsync("window.setRigLanguage('"+AppLocalization.Language+"')");
+                    var result=await web.EvaluateJavaScriptAsync("window.setWorkoutGuideMode()");
+                    if(!JsTrue(result)){GuideFailed();return;}
+                    _guideReady=true;_guideLoadedItem=null;RefreshGuide();
+                }
+                catch{GuideFailed();}
+            };
+            web.Source="rig3d/index.html";
+        }
+        RefreshGuide();
+    }
+    private static bool JsTrue(string? value)=>value?.Trim().Trim('"')=="true";
+    private void GuideFailed()
+    {
+        _guideReady=false;_guideOpen=false;_guideLoadedItem=null;
+        if(_guideWeb is not null)_guideHost.Children.Remove(_guideWeb);
+        _guideWeb=null;_guideHost.IsVisible=false;
+        _guideToggle.Text=AppLocalization.IsEnglish?"Retry 3D guide":"3D útmutató újrapróbálása";
+    }
+    private void RefreshGuide()
+    {
+        var item=_index>=0&&_index<_workout.Items.Count?_workout.Items[_index]:null;
+        var timing=item is null?null:Rig3DMovement.ForTimedWorkout(_workout,item,_paused);
+        var hasRig=item is not null&&_state.FindExercise(item.ExerciseId)?.Pose.Rig3D is not null;
+        var available=!_finished&&timing is not null&&hasRig;
+        _guideToggle.IsVisible=available;
+        _guideToggle.Text=_guideOpen
+            ? (AppLocalization.IsEnglish?"Hide 3D guide":"3D útmutató elrejtése")
+            : (AppLocalization.IsEnglish?"Show 3D guide":"3D útmutató megjelenítése");
+        _guideHost.IsVisible=available&&_guideOpen;
+        if(!_guideReady||_guideWeb is null)return;
+        _guidePending=true;
+        if(!_guideUpdating)_=UpdateGuideAsync();
+    }
+    private async Task UpdateGuideAsync()
+    {
+        _guideUpdating=true;
+        try
+        {
+            while(_guidePending&&_guideReady&&_guideWeb is { } web)
+            {
+                _guidePending=false;
+                var item=_index>=0&&_index<_workout.Items.Count?_workout.Items[_index]:null;
+                var timing=item is null?null:Rig3DMovement.ForTimedWorkout(_workout,item,_paused);
+                var rig=item is null?null:_state.FindExercise(item.ExerciseId)?.Pose.Rig3D;
+                if(!_guideOpen||_finished||timing is null||rig is null)
+                {
+                    await web.EvaluateJavaScriptAsync("window.clearWorkoutGuide()");
+                    continue;
+                }
+                if(_guideLoadedItem!=item!.Id)
+                {
+                    await web.EvaluateJavaScriptAsync("window.clearWorkoutGuide()");
+                    var encoded=Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(Rig3DMovement.ForDisplay(rig),CatalogCodec.JsonOptions));
+                    if(!JsTrue(await web.EvaluateJavaScriptAsync("window.loadRigBase64('"+encoded+"')")))
+                    {GuideFailed();return;}
+                    _guideLoadedItem=item.Id;
+                    // A timer tick or a navigation change during loading supersedes this snapshot.
+                    if(_guidePending)continue;
+                }
+                var payload=Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(timing,CatalogCodec.JsonOptions));
+                if(!JsTrue(await web.EvaluateJavaScriptAsync("window.setWorkoutGuideBase64('"+payload+"')")))
+                {GuideFailed();return;}
+            }
+        }
+        catch{GuideFailed();}
+        finally{_guideUpdating=false;if(_guidePending&&_guideReady)_=UpdateGuideAsync();}
     }
     private void Refresh()
     {
@@ -406,5 +501,6 @@ public sealed class WorkoutPlayerPage : ContentPage
         _action.IsVisible=!transition && !preparing && item.Measure=="reps";
         if(_skip is not null) _skip.IsVisible=_workout.Kind!="recovery" && !preparing && !transition;
         _action.Text=AppLocalization.Text("WorkoutUi183");
+        RefreshGuide();
     }
 }
