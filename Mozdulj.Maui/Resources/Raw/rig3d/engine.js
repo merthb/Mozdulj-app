@@ -135,12 +135,44 @@ function baseFrame(preset){
      f.hands[side]=[side==='left'?-.215:.215,.07,.14+.54*Math.sin(1.25)];
    }
  }
+ // Additional creation-only corrections, validated with the same geometry
+ // engine as the editor. These are illustrative starting poses.
+ if(preset==='chair'){
+   f.root=[0,.54,-.03];
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:1.45,abduction:.25,kneeFlexion:1.45};
+     f.hands[side]=[side==='left'?-.35:.35,.67,.17];
+   }
+ }
+ if(preset==='prone'){
+   f.root=[0,.20,.16];
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:0,abduction:.03,kneeFlexion:.10};
+     f.footPitch[side]=.95;f.hands[side]=[side==='left'?-.30:.30,.10,.65];
+   }
+ }
+ if(preset==='rowband'){
+   for(const side of ['left','right']){
+     f.legAngles[side]={flexion:1.23,abduction:.26,kneeFlexion:.04};f.footPitch[side]=-.1;
+   }
+ }
+ if(preset==='boat'){
+   for(const side of ['left','right']){
+     f.legAngles[side].abduction=.50;f.hands[side]=[side==='left'?-.49:.49,.66,.35];
+   }
+ }
+ if(preset==='legs-wall'){
+   f.root=[0,.20,.20];f.equipment[1].position=[0,1,.40];
+   for(const side of ['left','right']){
+     f.legAngles[side].flexion=1.47;f.legAngles[side].abduction=.30;
+   }
+ }
  return f;
 }
 const PRESET_NAMES=['stand','crosslegged','chair','tabletop','catcow','child','supine','bridge','side','rowband','lunge','balance','boat','reclinedbutterfly','legs-wall','prone','sideplank','kneel','hinge','ballseat','plank'];
 function initialPose(preset='stand'){
  let a=baseFrame(preset),b=JSON.parse(JSON.stringify(a));b.name='Mozdulat';
- if(preset==='catcow'){b.lumbarBend=.12;b.thoracicBend=.12;b.headPitch=.30;}
+ if(preset==='catcow'){b.lumbarBend=.08;b.thoracicBend=.16;b.headPitch=.30;}
  if(preset==='bridge'){b.root[1]=.49;b.euler[0]=-1.94;}
  if(preset==='rowband'){b.hands.left=[-.33,.61,.02];b.hands.right=[.33,.61,.02];}
  if(preset==='side'){b.hands.right=[.02,.83,-.28];}
@@ -770,7 +802,7 @@ const Collision3D=(()=>{
    return null;
  }
  function interpolate(a,b,t){
-   if(typeof b==='number')return (typeof a==='number'?a:0)*(1-t)+b*t;
+   if(typeof b==='number')return a===b?b:(typeof a==='number'?a:0)*(1-t)+b*t;
    if(Array.isArray(b))return b.map((x,i)=>i<(Array.isArray(a)?a.length:0)?interpolate(a[i],x,t):x);
    if(b&&typeof b==='object'){
      const out={};

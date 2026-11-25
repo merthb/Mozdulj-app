@@ -1,6 +1,10 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Hason fekvés":"Prone lying",
+  "Oldalsó plank":"Side plank",
+  "Csípőből előredőlés":"Hip hinge",
+  "Labdán ülés":"Seated on ball",
   "Sablon geometriai ellenőrzése: ":"Template geometry review: ",
   "eltérés":"findings",
   "Átmenet ellenőrizve":"Transition checked",

@@ -610,3 +610,19 @@ test('revised support presets are finite, reachable and improve geometric baseli
    const audit=rig.auditPreset(name);assert.equal(audit.frames.length,2);
  }
 });
+
+test('constant numeric coordinates are not perturbed by interpolation',()=>{
+ const rig=loadRig(),f=rig.baseFrame('tabletop');
+ for(const key of ['leftKnee','rightKnee','leftHand','rightHand'])rig.setPointLock(f,key,true);
+ const b=JSON.parse(JSON.stringify(f));rig.moveRoot(b,[0,.012,.015]);
+ const expected=JSON.stringify(f.pointLocks);
+ for(let i=0;i<=48;i++)assert.equal(JSON.stringify(rig.Collision.interpolate(f,b,i/48).pointLocks),expected);
+});
+test('second preset pass has no flagged geometry or unreachable targets in either phase',()=>{
+ const rig=loadRig();
+ for(const name of ['catcow','chair','prone','rowband','boat','legs-wall']){
+   const audit=rig.auditPreset(name);
+   for(const frame of audit.frames){assert.equal(frame.overlaps.count,0,name);assert.equal(frame.clamped.length,0,name);}
+   assert.equal(audit.transition,true,name);
+ }
+});
