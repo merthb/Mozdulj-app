@@ -1,6 +1,15 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Jobb oldalról":"From the right",
+  "Bal oldalról":"From the left",
+  "Hátulról":"From behind",
+  "Felülről":"From above",
+  "Fókusz a kijelölt pontra":"Focus selected point",
+  "Vetítési mód":"Projection mode",
+  "Perspektivikus":"Perspective",
+  "Ortografikus (torzításmentes)":"Orthographic (no perspective distortion)",
+  "Két ujjal nagyíthatsz és eltolhatod a nézetet, a szerkesztési módtól függetlenül.":"Use two fingers to zoom and pan in any editing mode.",
   "Minden testpont megjelenítése":"Show all body points",
   "Átfedő pontok":"Overlapping points",
   "Átfedő pontok – válassz":"Overlapping points – select one",

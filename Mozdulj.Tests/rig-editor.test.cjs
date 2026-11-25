@@ -279,3 +279,18 @@ test('support adaptation preserves reachable endpoint and lock coordinates',()=>
  assert.equal(JSON.stringify(f.pointLocks.leftHand),locked);
  assert.ok(m.len(m.sub(rig.joints(f).hands.left,f.pointLocks.leftHand))<=.005);
 });
+
+test('camera pinch changes distance and pans on camera axes, without changing pose',()=>{
+ const rig=loadRig(),pose=rig.initialPose(),before=JSON.stringify(pose.frames);
+ const c=pose.camera;c.azimuth=0;c.elevation=0;c.distance=4;c.target=[0,1,0];
+ const first=rig.gestureMetrics([{x:100,y:100},{x:200,y:100}]);
+ const next=rig.gestureMetrics([{x:70,y:110},{x:270,y:110}]);
+ rig.pinchCamera(c,first,next,300);
+ assert.equal(c.distance,2);assert.ok(c.target[0]<0&&c.target[1]>1);
+ assert.equal(JSON.stringify(pose.frames),before);
+ rig.pinchCamera(c,{x:0,y:0,distance:1},{x:0,y:0,distance:1000},300);assert.equal(c.distance,1.2);
+});
+test('orthographic projection is depth-independent in screen x and y',()=>{
+ const m=loadRig().ortho(2,1.5);
+ assert.ok(Math.abs(m[0]-1/3)<1e-7);assert.equal(m[5],.5);assert.equal(m[11],0);assert.equal(m[15],1);
+});

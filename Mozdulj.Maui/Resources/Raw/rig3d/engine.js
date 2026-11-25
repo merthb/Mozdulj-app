@@ -592,6 +592,26 @@ const Collision3D=(()=>{
 })();
 
 function mul4(a,b){let c=new Float32Array(16);for(let i=0;i<4;i++)for(let k=0;k<4;k++)for(let j=0;j<4;j++)c[j*4+i]+=a[k*4+i]*b[j*4+k];return c;}
+const VIEW_FOV=Math.PI/4;
+function ortho(halfHeight,aspect,n=.04,f=90){
+ const a=new Float32Array(16);a[0]=1/(halfHeight*aspect);a[5]=1/halfHeight;a[10]=-2/(f-n);a[14]=-(f+n)/(f-n);a[15]=1;return a;
+}
+function cameraBasis(c){
+ const a=c.azimuth,e=c.elevation;
+ return {right:[Math.cos(a),0,-Math.sin(a)],up:[-Math.sin(a)*Math.sin(e),Math.cos(e),-Math.cos(a)*Math.sin(e)],forward:[Math.sin(a)*Math.cos(e),Math.sin(e),Math.cos(a)*Math.cos(e)]};
+}
+function pixelScale(c,height){return 2*c.distance*Math.tan(VIEW_FOV/2)/Math.max(1,height);}
+function panCamera(c,dx,dy,height){
+ const {right,up}=cameraBasis(c),s=pixelScale(c,height);
+ c.target=add(c.target,add(mul(right,-dx*s),mul(up,dy*s))).map(v=>clamp(v,-10,10));return c;
+}
+function gestureMetrics(points){
+ const [a,b]=points;return {x:(a.x+b.x)/2,y:(a.y+b.y)/2,distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y))};
+}
+function pinchCamera(c,previous,next,height){
+ c.distance=clamp(c.distance*previous.distance/next.distance,1.2,10);
+ return panCamera(c,next.x-previous.x,next.y-previous.y,height);
+}
 function perspective(fov,aspect,n,f){let t=1/Math.tan(fov/2),a=new Float32Array(16);a[0]=t/aspect;a[5]=t;a[10]=-(f+n)/(f-n);a[11]=-1;a[14]=-2*f*n/(f-n);return a;}
 function lookAt(eye,at){let z=norm(sub(eye,at)),x=norm(cross([0,1,0],z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1]);}
 function model(centre,xAxis,yAxis,zAxis){return new Float32Array([xAxis[0],xAxis[1],xAxis[2],0,yAxis[0],yAxis[1],yAxis[2],0,zAxis[0],zAxis[1],zAxis[2],0,...centre,1]);}
@@ -667,7 +687,8 @@ function shaded3D(canvas){
  gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
  let palette={skin:[.92,.61,.45],shirt:[.45,.24,.62],leggings:[.19,.57,.60],hair:[.23,.13,.17],shoes:[.24,.18,.31],mat:[.74,.65,.85],background:[.97,.95,.99],band:[.60,.29,.76],metal:[.54,.50,.62],equip:[.52,.57,.74],floor:[.83,.77,.90],handle:[.95,.55,.2]};
  let camera={azimuth:.58,elevation:.34,distance:3.55,target:[0,.72,0]},viewproj, dims={w:0,h:0},lastJoints;
- function setup(){const w=Math.max(300,canvas.clientWidth),h=Math.max(240,canvas.clientHeight),dpr=Math.min(window.devicePixelRatio||1,2);if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){canvas.width=Math.floor(w*dpr);canvas.height=Math.floor(h*dpr);gl.viewport(0,0,canvas.width,canvas.height);}dims={w,h};let c=camera;let el=clamp(c.elevation,-1.35,1.35);c.elevation=el;let eye=add(c.target,[c.distance*Math.sin(c.azimuth)*Math.cos(el),c.distance*Math.sin(el),c.distance*Math.cos(c.azimuth)*Math.cos(el)]);viewproj=mul4(perspective(Math.PI/4,w/h,.04,90),lookAt(eye,c.target));gl.uniformMatrix4fv(uVP,false,viewproj);return eye;}
+ let projectionMode='perspective';
+ function setup(){const w=Math.max(1,canvas.clientWidth),h=Math.max(1,canvas.clientHeight),dpr=Math.min(window.devicePixelRatio||1,2);if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){canvas.width=Math.floor(w*dpr);canvas.height=Math.floor(h*dpr);gl.viewport(0,0,canvas.width,canvas.height);}dims={w,h};let c=camera;let el=clamp(c.elevation,-Math.PI/2+.001,Math.PI/2-.001);c.elevation=el;let eye=add(c.target,[c.distance*Math.sin(c.azimuth)*Math.cos(el),c.distance*Math.sin(el),c.distance*Math.cos(c.azimuth)*Math.cos(el)]);viewproj=mul4(projectionMode==='ortho'?ortho(c.distance*Math.tan(VIEW_FOV/2),w/h):perspective(VIEW_FOV,w/h,.04,90),lookAt(eye,c.target));gl.uniformMatrix4fv(uVP,false,viewproj);return eye;}
  function drawM(M,color,opacity=1){if(!M)return;gl.uniformMatrix4fv(uM,false,M);gl.uniform3fv(uC,new Float32Array(palette[color]||color));gl.uniform1f(uO,opacity);gl.drawElements(gl.TRIANGLES,indices.length,gl.UNSIGNED_SHORT,0);}
  const ell=(centre,s,c,o=1)=>drawM(sphereM(centre,s),c,o),limb=(a,b,th,c)=>drawM(segmentM(a,b,th,th),c);
  function poly(points,th,color){for(let i=1;i<points.length;i++)limb(points[i-1],points[i],th,color);}
@@ -832,7 +853,7 @@ function shaded3D(canvas){
  }).filter(x=>x.distance<=28).sort((a,b)=>a.distance-b.distance).map(x=>x.target);
  }
  function pick(x,y,showAll=false){return pickAll(x,y,showAll)[0]||null;}
- function dragTarget(frame,sel,dx,dy,depth=false,axis='free'){const c=camera,right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)],up=[-Math.sin(c.azimuth)*Math.sin(c.elevation),Math.cos(c.elevation),-Math.cos(c.azimuth)*Math.sin(c.elevation)],forward=[Math.sin(c.azimuth),0,Math.cos(c.azimuth)];let size=c.distance/Math.max(280,dims.h)*1.55;let delta=depth||axis==='depth'?mul(forward,-dy*size):add(mul(right,dx*size),mul(up,-dy*size));
+ function dragTarget(frame,sel,dx,dy,depth=false,axis='free'){const c=camera,right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)],up=[-Math.sin(c.azimuth)*Math.sin(c.elevation),Math.cos(c.elevation),-Math.cos(c.azimuth)*Math.sin(c.elevation)],forward=[Math.sin(c.azimuth),0,Math.cos(c.azimuth)];let size=pixelScale(c,dims.h);let delta=depth||axis==='depth'?mul(forward,-dy*size):add(mul(right,dx*size),mul(up,-dy*size));
  if(axis==='x')delta=[dx*size,0,0];else if(axis==='y')delta=[0,-dy*size,0];else if(axis==='z')delta=[0,0,-dy*size];
  if(sel.kind==='root'){moveRoot(frame,delta);return joints(frame).clamped;}
  if(sel.kind==='elbow'||sel.kind==='knee'){moveBendPoint(frame,sel.kind,sel.side,delta);return joints(frame).clamped;}
@@ -844,7 +865,7 @@ function shaded3D(canvas){
  let point=add(origin,delta);
  if(key==='feet')point[1]=Math.max(.05,point[1]);
  frame[key][sel.side]=point;return joints(frame).clamped;}
- return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,pick,pickAll,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
+ return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
 function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
 if(f.pointLocks!=null){
@@ -878,5 +899,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

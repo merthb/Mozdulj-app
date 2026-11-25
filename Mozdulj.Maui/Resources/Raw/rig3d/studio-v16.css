@@ -239,3 +239,5 @@ html.dark .phase-editor input{background:var(--surface);color:#f3f0fa;border-col
 .precision-unit{font-size:.8rem;color:inherit;flex:0 0 auto}
 
 .target-toggle{display:flex;align-items:center;gap:8px;min-height:44px}.target-toggle input{width:21px;height:21px;accent-color:var(--purple)}#targetHelp:empty{display:none}#overlapTargets[hidden]{display:none!important}
+
+#pane-view .view-controls{grid-template-columns:repeat(2,minmax(0,1fr))}#pane-view .view-controls button{min-height:44px}.view-controls button{overflow-wrap:anywhere}.stage canvas{touch-action:none;user-select:none;-webkit-user-select:none}
