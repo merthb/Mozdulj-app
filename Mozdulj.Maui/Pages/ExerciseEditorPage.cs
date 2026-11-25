@@ -42,6 +42,7 @@ public sealed class ExerciseEditorPage : ContentPage
     private readonly Label _figureInfo = UI.Label("",13,color:UI.Muted);
     private readonly bool _open3dImmediately;
     private bool _opened3d;
+    private readonly string _rigDraftKey, _rigSourceHash;
 
     public ExerciseEditorPage(AppState state, Exercise? current = null, bool open3dImmediately=false)
     {
@@ -53,6 +54,8 @@ public sealed class ExerciseEditorPage : ContentPage
             Difficulty = 1, Pose = new MotionPose()
         } : ExerciseLibraryRules.Clone(current);
         ExerciseLibraryRules.Normalize(_draft);
+        _rigDraftKey=current is null?"form:new-exercise":"form:"+_draft.Id;
+        _rigSourceHash=RigDraftStore.Fingerprint(_draft.Pose);
         if (state.BuiltInCatalog.Exercises.Any(x=>x.Id==_draft.Id))
             throw new InvalidOperationException(AppLocalization.Text("WorkoutUi061"));
         UI.Setup(this,current is null ? AppLocalization.Text("WorkoutUi062") : AppLocalization.Text("WorkoutUi063"));
@@ -98,7 +101,7 @@ public sealed class ExerciseEditorPage : ContentPage
         {
             _draft.Pose=pose;
             UpdateFigureInfo();
-        })));
+        },draftKey:_rigDraftKey,sourceHash:_rigSourceHash)));
     }
     private static List<string> Csv(string? text) => (text??"").Split(',',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries)
         .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -188,7 +191,7 @@ public sealed class ExerciseEditorPage : ContentPage
         var draw=UI.Button(AppLocalization.Text("WorkoutUi080"),false);
         draw.Clicked+=async (_,_)=>{
             await Navigation.PushAsync(new Rig3DEditorPage(_draft.Pose, pose=>
-            { _draft.Pose=pose; UpdateFigureInfo(); }));
+            { _draft.Pose=pose; UpdateFigureInfo(); },draftKey:_rigDraftKey,sourceHash:_rigSourceHash));
         };
         _content.Children.Add(draw);
         var saveDraft=UI.Button(AppLocalization.Text("WorkoutUi081"),false);
@@ -370,6 +373,7 @@ public sealed class ExerciseEditorPage : ContentPage
         try
         {
             await _state.SaveCustomExerciseAsync(_draft,status);
+            Rig3DEditorPage.ClearDraft(_rigDraftKey);
             await Navigation.PopModalAsync();
         }
         catch(Exception ex){await DisplayAlertAsync(AppLocalization.Text("SaveError"),ex.Message,AppLocalization.Text("OK"));}

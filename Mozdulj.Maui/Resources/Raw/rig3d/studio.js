@@ -5,7 +5,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
 const history=new MozduljPoseHistory();
 let selectedTarget=null,gesture=null,controlGesture=null;
-let animation=null;
+let animation=null, draftBaseline=null, pendingPreset=null;
 const snapshot=()=>{const data=clone(pose);delete data.camera;return {pose:data,frameIndex};};
 function syncHistory(){ $('undoPose').disabled=!history.canUndo; $('redoPose').disabled=!history.canRedo; }
 function closeGesture(){if(pose&&history.pending!==null)history.finish(snapshot());gesture=null;controlGesture=null;syncHistory();}
@@ -180,12 +180,28 @@ function fillSelectedBand(){
  $('bandRoute').value=obj.route||'auto';$('bandAnchorC').value=obj.anchorC||'none';setFixedInputs('A',obj.position);setFixedInputs('B',obj.positionB);setFixedInputs('C',obj.positionC||[0,.35,.45]);updateFixedAnchorInputs();
 }
 function switchFrame(i){stopPreview();closeGesture();frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
-function setPreset(name){stopPreview();const apply=()=>{const camera=pose?studio.getCamera():null;pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(camera||pose.camera);sync();};if(pose){closeGesture();tracked(apply);}else apply();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
-function load(p,track=false){stopPreview();MozduljRig.checkPose(p);const apply=()=>{const camera=track?studio.getCamera():null;pose=clone(p);frameIndex=0;studio.setCamera(camera||pose.camera||MozduljRig.initialPose().camera);sync();};closeGesture();if(track)tracked(apply);else{apply();window.resetRigHistory();}msg('A 3D testhelyzet betöltve.');}
+function setPreset(name){pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();const apply=()=>{const camera=pose?studio.getCamera():null;pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(camera||pose.camera);sync();};if(pose){closeGesture();tracked(apply);}else apply();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
+function load(p,track=false){pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();MozduljRig.checkPose(p);const apply=()=>{const camera=track?studio.getCamera():null;pose=clone(p);frameIndex=0;studio.setCamera(camera||pose.camera||MozduljRig.initialPose().camera);sync();};closeGesture();if(track)tracked(apply);else{apply();window.resetRigHistory();}msg('A 3D testhelyzet betöltve.');}
 function b64toStr(s){return decodeURIComponent(escape(atob(s)));}function strtoB64(s){return btoa(unescape(encodeURIComponent(s)));}
 window.loadRigBase64=s=>{try{load(JSON.parse(b64toStr(s)));return true;}catch(e){msg(window.rigText('Betöltési hiba: ')+e.message);return false;}};
 window.exportRigBase64=()=>strtoB64(JSON.stringify({...pose,camera:studio.getCamera()}));
 window.exportRigJson=()=>JSON.stringify({...pose,camera:studio.getCamera()},null,2);
+// Camera-only navigation is not an unsaved pose edit.
+window.markRigDraftBaseline=()=>{draftBaseline=JSON.stringify(snapshot().pose);return true;};
+window.captureRigDraftBase64=()=>strtoB64(JSON.stringify({
+ dirty:JSON.stringify(snapshot().pose)!==draftBaseline,
+ payload:window.exportRigBase64(),frameIndex
+}));
+window.restoreRigDraftBase64=(payload,index)=>{
+ try{
+   load(JSON.parse(b64toStr(payload)));
+   switchFrame(index);return true;
+ }catch(e){msg(window.rigText('Betöltési hiba: ')+e.message);return false;}
+};
+window.loadRigPreset=name=>{
+ if(![...$('preset').options].some(o=>o.value===name))return false;
+ setPreset(name);window.resetRigHistory();return true;
+};
 window.getRigHealth=()=>JSON.stringify({webgl:!!studio,frames:pose?.frames?.length,renderer:'pure-webgl-offline'});
 window.setReadOnlyMode=()=>{
   document.body.classList.add('view-only');
@@ -344,7 +360,16 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(e.key==='ArrowLeft'&&frameIndex>0){e.preventDefault();switchFrame(frameIndex-1);}
    if(e.key==='ArrowRight'&&frameIndex<pose.frames.length-1){e.preventDefault();switchFrame(frameIndex+1);}
  });
- $('preset').addEventListener('change',e=>setPreset(e.target.value));
+ $('preset').addEventListener('change',e=>{
+   if(e.target.value===pose.preset)return;
+   pendingPreset=e.target.value;e.target.value=pose.preset;
+   $('presetConfirm').hidden=false;
+ });
+ $('confirmPreset').onclick=()=>{
+   const name=pendingPreset;pendingPreset=null;$('presetConfirm').hidden=true;
+   if(name)setPreset(name);
+ };
+ $('cancelPreset').onclick=()=>{pendingPreset=null;$('presetConfirm').hidden=true;};
  $('yaw').oninput=e=>guardedEdit(f=>{f.headYaw=rad(+e.target.value);});
  $('pitch').oninput=e=>guardedEdit(f=>{f.headPitch=rad(+e.target.value);});
  $('torso').oninput=e=>guardedEdit(f=>{f.euler[0]=rad(+e.target.value);});

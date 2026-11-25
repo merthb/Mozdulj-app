@@ -21,6 +21,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
     private bool _saving;
     private readonly bool _open3dImmediately;
     private bool _opened3d;
+    private readonly string _rigDraftKey, _rigSourceHash;
 
     public BuiltInContentEditorPage(AppState state,string exerciseId, bool open3dImmediately=false)
     {
@@ -29,6 +30,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
             ?? throw new InvalidOperationException("Ismeretlen alapgyakorlat.");
         var effective=state.GetBuiltInEffective(exerciseId);
         _draft=BuiltInContentRules.FromExercise(effective);
+        _rigDraftKey="form:"+exerciseId;_rigSourceHash=RigDraftStore.Fingerprint(_draft.Pose);
         UI.Setup(this,AppLocalization.Text("WorkoutUi086"));
         _summary.Text=_draft.Summary;
         _position.Text=_draft.StartingPosition;
@@ -52,7 +54,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
         {
             _draft.Pose=BuiltInContentRules.ClonePose(p);
             UpdateFigure();
-        }));
+        },draftKey:_rigDraftKey,sourceHash:_rigSourceHash));
         body.Children.Add(draw);
         if(state.HasBuiltInContentOverride(exerciseId))
         {
@@ -89,7 +91,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
         {
             _draft.Pose=BuiltInContentRules.ClonePose(pose);
             UpdateFigure();
-        })));
+        },draftKey:_rigDraftKey,sourceHash:_rigSourceHash)));
     }
     private static View Field(string caption,View editor) =>new VerticalStackLayout{Spacing=4,
         Children={UI.Label(caption,14,true,color:UI.Muted),editor}};
@@ -110,6 +112,7 @@ public sealed class BuiltInContentEditorPage : ContentPage
             _draft.CommonMistakes=Lines(_mistakes.Text);
             _draft.SafetyNote=_safety.Text?.Trim()??"";
             await _state.SaveBuiltInContentAsync(_draft);
+            Rig3DEditorPage.ClearDraft(_rigDraftKey);
             await Navigation.PopModalAsync();
         }
         catch(Exception ex){await DisplayAlertAsync(AppLocalization.Text("WorkoutUi098"),ex.Message,AppLocalization.Text("OK"));}

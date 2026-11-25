@@ -58,7 +58,7 @@ public sealed class ExerciseDetailPage : ContentPage
                         Func<MotionPose, Task> savePose = pose =>
                             _state.SaveExercisePoseAsync(e.Id, pose);
                         await Navigation.PushAsync(new Rig3DEditorPage(
-                            current.Pose, savePose, current.Name));
+                            current.Pose, savePose, current.Name,draftKey:"direct:"+e.Id));
                     };
                     refreshedPose = () => (_state.FindExercise(e.Id) ?? e).Pose;
                 }

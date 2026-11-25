@@ -1,6 +1,9 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "A teljes pózsablon cseréje felülírja az aktuális fázisokat. Folytatod?": "Replacing the entire pose template replaces the current phases. Continue?",
+  "Sablon lecserélése": "Replace template",
+  "Mégse": "Cancel",
   "Eszköz forgatása függőleges tengely körül (°)": "Rotate equipment around vertical axis (°)",
   "Eszköz rögzítése": "Lock equipment",
   "Módosítás hatóköre": "Apply changes to",
