@@ -103,6 +103,8 @@ const dictionary={
   "Váll önálló emelése / süllyesztése":"Individual shoulder elevation / depression",
   "Váll előretolása / hátrahúzása":"Shoulder protraction / retraction",
   "Csukló oldalirányú hajlítása":"Wrist lateral deviation",
+  "Lábujjak emelése / behajlítása": "Toe lifting / curling",
+  "A lábujjrész a lábfejhez képest hajlik; a boka szöge külön állítható.": "The toes bend relative to the foot; the ankle angle is adjusted separately.",
   "Lábfej befelé / kifelé fordítása":"Foot inward / outward rotation",
   "Talp befelé / kifelé billentése":"Sole inward / outward tilt",
   "Medence előre / hátra forgatása":"Pelvis forward / backward rotation",
