@@ -18,6 +18,14 @@ internal static class TimedTargetsRegression
         workout.RemainingSeconds=0;
         Check(TimedTargets.TryAdvance(workout,item) && workout.RemainingSeconds==25 && TimedTargets.Index(item)==1,"automatic second side");
         Check(!TimedTargets.CanComplete(workout,item),"no early credit on final interval");
+        workout.PlaybackPhase="exercise";workout.RemainingSeconds=18;
+        var guide=Rig3DMovement.ForTimedWorkout(workout,item,false);
+        Check(guide is {Direction:"right",ElapsedSeconds:7,TotalSeconds:25,Playing:true},"guide follows current side and elapsed seconds");
+        Check(Rig3DMovement.ForTimedWorkout(workout,item,true) is {Playing:false},"guide pauses with workout");
+        workout.PlaybackPhase="transition";
+        Check(Rig3DMovement.ForTimedWorkout(workout,item,false) is null,"no active guide during transition");
+        workout.PlaybackPhase="exercise";workout.RemainingSeconds=25;
+
         var copy=JsonSerializer.Deserialize<Workout>(JsonSerializer.Serialize(workout,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
         Check(copy.RemainingSeconds==25 && TimedTargets.Index(copy.Items[0])==1,"resume interval retained");
         copy.RemainingSeconds=0;
