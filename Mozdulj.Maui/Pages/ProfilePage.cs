@@ -1,3 +1,4 @@
+using Mozdulj.Core;
 using Mozdulj.Maui.Services;
 using Microsoft.Maui.Storage;
 using Microsoft.Maui.ApplicationModel;
@@ -12,7 +13,7 @@ public sealed class ProfilePage : ContentPage
     public ProfilePage(AppState state)
     {
         _state=state;
-        UI.Setup(this,"Profil");
+        UI.Setup(this,AppLocalization.Text("Profile"));
         Content=new ScrollView{Content=_content};
     }
     protected override void OnAppearing() { base.OnAppearing(); Draw(); }
@@ -21,6 +22,38 @@ public sealed class ProfilePage : ContentPage
         _content.Children.Clear();
         var p=_state.Preferences;
         _content.Children.Add(UI.Label("Saját mozgásprofil",25,true));
+
+        var languagePicker = new Picker { Title = AppLocalization.Text("Language"), TextColor = UI.Ink };
+        languagePicker.Items.Add("Magyar");
+        languagePicker.Items.Add("English");
+        languagePicker.SelectedIndex = AppLocalization.IsEnglish ? 1 : 0;
+        bool changingLanguage = false;
+        languagePicker.SelectedIndexChanged += async (_, _) =>
+        {
+            if (changingLanguage || languagePicker.SelectedIndex < 0) return;
+            var language = languagePicker.SelectedIndex == 1 ? "en" : "hu";
+            if (language == _state.Data.ApplicationLanguage) return;
+            changingLanguage = true;
+            languagePicker.IsEnabled = false;
+            try
+            {
+                await _state.SetApplicationLanguageAsync(language);
+                Dispatcher.Dispatch(() =>
+                {
+                    if (Window is null) return;
+                    var tabs = new RootTabs(_state);
+                    tabs.CurrentPage = tabs.Children[4];
+                    Window.Page = tabs;
+                });
+            }
+            catch (Exception ex)
+            {
+                languagePicker.SelectedIndex = AppLocalization.IsEnglish ? 1 : 0;
+                await DisplayAlertAsync(AppLocalization.Text("LanguageSaveError"), ex.Message, AppLocalization.Text("OK"));
+            }
+            finally { changingLanguage = false; languagePicker.IsEnabled = true; }
+        };
+        _content.Children.Add(UI.Card(UI.Label(AppLocalization.Text("Language"), 19, true), languagePicker));
 
         // Appearance is a device preference, not part of the exported workout profile.
         _content.Children.Add(UI.Label("Megjelenés", 19, true));
@@ -160,7 +193,17 @@ public sealed class ProfilePage : ContentPage
         {
             try
             {
-                if (await BackupRestoreFlow.RunAsync(this,_state)) Draw();
+                var previousLanguage = AppLocalization.IsEnglish;
+                if (await BackupRestoreFlow.RunAsync(this,_state))
+                {
+                    if (previousLanguage != AppLocalization.IsEnglish && Window is not null)
+                    {
+                        var tabs = new RootTabs(_state);
+                        tabs.CurrentPage = tabs.Children[4];
+                        Window.Page = tabs;
+                    }
+                    else Draw();
+                }
             }
             catch(Exception ex)
             {

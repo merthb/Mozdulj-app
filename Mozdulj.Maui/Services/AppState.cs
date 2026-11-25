@@ -98,7 +98,10 @@ public sealed class AppState
             if(!File.Exists(migrationBackup)) File.Copy(UserPath,migrationBackup);
         }
         var needsInitialSave = readFromBackup || !File.Exists(UserPath) || Data.SchemaVersion < LocalDataMigrations.CurrentVersion;
+        var previousLanguage = Data.ApplicationLanguage;
         Data = LocalDataMigrations.Upgrade(Data);
+        if (previousLanguage != Data.ApplicationLanguage) needsInitialSave = true;
+        AppLocalization.Apply(Data.ApplicationLanguage);
         if (_baseCatalog.CatalogVersion == bundledVersion &&
             Data.AppliedBuiltInCatalogVersion < bundledVersion)
         {
@@ -134,6 +137,17 @@ public sealed class AppState
         await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences));
 #endif
+    }
+
+    public async Task SetApplicationLanguageAsync(string language)
+    {
+        if (!AppLanguage.IsSupported(language)) throw new ArgumentOutOfRangeException(nameof(language));
+        if (Data.ApplicationLanguage == language) { AppLocalization.Apply(language); return; }
+        var previous = Data.ApplicationLanguage;
+        Data.ApplicationLanguage = language;
+        try { await SaveAsync(); }
+        catch { Data.ApplicationLanguage = previous; throw; }
+        AppLocalization.Apply(language);
     }
 
     private void RequireSetup()
@@ -709,6 +723,7 @@ public sealed class AppState
             Catalog=ExerciseLibraryRules.BuildEffectiveCatalog(_baseCatalog,Data);
             // A restore does not award again for thresholds already processed in the backup.
             await SaveAsync();
+            AppLocalization.Apply(Data.ApplicationLanguage);
 #if ANDROID
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences);
 #endif
@@ -717,6 +732,7 @@ public sealed class AppState
         catch
         {
             Data=previous;
+            AppLocalization.Apply(Data.ApplicationLanguage);
             Catalog=ExerciseLibraryRules.BuildEffectiveCatalog(_baseCatalog,Data);
             throw;
         }
