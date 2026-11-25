@@ -728,4 +728,5 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="RigInvalidEquipmentId" xml:space="preserve"><value>Invalid equipment ID.</value></data>
   <data name="RigInvalidFourthBandPoint" xml:space="preserve"><value>Invalid fourth band point.</value></data>
   <data name="RigInvalidArticulation" xml:space="preserve"><value>Invalid local spine or pelvis rotation.</value></data>
+  <data name="RigInvalidHandPose" xml:space="preserve"><value>Invalid hand pose.</value></data>
 </root>

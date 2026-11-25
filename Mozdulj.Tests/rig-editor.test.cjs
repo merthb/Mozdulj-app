@@ -506,3 +506,33 @@ test('side controls mirror, copy, limit symmetric edits and interpolate to legac
  const pose=rig.initialPose('stand');pose.frames[0]=f;assert.doesNotThrow(()=>rig.checkPose(pose));
  f.leftWristDeviation=2;assert.throws(()=>rig.checkPose(pose));
 });
+
+test('hand curl preserves the arm chain and finger lengths, moves equipment grasp independently',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),before=rig.joints(f);
+ assert.equal(rig.handCurl(f,'left'),null);assert.equal(before.handDetails.left,undefined);
+ rig.setHandCurl(f,'left',0);const open=rig.joints(f);
+ rig.setHandCurl(f,'left',rig.HAND_PRESETS.grip);const grip=rig.joints(f);
+ const d=(a,b)=>m.len(m.sub(a,b));
+ for(const key of ['hands','elbow','shoulder','palms','thumbs'])assert.equal(JSON.stringify(before[key]),JSON.stringify(grip[key]));
+ assert.equal(grip.handDetails.right,undefined);
+ for(let i=0;i<4;i++)for(let k=1;k<4;k++){
+   const a=open.handDetails.left.fingers[i],b=grip.handDetails.left.fingers[i];
+   assert.ok(Math.abs(d(a[k],a[k-1])-d(b[k],b[k-1]))<1e-8);
+ }
+ assert.ok(d(rig.gripPoint(grip,'left'),before.hands.left)>.03);
+ const prop={type:'band',anchorA:'leftHand',anchorB:'rightHand'};
+ assert.equal(JSON.stringify(rig.bandSegments(prop,f,grip)[0][0]),JSON.stringify(rig.gripPoint(grip,'left')));
+ assert.equal(JSON.stringify(rig.bandSegments(prop,f,grip)[0][1]),JSON.stringify(before.hands.right));
+ assert.ok(rig.Collision.bodyProbes(grip).some(p=>p.id.startsWith('fingerleft')));
+});
+test('hand pose copies, mirrors, validates and interpolates without changing legacy saves',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),legacy=JSON.parse(JSON.stringify(f));
+ rig.setHandCurl(f,'left',.8);
+ assert.equal(rig.mirrorFrame(f).rightHandCurl,.8);
+ rig.copyLimb(f,'arm','left');assert.equal(f.rightHandCurl,.8);
+ assert.equal(rig.Collision.interpolate(f,legacy,.5).leftHandCurl,.4);
+ rig.setHandCurl(f,'right',null,true);
+ assert.equal(f.leftHandCurl,undefined);assert.equal(f.rightHandCurl,undefined);
+ const pose=rig.initialPose('stand');pose.frames[0]=f;
+ f.leftHandCurl=1.1;assert.throws(()=>rig.checkPose(pose));f.leftHandCurl=0;assert.doesNotThrow(()=>rig.checkPose(pose));
+});

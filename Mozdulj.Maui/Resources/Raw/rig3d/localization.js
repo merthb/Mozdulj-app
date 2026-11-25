@@ -1,6 +1,16 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Kéztartás":"Hand pose",
+  "Régi egyszerűsített kéz":"Legacy simplified hand",
+  "Nyitott tenyér":"Open palm",
+  "Laza kéz":"Relaxed hand",
+  "Eszközfogás":"Equipment grip",
+  "Ököl":"Fist",
+  "Egyéni ujjbehajlítás":"Custom finger curl",
+  "Ujjak együttes behajlítása (%)":"Combined finger curl (%)",
+  "A kéztartás a szalag és a kézisúlyzó fogási pontját is módosítja. Az ujjak együtt mozgathatók.":"Hand pose also changes the band and dumbbell grasp point. Fingers move together.",
+  "Érvénytelen kéztartás.":"Invalid hand pose.",
   "Váll önálló emelése / süllyesztése":"Individual shoulder elevation / depression",
   "Váll előretolása / hátrahúzása":"Shoulder protraction / retraction",
   "Csukló oldalirányú hajlítása":"Wrist lateral deviation",

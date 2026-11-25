@@ -244,6 +244,9 @@ function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headY
  $('kneeFlex').value=Math.round(deg(leg.kneeFlexion||0));$('hipRotation').value=Math.round(deg(leg.axialRotation||0));
  $('footPitch').value=Math.round(deg(f.footPitch?.[side]||0));
  const armSide=$('armSide').value||'right';const arm=f.armAngles?.[armSide]||MozduljRig.inferAngles(f,'arm',armSide)?.angles||{};
+ const curl=MozduljRig.handCurl(f,armSide);
+ $('handCurl').disabled=curl===null;$('handCurl').value=Math.round((curl??0)*100);
+ $('handShape').value=curl===null?'legacy':Object.keys(MozduljRig.HAND_PRESETS).find(k=>Math.abs(MozduljRig.HAND_PRESETS[k]-curl)<.00001)||'custom';
  for(const [kind,selected] of [['arm',armSide],['leg',side]])
    for(const suffix of MozduljRig.SIDE_ARTICULATION[kind])$('side'+suffix).value=Math.round(deg(f[selected+suffix]||0));
  for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])$(id).value=Math.round(deg(arm[k]||0));
@@ -451,6 +454,7 @@ window.reviewRigBase64=()=>strtoB64(JSON.stringify(reviewPose()));
 const precisionControls=new Map();
 function syncPrecision(){
  for(const [id,entry] of precisionControls){
+   entry.disabled=$(id).disabled;
    if(document.activeElement!==entry)entry.value=$(id).value;
  }
 }
@@ -460,7 +464,7 @@ function setupPrecision(){
    if(!label)continue;
    const row=document.createElement('div');row.className='precision-row';
    const number=document.createElement('input');number.type='number';number.min=slider.min;number.max=slider.max;number.step=slider.step||'1';number.value=slider.value;
-   const unit=slider.id==='shoulderLift'?'cm':'°';
+   const unit=slider.id==='shoulderLift'?'cm':slider.id==='handCurl'?'%':'°';
    label.id='label-'+slider.id;
    number.setAttribute('aria-labelledby',label.id);
    const unitText=document.createElement('span');unitText.className='precision-unit';unitText.textContent=unit;
@@ -614,6 +618,19 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      const selected=$(selector).value,value=rad(+e.target.value),symmetric=$('symmetricEdit').checked;
      guardedEdit(f=>MozduljRig.editSideArticulation(f,selected,suffix,value,symmetric),null,suffix.startsWith('Shoulder'));
    };
+ $('handShape').onchange=e=>{
+   const selected=$('armSide').value,symmetric=$('symmetricEdit').checked;
+   const value=e.target.value;
+   if(value==='custom')return;
+   closeGesture();
+   const curl=value==='legacy'?null:MozduljRig.HAND_PRESETS[value];
+   guardedEdit(f=>MozduljRig.setHandCurl(f,selected,curl,symmetric));syncJointValues();
+ };
+ $('handCurl').oninput=e=>{
+   const selected=$('armSide').value,symmetric=$('symmetricEdit').checked;
+   if(MozduljRig.handCurl(current(),selected)===null)return;
+   guardedEdit(f=>MozduljRig.setHandCurl(f,selected,Number(e.target.value)/100,symmetric));
+ };
  $('armSide').onchange=()=>focusBody($('armSide').value+'Arm',false);
  function editArm(field,value){const side=$('armSide').value;
    const symmetric=$('symmetricEdit').checked,other=side==='left'?'right':'left';

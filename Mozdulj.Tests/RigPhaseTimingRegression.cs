@@ -54,7 +54,14 @@ internal static class RigPhaseTimingRegression
         Check(sidePose.Frames[0].LeftShoulderElevation==.2f&&sidePose.Frames[0].RightAnkleRoll==.25f,"side articulation round trip");
         frame.RightAnkleRoll=2;Reject(pose);frame.RightAnkleRoll=.25f;
         frame.LeftWristDeviation=float.NaN;Reject(pose);
-        Console.WriteLine("PASS 3D timing, equipment, bands and local/side articulation compatibility");
+        frame.LeftWristDeviation=null;
+        var legacyHand=JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions);
+        Check(!legacyHand.Contains("leftHandCurl")&&!legacyHand.Contains("rightHandCurl"),"legacy hand omission");
+        frame.LeftHandCurl=0;frame.RightHandCurl=.78f;Rig3DValidator.Validate(pose);
+        var handPose=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
+        Check(handPose.Frames[0].LeftHandCurl==0&&handPose.Frames[0].RightHandCurl==.78f,"hand pose round trip");
+        frame.RightHandCurl=1.01f;Reject(pose);frame.RightHandCurl=float.NaN;Reject(pose);
+        Console.WriteLine("PASS 3D timing, equipment, bands, articulation and hand compatibility");
     }
     private static void Reject(Rig3DPose p){try{Rig3DValidator.Validate(p);}catch(InvalidDataException){return;}throw new Exception("TEST FAIL: invalid 3D phase timing accepted");}
     private static void Check(bool ok,string label){if(!ok)throw new Exception("TEST FAIL: "+label);}

@@ -142,6 +142,48 @@ function editSideArticulation(frame,side,field,value,symmetric=false){
  }
  frame[key]=old+delta;return true;
 }
+const HAND_PRESETS={open:0,relaxed:.32,grip:.78,fist:1};
+const HAND_KEYS=['leftHandCurl','rightHandCurl'];
+const neutralNumericKey=k=>Object.hasOwn(ARTICULATION_LIMITS,k)||HAND_KEYS.includes(k);
+function validHandCurl(frame){return HAND_KEYS.every(k=>frame[k]==null||(Number.isFinite(frame[k])&&frame[k]>=0&&frame[k]<=1));}
+function handCurl(frame,side){const value=frame[side+'HandCurl'];return value==null?null:clamp(value,0,1);}
+function setHandCurl(frame,side,value,symmetric=false){
+ if(!['left','right'].includes(side)||(value!==null&&(!Number.isFinite(value)||value<0||value>1)))return false;
+ for(const s of symmetric?['left','right']:[side]){
+   const key=s+'HandCurl';if(value===null)delete frame[key];else frame[key]=value;
+ }
+ return true;
+}
+// Four fingers share one curl control. A mirrored, anatomically local basis
+// is constructed from the palm and the rotated thumb rather than world axes.
+// Finger segment lengths remain fixed; the grasp position follows curl.
+function handGeometry(wrist,forward,thumbDirection,side,curl){
+ let transverse=sub(thumbDirection,mul(forward,dot(thumbDirection,forward)));
+ if(len(transverse)<1e-6)transverse=cross(forward,Math.abs(forward[1])<.9?[0,1,0]:[0,0,1]);
+ transverse=norm(transverse);
+ // Existing thumb coordinates use +X for both hands. Use a side-relative
+ // axis for the fingers and a reflection-consistent palm normal.
+ const sign=side==='left'?-1:1;
+ const lateral=mul(transverse,-sign);
+ const inward=norm(mul(cross(forward,lateral),sign));
+ const center=add(wrist,mul(forward,.048));
+ const fingers=[.074,.082,.077,.063].map((length,i)=>{
+   const spread=(1.5-i)*.018;
+   const base=add(add(wrist,mul(forward,.086)),mul(lateral,spread));
+   const segments=[.46,.31,.23],angles=[.95,1.9,2.6].map(a=>a*curl);
+   const points=[base];
+   for(let k=0;k<3;k++){
+     const direction=add(mul(forward,Math.cos(angles[k])),mul(inward,Math.sin(angles[k])));
+     points.push(add(points[k],mul(direction,length*segments[k])));
+   }
+   return points;
+ });
+ const thumbBase=add(add(wrist,mul(forward,.023)),mul(lateral,.036));
+ const thumbMiddle=add(thumbBase,add(mul(lateral,.024*(1-curl*.6)),mul(forward,.027)));
+ const thumbTip=add(thumbMiddle,add(mul(forward,.022*(1-curl)),mul(inward,.027*curl)));
+ return {center,forward,lateral,inward,fingers,thumb:[thumbBase,thumbMiddle,thumbTip],grip:add(wrist,add(mul(forward,.064*curl),mul(inward,.026*curl))),curl};
+}
+function gripPoint(j,side){return j.handDetails?.[side]?.grip||j.hands[side];}
 function validArticulation(frame){
  return Object.entries(ARTICULATION_LIMITS).every(([key,limit])=>frame[key]==null||(Number.isFinite(frame[key])&&Math.abs(frame[key])<=limit+1e-6));
 }
@@ -179,7 +221,7 @@ function joints(frame){
  const shoulder={left:upperPoint(shoulderLocal('left')),right:upperPoint(shoulderLocal('right'))};
  const neck=upperPoint(spineLocal(.70));
  const head=add(neck,axes.upper(rotate([0,.21,.015],[frame.headPitch||0,frame.headYaw||0,frame.headRoll||0])));
- const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},clamped:[]};
+ const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},handDetails:{},clamped:[]};
  for(const side of ['left','right']){
   let s=side==='left'?-1:1;
   // Anatomical hinge pole is anchored to the current body rotation, not a fixed
@@ -276,6 +318,8 @@ function joints(frame){
   thumbAxis=norm(thumbAxis);
   const thumbRot=add(mul(thumbAxis,Math.cos(turn)),mul(cross(palmDir,thumbAxis),Math.sin(turn)));
   j.thumbs[side]=add(j.hands[side],mul(norm(thumbRot),.064));
+  const curl=handCurl(frame,side);
+  if(curl!==null)j.handDetails[side]=handGeometry(j.hands[side],palmDir,norm(thumbRot),side,curl);
   if(h.reachClamped)j.clamped.push(side+'Hand');if(k.reachClamped)j.clamped.push(side+'Foot');
  }
  return j;
@@ -372,6 +416,9 @@ function mirrorFrame(frame){
      if(frame[opposite]!=null)f[key]=frame[opposite];else delete f[key];
    }
  }
+ for(const side of ['left','right']){
+   const other=swapSide(side),key=side+'HandCurl';if(frame[other+'HandCurl']!=null)f[key]=frame[other+'HandCurl'];else delete f[key];
+ }
  for(const key of ['armAngles','legAngles'])if(f[key]!=null)
    f[key]=Object.fromEntries(Object.entries(f[key]).map(([side,a])=>[swapSide(side),mirrorControls(a)]));
  for(const prop of f.equipment||[]){
@@ -398,6 +445,7 @@ function copyLimb(frame,kind,source){
    const from=source+suffix,to=dest+suffix;
    if(frame[from]!=null)frame[to]=frame[from];else delete frame[to];
  }
+ if(kind==='arm'){if(frame[source+'HandCurl']!=null)frame[dest+'HandCurl']=frame[source+'HandCurl'];else delete frame[dest+'HandCurl'];}
  if(kind==='leg'){
    frame.footPitch??={};
    if(frame.footPitch[source]!=null)frame.footPitch[dest]=frame.footPitch[source];
@@ -567,6 +615,14 @@ const Collision3D=(()=>{
      chain('shin'+side,j.knee[side],j.feet[side],.065);
      chain('foot'+side,j.feet[side],j.toes[side],.041);
      point('palm'+side,j.hands[side],.039);
+     const detail=j.handDetails?.[side];
+     if(detail){
+       point('palmDetail'+side,detail.center,.038);
+       for(const [i,finger] of [...detail.fingers,detail.thumb].entries())for(let k=1;k<finger.length;k++){
+         point('finger'+side+i+'-'+k,finger[k],.010);
+         point('fingerMid'+side+i+'-'+k,lerp(finger[k-1],finger[k],.5),.010);
+       }
+     }
      point('ankle'+side,j.feet[side],.048);
    }
    return out;
@@ -626,7 +682,11 @@ const Collision3D=(()=>{
    for(const side of ['left','right']){
      seg('upperArm-'+side,lerp(j.shoulder[side],j.elbow[side],.28),j.elbow[side],.062);
      seg('forearm-'+side,j.elbow[side],j.hands[side],.048);
-     seg('hand-'+side,j.hands[side],j.palms[side],.035);
+     const detail=j.handDetails?.[side];
+     if(detail){
+       seg('hand-'+side,j.hands[side],add(j.hands[side],mul(detail.forward,.086)),.035);
+       for(const finger of [...detail.fingers,detail.thumb])for(let k=1;k<finger.length;k++)seg('hand-'+side,finger[k-1],finger[k],.010);
+     }else seg('hand-'+side,j.hands[side],j.palms[side],.035);
      seg('thigh-'+side,lerp(j.hip[side],j.knee[side],.22),j.knee[side],.081);
      seg('shin-'+side,j.knee[side],j.feet[side],.055);
      seg('foot-'+side,j.feet[side],j.toes[side],.038);
@@ -675,9 +735,9 @@ const Collision3D=(()=>{
    if(Array.isArray(b))return b.map((x,i)=>i<(Array.isArray(a)?a.length:0)?interpolate(a[i],x,t):x);
    if(b&&typeof b==='object'){
      const out={};
-     for(const k of Object.keys(b))out[k]=Object.hasOwn(ARTICULATION_LIMITS,k)&&b[k]==null&&typeof a?.[k]==='number'&&t<1?a[k]*(1-t):interpolate(a?.[k],b[k],t);
+     for(const k of Object.keys(b))out[k]=neutralNumericKey(k)&&b[k]==null&&typeof a?.[k]==='number'&&t<1?a[k]*(1-t):interpolate(a?.[k],b[k],t);
      for(const k of Object.keys(a||{}))if(!(k in b)&&t<1)
-       out[k]=Object.hasOwn(ARTICULATION_LIMITS,k)&&typeof a[k]==='number'?a[k]*(1-t):a[k];
+       out[k]=neutralNumericKey(k)&&typeof a[k]==='number'?a[k]*(1-t):a[k];
      return out;
    }
    return b;
@@ -841,7 +901,11 @@ function contactEnvelope(j,key){
  if(key==='root')return [{p:j.root,r:.135}];
  const side=key.startsWith('left')?'left':'right';
  if(key.endsWith('Foot'))return [{p:j.feet[side],r:.067},{p:j.toes[side],r:.067}];
- if(key.endsWith('Hand'))return [{p:j.hands[side],r:.055},{p:j.palms[side],r:.046},{p:j.thumbs[side],r:.018}];
+ if(key.endsWith('Hand')){
+   const detail=j.handDetails?.[side];
+   if(detail)return [{p:j.hands[side],r:.055},{p:detail.center,r:.038},...[...detail.fingers,detail.thumb].flatMap(f=>f.map(p=>({p,r:.010})))];
+   return [{p:j.hands[side],r:.055},{p:j.palms[side],r:.046},{p:j.thumbs[side],r:.018}];
+ }
  return [];
 }
 function contactDistance(j,key,surface){
@@ -927,7 +991,7 @@ function fitSupport(frame,type,keys,index=null,lock=false){
 }
  function bandAnchorPoint(anchor,frame,j,prop,which){
    const fixed=which==='A' ? prop.position : which==='C' ? prop.positionC : which==='D' ? prop.positionD : (prop.positionB||prop.position);
-   const look={leftHand:j.hands.left,rightHand:j.hands.right,
+   const look={leftHand:gripPoint(j,'left'),rightHand:gripPoint(j,'right'),
      leftAnkle:j.feet.left,rightAnkle:j.feet.right,leftKnee:j.knee.left,rightKnee:j.knee.right,
      leftToe:j.toes.left,rightToe:j.toes.right,
      floorLeft:[j.feet.left[0],.035,j.feet.left[2]],floorRight:[j.feet.right[0],.035,j.feet.right[2]],
@@ -943,11 +1007,11 @@ function fitSupport(frame,type,keys,index=null,lock=false){
      return [[a,b]];}
    // Backward-compatibility with the 158 bundled movement records.
    switch(prop.anchor){
-     case 'hands':return [[j.hands.left,j.hands.right]];
+     case 'hands':return [[gripPoint(j,'left'),gripPoint(j,'right')]];
      case 'knees':return [[j.knee.left,j.knee.right]];
      case 'ankle':return [[j.feet.left,j.feet.right]];
-     case 'fixed':return [[[ -.82,.35,.58],j.hands.left],[[.82,.35,.58],j.hands.right]];
-     default:return [[j.feet.left,j.hands.left],[j.feet.right,j.hands.right]];
+     case 'fixed':return [[[ -.82,.35,.58],gripPoint(j,'left')],[[.82,.35,.58],gripPoint(j,'right')]];
+     default:return [[j.feet.left,gripPoint(j,'left')],[j.feet.right,gripPoint(j,'right')]];
    }
  }
 
@@ -1094,7 +1158,11 @@ function shaded3D(canvas){
     const f=rotate([0,0,.24],frame.euler);
     poly([a,add(mid,f),b],type==='towel'?.027:.012,type==='towel'?'mat':'band');
   }
-  if(type==='dumbbell'){for(let s of ['left','right']){let p=j.hands[s];limb(add(p,[-.10,0,0]),add(p,[.10,0,0]),.025,'metal');ell(add(p,[-.12,0,0]),[.035,.06,.06],'metal');ell(add(p,[.12,0,0]),[.035,.06,.06],'metal');}}
+  if(type==='dumbbell'){for(let s of ['left','right']){
+    const p=gripPoint(j,s),axis=j.handDetails[s]?.lateral||[1,0,0];
+    limb(add(p,mul(axis,-.10)),add(p,mul(axis,.10)),.025,'metal');
+    for(const sign of [-1,1])ell(add(p,mul(axis,sign*.12)),[.035,.06,.06],'metal');
+  }}
  }}
  function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
@@ -1120,7 +1188,12 @@ function shaded3D(canvas){
  limb(torsoUpper,neck,.105,'skin');
  for(const side of ['left','right']){
   const shoulder=j.shoulder[side],hip=j.hip[side],elbow=j.elbow[side],hand=j.hands[side],knee=j.knee[side],foot=j.feet[side];
-  ell(shoulder,[.12,.115,.12],'shirt');limb(shoulder,elbow,.092,'skin');ell(elbow,[.075,.075,.075],'skin');limb(elbow,hand,.065,'skin');ell(hand,[.06,.055,.055],'skin');limb(hand,j.palms[side],.046,'skin');limb(hand,j.thumbs[side],.018,'skin');
+  ell(shoulder,[.12,.115,.12],'shirt');limb(shoulder,elbow,.092,'skin');ell(elbow,[.075,.075,.075],'skin');limb(elbow,hand,.065,'skin');ell(hand,[.06,.055,.055],'skin');
+  const detail=j.handDetails[side];
+  if(detail){
+    drawM(model(detail.center,mul(detail.lateral,.043),mul(detail.inward,.023),mul(detail.forward,.052)),'skin');
+    for(const finger of [...detail.fingers,detail.thumb])poly(finger,.010,'skin');
+  }else {limb(hand,j.palms[side],.046,'skin');limb(hand,j.thumbs[side],.018,'skin');}
   ell(hip,[.11,.11,.11],'leggings');limb(hip,knee,.13,'leggings');ell(knee,[.109,.108,.105],'leggings');limb(knee,foot,.092,'leggings');
   if(sideAngle(frame,side,'AnkleYaw')||sideAngle(frame,side,'AnkleRoll')){
     const {right,up,forward}=j.footAxes[side];
@@ -1197,7 +1270,7 @@ function shaded3D(canvas){
  frame[key][sel.side]=point;return joints(frame).clamped;}
  return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,pickEquipment,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
-function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');if(!validEquipmentIds(p.frames))throw Error('Érvénytelen eszközazonosító.');for(let f of p.frames){if(!validArticulation(f))throw Error('Érvénytelen helyi gerinc- vagy medenceforgatás.');if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
+function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');if(!validEquipmentIds(p.frames))throw Error('Érvénytelen eszközazonosító.');for(let f of p.frames){if(!validHandCurl(f))throw Error('Érvénytelen kéztartás.');if(!validArticulation(f))throw Error('Érvénytelen helyi gerinc- vagy medenceforgatás.');if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
 if(f.pointLocks!=null){
  if(typeof f.pointLocks!=='object'||Array.isArray(f.pointLocks))throw Error('Érvénytelen rögzítési pont.');
  for(const [key,pos] of Object.entries(f.pointLocks))if(!LOCK_KEYS.includes(key)||!Array.isArray(pos)||pos.length!==3||pos.some(x=>!Number.isFinite(x)||Math.abs(x)>10))throw Error('Érvénytelen rögzítési pont.');
@@ -1232,5 +1305,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

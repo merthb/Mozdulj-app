@@ -71,6 +71,11 @@ public sealed class Rig3DFrame
     public float? RightAnkleYaw { get; set; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public float? RightAnkleRoll { get; set; }
+    // Null preserves the legacy hand; 0 = open, 1 = fully curled.
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? LeftHandCurl { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float? RightHandCurl { get; set; }
     /// <summary>Ankle plantarflexion (+spicc) and dorsiflexion (-pipa), radians per side.</summary>
     public Dictionary<string,float> FootPitch { get; set; } = [];
     /// <summary>Optional anatomically constrained leg-chain controls, independent of raw IK targets.</summary>
@@ -169,6 +174,9 @@ public static class Rig3DValidator
                (f.HoldSeconds is float hold && (!float.IsFinite(hold)||hold<0f||hold>120f)))
                 throw new InvalidDataException(AppLocalization.Text("RigInvalidPhaseTiming"));
             CheckVector(f.Root,"testgyökér");CheckVector(f.Euler,"forgásszög");
+            foreach(var curl in new[]{f.LeftHandCurl,f.RightHandCurl})
+                if(curl is float amount && (!float.IsFinite(amount)||amount<0||amount>1))
+                    throw new InvalidDataException(AppLocalization.Text("RigInvalidHandPose"));
             foreach(var (angle,degrees) in new (float? Angle,int Degrees)[]{(f.PelvisPitch,30),(f.PelvisYaw,35),(f.PelvisRoll,25),(f.LumbarBend,30),(f.LumbarSideBend,25),(f.ThoracicBend,35),(f.ThoracicSideBend,25),(f.LeftShoulderElevation,20),(f.LeftShoulderProtraction,25),(f.LeftWristDeviation,25),(f.LeftAnkleYaw,30),(f.LeftAnkleRoll,25),(f.RightShoulderElevation,20),(f.RightShoulderProtraction,25),(f.RightWristDeviation,25),(f.RightAnkleYaw,30),(f.RightAnkleRoll,25)})
                 if(angle is float value && (!float.IsFinite(value)||Math.Abs(value)>degrees*Math.PI/180+1e-6))
                     throw new InvalidDataException(AppLocalization.Text("RigInvalidArticulation"));

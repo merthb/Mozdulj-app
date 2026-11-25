@@ -46,6 +46,9 @@
 <label for="armAbduct">Kar oldalra emelése</label><input id="armAbduct" type="range" min="0" max="154" value="0">
 <label for="armRotation">Felkar befelé / kifelé forgatása</label><input id="armRotation" type="range" min="-90" max="90" value="0"><label for="elbowFlex">Könyökhajlítás (0–150°)</label><input id="elbowFlex" type="range" min="0" max="150" value="0">
 <label for="wristFlex">Csukló hajlítása</label><input id="wristFlex" type="range" min="-59" max="59" value="0"><label for="sideWristDeviation">Csukló oldalirányú hajlítása</label><input id="sideWristDeviation" type="range" min="-25" max="25" value="0">
+<label for="handShape">Kéztartás</label><select id="handShape"><option value="legacy">Régi egyszerűsített kéz</option><option value="open">Nyitott tenyér</option><option value="relaxed">Laza kéz</option><option value="grip">Eszközfogás</option><option value="fist">Ököl</option><option value="custom" disabled>Egyéni ujjbehajlítás</option></select>
+<label for="handCurl">Ujjak együttes behajlítása (%)</label><input id="handCurl" type="range" min="0" max="100" step="1" value="0" disabled>
+<div class="hint">A kéztartás a szalag és a kézisúlyzó fogási pontját is módosítja. Az ujjak együtt mozgathatók.</div>
 <label for="forearmRotation">Alkar és tenyér fordítása</label><input id="forearmRotation" type="range" min="-89" max="89" value="0">
 <div class="hint">A könyök a vállhoz kötött hajlítási síkot követi. A kézpont kézi húzása az adott kart visszaváltja célpontos szerkesztésre.</div>
 </div></details><details class="edit-group" data-body-group="leg"><summary>Lábak és lábfejek</summary><div class="line"><label for="legSide">Szerkesztett láb</label>

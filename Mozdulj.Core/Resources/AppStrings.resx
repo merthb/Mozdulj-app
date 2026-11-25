@@ -728,4 +728,5 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="RigInvalidEquipmentId" xml:space="preserve"><value>Érvénytelen eszközazonosító.</value></data>
   <data name="RigInvalidFourthBandPoint" xml:space="preserve"><value>Hibás negyedik szalagpont.</value></data>
   <data name="RigInvalidArticulation" xml:space="preserve"><value>Érvénytelen helyi gerinc- vagy medenceforgatás.</value></data>
+  <data name="RigInvalidHandPose" xml:space="preserve"><value>Érvénytelen kéztartás.</value></data>
 </root>
