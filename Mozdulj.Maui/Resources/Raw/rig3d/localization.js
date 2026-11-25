@@ -1,6 +1,18 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Fázisok összehasonlítása":"Compare phases",
+  "Referencia-csontváz (onion skin)":"Reference skeleton (onion skin)",
+  "Kikapcsolva":"Off",
+  "Előző és következő fázis":"Previous and next phases",
+  "Az előző fázis folytonos, a következő szaggatott vonallal látszik. A referenciák nem szerkeszthetők, nem kerülnek a mentésbe.":"The previous phase uses solid lines, the next uses dashed lines. References cannot be edited or saved into the pose.",
+  "Másolás forrásfázisa":"Source phase",
+  "Másolandó testrész":"Body part to copy",
+  "Medence (térbeli helyzettel)":"Pelvis (including world position)",
+  "Testrész másolása ide":"Copy body part here",
+  "A végtag az aktuális törzs vagy medence helyzetéhez igazodik. Az eszközök, rögzítések, fázisnév és időzítés nem kerülnek át.":"The limb adapts to the current torso or pelvis. Equipment, locks, phase name and timing are not transferred.",
+  "A testrész másolása ütközés, rögzítés vagy elérési korlát miatt nem lehetséges. A póz változatlan maradt.":"A collision, lock or reach limit prevents the copy. The pose is unchanged.",
+  "A kiválasztott testrész átmásolva az aktuális fázisba.":"The selected body part was copied into the current phase.",
   "Szabad":"Free",
   "Térben rögzített ●":"World lock ●",
   "Eszközhöz rögzített ✚":"Equipment lock ✚",
