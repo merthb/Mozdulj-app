@@ -889,3 +889,36 @@ test('creation templates place palms, soles, chair seat and wall supports within
  const crossed=rig.joints(rig.baseFrame('crosslegged'));
  assert.ok(crossed.root[1]<=.28&&crossed.feet.left[1]>=.067);
 });
+
+
+test('phase references are bounded, non-wrapping and do not change pose data',()=>{
+ const rig=loadRig(),frames=rig.initialPose('stand').frames;
+ frames.push(JSON.parse(JSON.stringify(frames[1])));
+ const before=JSON.stringify(frames);
+ assert.equal(rig.phaseReferences(frames,0,'previous').length,0);
+ assert.equal(rig.phaseReferences(frames,2,'next').length,0);
+ assert.equal(rig.phaseReferences(frames,1,'off').length,0);
+ const refs=rig.phaseReferences(frames,1,'both');
+ assert.equal(refs.length,2);assert.equal(refs[0].frame,frames[0]);assert.equal(refs[1].frame,frames[2]);
+ assert.equal(JSON.stringify(frames),before);
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ for(const id of ['phaseOverlay','phaseCopySource','phaseCopyGroup','copyPhaseBodyPart'])assert.ok(html.includes('id="'+id+'"'));
+});
+test('phase body copy is transactional, preserves metadata and rejects locked changes',()=>{
+ const rig=loadRig(),frame=rig.baseFrame('stand'),source=JSON.parse(JSON.stringify(frame));
+ frame.name='Destination';frame.holdSeconds=5;source.name='Source';source.holdSeconds=2;source.headYaw=.2;
+ const before=JSON.stringify(frame),original=JSON.stringify(source);
+ const copy=rig.copyPhaseBodyPart(frame,source,'head');assert.equal(copy.ok,true);
+ assert.equal(copy.frame.headYaw,.2);assert.equal(copy.frame.name,'Destination');assert.equal(copy.frame.holdSeconds,5);
+ assert.equal(JSON.stringify(copy.frame.equipment),JSON.stringify(frame.equipment));
+ assert.equal(JSON.stringify(frame),before);assert.equal(JSON.stringify(source),original);
+ rig.setPointLock(frame,'root',true);source.root[1]-=.1;
+ const locked=JSON.stringify(frame);
+ assert.equal(rig.copyPhaseBodyPart(frame,source,'root').ok,false);
+ assert.equal(JSON.stringify(frame),locked);
+ assert.equal(rig.copyPhaseBodyPart(frame,source,'unknown').ok,false);
+ const a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));b.root[0]=.2;b.hands.left[0]+=.2;b.poles.elbowLeft[0]+=.2;
+ const limb=rig.copyPhaseBodyPart(a,b,'leftArm');assert.equal(limb.ok,true,limb.issue);
+ assert.ok(rig.math.len(rig.math.sub(rig.joints(limb.frame).hands.left,rig.joints(a).hands.left))<1e-7);
+ assert.equal(JSON.stringify(limb.frame.hands.right),JSON.stringify(a.hands.right));
+});
