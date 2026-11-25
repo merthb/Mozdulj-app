@@ -922,3 +922,31 @@ test('phase body copy is transactional, preserves metadata and rejects locked ch
  assert.ok(rig.math.len(rig.math.sub(rig.joints(limb.frame).hands.left,rig.joints(a).hands.left))<1e-7);
  assert.equal(JSON.stringify(limb.frame.hands.right),JSON.stringify(a.hands.right));
 });
+
+
+test('timed workout guides select authored sides, sustain holds and never infer missing sides',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),left=JSON.parse(JSON.stringify(a)),right=JSON.parse(JSON.stringify(a));
+ left.direction='left';left.phaseType='hold';left.headYaw=.2;
+ right.direction='right';right.phaseType='hold';right.headYaw=-.2;
+ const frames=[a,left,right],before=JSON.stringify(frames);
+ for(const [code,yaw] of [['left',.2],['right',-.2]]){
+   const plan=rig.workoutGuidePlan(frames,code);assert.equal(plan.kind,'hold');
+   assert.equal(rig.workoutGuideAt(plan,0).headYaw,0);
+   assert.equal(rig.workoutGuideAt(plan,30000).headYaw,yaw);
+ }
+ const missing=rig.workoutGuidePlan([a,left],'right');
+ assert.equal(missing.kind,'unassigned');assert.equal(missing.frame,a);
+ assert.equal(rig.workoutGuidePlan([left],'right').frame,null);
+ assert.equal(rig.workoutGuidePlan([left,right],'all').kind,'unassigned');
+ const loop=rig.workoutGuidePlan([a,JSON.parse(JSON.stringify(a))],'all');
+ assert.equal(loop.kind,'loop');assert.ok(rig.workoutGuideAt(loop,10000));
+ assert.equal(JSON.stringify(frames),before);
+});
+test('workout guide refuses unchecked transitions and provides a still fallback',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
+ b.equipment=[{type:'wall',id:'eq-1'}];b.direction='left';
+ const guide=rig.workoutGuidePlan([a,b],'left');
+ assert.equal(guide.kind,'blocked');assert.equal(guide.frame,b);
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ assert.ok(html.includes('id="workoutGuideStatus"'));
+});
