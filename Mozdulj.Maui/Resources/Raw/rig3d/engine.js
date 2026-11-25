@@ -226,7 +226,7 @@ function initialPose(preset='stand'){
  if(preset==='side'){b.hands.right=[.34,.52,-.18];}
  if(preset==='balance'){b.legAngles.right.flexion=1.45;b.legAngles.right.kneeFlexion=.7;}
  if(preset==='lunge'){b.root[1]=.73;}
- if(preset==='child'){b.thoracicBend=.17;b.hands.left=[-.32,.08,.99];b.hands.right=[.32,.08,.99];}
+ if(preset==='child'){b.thoracicBend=.15;b.hands.left=[-.32,.08,.98];b.hands.right=[.32,.08,.98];}
  return {version:1,preset,reviewStatus:'illustrative',frames:[a,b],camera:{azimuth:.58,elevation:.35,distance:3.55,target:[0,.72,0]}};
 }
 // Review the authored geometry of every template frame; no clinical claim.

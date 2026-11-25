@@ -662,3 +662,16 @@ test('folded and stacked templates preserve intended geometry without unreachabl
  const plank=rig.joints(rig.baseFrame('sideplank'));
  assert.ok(plank.hands.left[1]<.09&&plank.feet.left[1]<.09);
 });
+
+test('all 21 built-in templates pass both phases and checked transition geometry',()=>{
+ const rig=loadRig();
+ assert.equal(rig.PRESET_NAMES.length,21);
+ for(const name of rig.PRESET_NAMES){
+   const a=rig.auditPreset(name);
+   for(const frame of a.frames){
+     assert.equal(frame.overlaps.count,0,name+' overlap');
+     assert.equal(frame.clamped.length,0,name+' reach');
+   }
+   assert.equal(a.transition,true,name+' transition');
+ }
+});
