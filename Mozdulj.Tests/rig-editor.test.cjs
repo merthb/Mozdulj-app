@@ -369,3 +369,31 @@ test('old phase timings stay implicit, invalid timing fails validation, thumbnai
  pose.frames[0].holdSeconds=0;pose.frames[0].transitionSeconds=0;assert.throws(()=>rig.checkPose(pose));
  pose.frames[0].transitionSeconds=1;pose.frames[0].phaseType='hold';assert.doesNotThrow(()=>rig.checkPose(pose));
 });
+
+test('equipment identities survive different frame orders and isolate new objects from legacy ones',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=rig.baseFrame('stand');
+ a.equipment=[{type:'block',id:'eq-1'},{type:'block',id:'eq-2'},{type:'block'}];
+ b.equipment=[{type:'block'},{type:'block',id:'eq-2'},{type:'block',id:'eq-1'}];
+ const frames=[a,b];
+ assert.equal(rig.newEquipmentId(frames),'eq-3');
+ assert.equal(JSON.stringify(rig.matchingProp(frames,0,0)),JSON.stringify([{frame:0,index:0},{frame:1,index:2}]));
+ assert.equal(JSON.stringify(rig.matchingProp(frames,0,2)),JSON.stringify([{frame:0,index:2},{frame:1,index:0}]));
+ assert.equal(rig.validEquipmentIds(frames),true);
+ b.equipment[0].id='eq-2';assert.equal(rig.validEquipmentIds(frames),false);
+ b.equipment[0].id='bad id';assert.equal(rig.validEquipmentIds(frames),false);
+});
+test('explicit three-point band handles detach at the rendered position and move independently',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ f.equipment=[{type:'band',id:'eq-1',anchorA:'leftHand',anchorB:'rightHand',anchorC:'fixed',positionC:[0,.1,.4]}];
+ let handles=rig.equipmentHandles(f);
+ assert.equal(handles.length,3);assert.equal(handles[0].movable,false);assert.equal(handles[2].movable,true);
+ const first=JSON.stringify(handles[0].position),other=JSON.stringify(handles[1].position);
+ assert.equal(rig.moveBandPoint(f,0,'A',[.1,0,0]),false);
+ assert.equal(rig.detachBandPoint(f,0,'A'),true);
+ assert.equal(JSON.stringify(f.equipment[0].position),first);
+ assert.equal(rig.moveBandPoint(f,0,'A',[.1,0,0]),true);
+ handles=rig.equipmentHandles(f);
+ assert.equal(handles[0].movable,true);assert.notEqual(JSON.stringify(handles[0].position),first);
+ assert.equal(JSON.stringify(handles[1].position),other);
+ assert.equal(JSON.stringify(f.equipment[0].positionC),JSON.stringify([0,.1,.4]));
+});

@@ -1,6 +1,20 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Eszközpont":"Equipment point",
+  "Szerkesztett eszközpont":"Equipment point to edit",
+  "Szalagpont leválasztása":"Detach band point",
+  "Az Eszközpont módban a jelölőket a modellen is megfoghatod. A testhez kötött szalagpontokat előbb le kell választani.":"In Equipment point mode, drag the handles on the model. Body-attached band points must be detached first.",
+  "Eszközazonosító: ":"Equipment ID: ",
+  "Régi eszköz – típus és sorrend szerinti párosítás":"Legacy equipment – matched by type and order",
+  "Húzd a kijelölt eszközpontot.":"Drag the selected equipment point.",
+  "A szalagpont a testhez kötött. A szabad mozgatáshoz válaszd le.":"The band point is attached to the body. Detach it to move freely.",
+  "A kijelölt eszköz rögzített.":"The selected equipment is locked.",
+  "Válassz eszközpontot, majd húzd a kívánt helyre.":"Select an equipment point and drag it to the desired position.",
+  "A szalagpont leválasztva, a helyzete változatlan.":"Band point detached without changing position.",
+  "Több eszközpont fedi egymást. Válassz az eszközpontok listájából.":"Multiple equipment points overlap. Select one from the equipment point list.",
+  "A szalag új útvonala akadályba ütközne.":"The new band path would be obstructed.",
+  "Érvénytelen eszközazonosító.":"Invalid equipment ID.",
   "Mozgás idővonala":"Movement timeline",
   "Fázis típusa":"Phase type",
   "Automatikus":"Automatic",

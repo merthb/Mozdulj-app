@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id),canvas=$('scene');
 const clone=o=>JSON.parse(JSON.stringify(o));
 const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
 const history=new MozduljPoseHistory();
-let selectedTarget=null,gesture=null,controlGesture=null;
+let selectedTarget=null,selectedEquipment=null,gesture=null,controlGesture=null;
 let animation=null, timelineSignature='', draftBaseline=null, pendingPreset=null,activeIssue=null;
 const pointers=new Map();let pinch=null, multiGesture=false;
 const snapshot=()=>{const data=clone(pose);delete data.camera;return {pose:data,frameIndex};};
@@ -71,8 +71,9 @@ function chooseTarget(key){
 function explicitTarget(key){return MozduljRig.bodyTarget(key);}
 function setMode(m){
  mode=m;
- for(const b of ['orbit','move','pan'])$(b).classList.toggle('active',m===b);
+ for(const b of ['orbit','move','pan','editEquipment'])$(b).classList.toggle('active',m===b);
  if(m==='move'&&!document.body.classList.contains('view-only'))selectTab('body');
+ if(m==='editEquipment'&&!document.body.classList.contains('view-only'))selectTab('props');
  show();
 }
 function current(){return pose.frames[frameIndex];}
@@ -221,7 +222,7 @@ function updatePhaseControls(){
  $('phasePrev').setAttribute('aria-disabled',String(frameIndex===0));
  $('phaseNext').setAttribute('aria-disabled',String(frameIndex>=n-1));
 }
-function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked,issue:activeIssue,dark:document.documentElement.classList.contains('dark')});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='inspect'?window.rigText('Ez a pont kijelölhető; a hozzá tartozó vezérlőkkel módosítható.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
+function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked,issue:activeIssue,dark:document.documentElement.classList.contains('dark'),equipmentMode:mode==='editEquipment',equipmentSelection:selectedEquipment});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='inspect'?window.rigText('Ez a pont kijelölhető; a hozzá tartozó vezérlőkkel módosítható.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
 function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number((f.root[1]*100).toFixed(1));$('upperYaw').value=Math.round(deg(f.upperYaw||0));$('spineBend').value=Math.round(deg(f.spineBend||0));
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||MozduljRig.inferAngles(f,'leg',side)?.angles||{};
@@ -233,23 +234,24 @@ function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headY
  for(const [id,k] of [['armFlex','flexion'],['armAbduct','abduction'],['elbowFlex','elbowFlexion'],['wristFlex','wristFlexion'],['forearmRotation','forearmRotation'],['armRotation','axialRotation']])$(id).value=Math.round(deg(arm[k]||0));
  syncPrecision();
 }
-function sync(){syncJointValues();$('preset').value=pose.preset;updatePhaseControls();syncBands();syncProps();syncLocks();$('zoom').value=studio.getCamera().distance;show();}
+function sync(){syncJointValues();$('preset').value=pose.preset;updatePhaseControls();syncBands();syncProps();syncLocks();syncEquipmentSelection();$('zoom').value=studio.getCamera().distance;show();}
 function syncBands(selected){
  const sel=$('bandSelect'),prior=selected===undefined?sel.value:selected;
  const items=current().equipment||[];
  sel.innerHTML='<option value="new">Új szalag</option>';
  items.forEach((obj,i)=>{if(['band','miniband','strap'].includes(obj.type)){
-   const opt=document.createElement('option');opt.value=String(i);opt.textContent=window.rigText('Szalag ')+(i+1);sel.appendChild(opt);
+   const opt=document.createElement('option');opt.value=String(i);opt.textContent=equipmentLabel(obj,i);sel.appendChild(opt);
  }});
  sel.value=[...sel.options].some(o=>o.value===prior)?prior:'new';
  fillSelectedBand();
 }
 const BASE_POS=MozduljRig.PROP_POSITIONS,POSITIONABLE=Object.keys(BASE_POS);
+function equipmentLabel(prop,i){const name=[...$('equip').options].find(o=>o.value===prop.type)?.textContent||prop.type;return name+' · '+(i+1);}
 function syncProps(selected){
  const sel=$('propSelect'),prior=selected===undefined?sel.value:selected;
  sel.innerHTML='<option value="none">Nincs mozgatható eszköz</option>';
  (current().equipment||[]).forEach((prop,i)=>{if(POSITIONABLE.includes(prop.type)){
- const opt=document.createElement('option');opt.value=String(i);opt.textContent=prop.type+' · '+(i+1);sel.appendChild(opt);
+ const opt=document.createElement('option');opt.value=String(i);opt.textContent=equipmentLabel(prop,i)+(prop.locked?' 🔒':'');sel.appendChild(opt);
  }});
  sel.value=[...sel.options].some(o=>o.value===prior)?prior:(sel.options.length>1?sel.options[1].value:'none');
  fillProp();
@@ -261,12 +263,30 @@ function fillProp(){const i=$('propSelect').value;
  $('propLocked').checked=!!prop?.locked;$('propLocked').disabled=!prop;
  $('moveProp').disabled=!prop||!!prop.locked;$('deleteProp').disabled=!prop||!!prop.locked;
  $('propScope').disabled=!prop;
+ $('equipmentIdentity').textContent=prop?.id?window.rigText('Eszközazonosító: ')+prop.id:prop?window.rigText('Régi eszköz – típus és sorrend szerinti párosítás') :'';
+}
+function syncEquipmentSelection(){
+ const handles=MozduljRig.equipmentHandles(current());
+ const select=$('equipmentPoint');select.replaceChildren();
+ const empty=document.createElement('option');empty.value='';empty.textContent='Automatikus kiválasztás';select.appendChild(empty);
+ for(const h of handles){const option=document.createElement('option');option.value=h.key;option.textContent=equipmentLabel(current().equipment[h.index],h.index)+(h.which?' · '+h.which:'')+(h.movable?'':' 🔒');select.appendChild(option);}
+ selectedEquipment=handles.find(h=>h.key===selectedEquipment?.key)||null;
+ select.value=selectedEquipment?.key||'';
+ $('detachBandPoint').disabled=!(selectedEquipment?.kind==='band'&&!selectedEquipment.movable);
+ $('equipmentPointStatus').textContent=selectedEquipment?(selectedEquipment.movable?window.rigText('Húzd a kijelölt eszközpontot.'):window.rigText(selectedEquipment.kind==='band'?'A szalagpont a testhez kötött. A szabad mozgatáshoz válaszd le.':'A kijelölt eszköz rögzített.')):'';
+}
+function chooseEquipment(key){
+ selectedEquipment=MozduljRig.equipmentHandles(current()).find(h=>h.key===key)||null;
+ if(selectedEquipment?.kind==='prop')syncProps(String(selectedEquipment.index));
+ if(selectedEquipment?.kind==='band')syncBands(String(selectedEquipment.index));
+ syncEquipmentSelection();show();
 }
 function freePlacement(type){
  const base=BASE_POS[type];if(!base)return null;
- const offsets=[[0,0,0],[0,0,-.70],[.85,0,0],[-.85,0,0],[0,0,.80],[1.4,0,0],[-1.4,0,0],[0,0,-1.5]];
+ const offsets=[[0,0,0],[0,0,-.70],[.85,0,0],[-.85,0,0],[0,0,.80],[1.4,0,0],[-1.4,0,0],[0,0,-1.5],[2.2,0,0],[-2.2,0,0],[0,0,2.2]];
  for(const offset of offsets){
    const pos=base.map((v,i)=>v+offset[i]);
+   if(current().equipment.some(o=>POSITIONABLE.includes(o.type)&&MozduljRig.math.len(MozduljRig.math.sub(MozduljRig.propPosition(o),pos))<.35))continue;
    const before=clone(current()),after=clone(before);after.equipment.push({type,position:pos});
    if(!MozduljRig.Collision.transition(before,after).limited)return pos;
  }
@@ -289,9 +309,9 @@ function fillSelectedBand(){
  $('bandAnchorB').value=obj.anchorB||({knees:'rightKnee',ankle:'rightAnkle',hands:'rightHand'}[legacy]||'leftHand');
  $('bandRoute').value=obj.route||'auto';$('bandAnchorC').value=obj.anchorC||'none';setFixedInputs('A',obj.position);setFixedInputs('B',obj.positionB);setFixedInputs('C',obj.positionC||[0,.35,.45]);updateFixedAnchorInputs();
 }
-function switchFrame(i){$('contactStatus').textContent='';activeIssue=null;stopPreview();closeGesture();frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
-function setPreset(name){activeIssue=null;pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();const apply=()=>{const camera=pose?studio.getCamera():null;pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(camera||pose.camera);sync();};if(pose){closeGesture();tracked(apply);}else apply();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
-function load(p,track=false){activeIssue=null;pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();MozduljRig.checkPose(p);const apply=()=>{const camera=track?studio.getCamera():null;pose=clone(p);frameIndex=0;studio.setCamera(camera||pose.camera||MozduljRig.initialPose().camera);sync();};closeGesture();if(track)tracked(apply);else{apply();window.resetRigHistory();}msg('A 3D testhelyzet betöltve.');}
+function switchFrame(i){selectedEquipment=null;$('contactStatus').textContent='';activeIssue=null;stopPreview();closeGesture();frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
+function setPreset(name){selectedEquipment=null;activeIssue=null;pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();const apply=()=>{const camera=pose?studio.getCamera():null;pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(camera||pose.camera);sync();};if(pose){closeGesture();tracked(apply);}else apply();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
+function load(p,track=false){selectedEquipment=null;activeIssue=null;pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();MozduljRig.checkPose(p);const apply=()=>{const camera=track?studio.getCamera():null;pose=clone(p);frameIndex=0;studio.setCamera(camera||pose.camera||MozduljRig.initialPose().camera);sync();};closeGesture();if(track)tracked(apply);else{apply();window.resetRigHistory();}msg('A 3D testhelyzet betöltve.');}
 function b64toStr(s){return decodeURIComponent(escape(atob(s)));}function strtoB64(s){return btoa(unescape(encodeURIComponent(s)));}
 window.loadRigBase64=s=>{try{load(JSON.parse(b64toStr(s)));return true;}catch(e){msg(window.rigText('Betöltési hiba: ')+e.message);return false;}};
 window.exportRigBase64=()=>strtoB64(JSON.stringify({...pose,camera:studio.getCamera()}));
@@ -597,17 +617,18 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('zoom').oninput=e=>{studio.getCamera().distance=+e.target.value;show();};
  $('addEquipment').onclick=()=>{
    const type=$('equip').value;
-   if(['band','miniband','strap'].includes(type)){const result=guardedEdit(f=>f.equipment.push({type,anchorA:type==='miniband'?'leftKnee':'leftHand',anchorB:type==='miniband'?'rightKnee':'rightHand',route:'auto'}));
-     if(!result.limited){syncBands(String(current().equipment.length-1));msg('Szalag beszúrva; lent beállíthatod mindhárom pontját.');}return;}
-   if(!current().equipment.some(o=>o.type===type)){
+   if(['band','miniband','strap'].includes(type)){const id=MozduljRig.newEquipmentId(pose.frames);const result=guardedEdit(f=>f.equipment.push({type,id,anchorA:type==='miniband'?'leftKnee':'leftHand',anchorB:type==='miniband'?'rightKnee':'rightHand',route:'auto'}));
+     if(!result.limited){syncBands(String(current().equipment.length-1));syncEquipmentSelection();msg('Szalag beszúrva; lent beállíthatod mindhárom pontját.');}return;}
+   if(POSITIONABLE.includes(type)||!current().equipment.some(o=>o.type===type)){
      const pos=POSITIONABLE.includes(type)?freePlacement(type):null;
      if(POSITIONABLE.includes(type)&&!pos){msg('Az eszköznek nem találtam akadálymentes helyet. Módosítsd a pózt vagy válassz másik eszközt.');return;}
-     const result=guardedEdit(f=>f.equipment.push(pos?{type,position:pos}:{type}));
-     if(!result.limited){syncProps(String(current().equipment.length-1));msg(window.rigText('Eszköz hozzáadva: ')+$('equip').selectedOptions[0].textContent);}
+     const id=MozduljRig.newEquipmentId(pose.frames);
+     const result=guardedEdit(f=>f.equipment.push(pos?{type,id,position:pos}:{type,id}));
+     if(!result.limited){syncProps(String(current().equipment.length-1));syncEquipmentSelection();msg(window.rigText('Eszköz hozzáadva: ')+$('equip').selectedOptions[0].textContent);}
    }else msg('Ez az eszköz már szerepel ebben a fázisban.');
  };
- $('clearEquipment').onclick=()=>{stopPreview();closeGesture();tracked(()=>{current().equipment=current().equipment.filter(p=>p.locked);});syncBands('new');syncProps('none');show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
- $('propSelect').onchange=fillProp;
+ $('clearEquipment').onclick=()=>{selectedEquipment=null;stopPreview();closeGesture();tracked(()=>{current().equipment=current().equipment.filter(p=>p.locked);});syncBands('new');syncProps('none');syncEquipmentSelection();show();msg('Az aktuális fázis eszközeit eltávolítottam.');};
+ $('propSelect').onchange=()=>{fillProp();chooseEquipment('prop:'+$('propSelect').value);};
  function propLocations(){
    const i=Number($('propSelect').value);
    return $('propScope').value==='all'?MozduljRig.matchingProp(pose.frames,frameIndex,i):[{frame:frameIndex,index:i}];
@@ -615,12 +636,12 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('propLocked').onchange=()=>{
    stopPreview();closeGesture();const i=Number($('propSelect').value);
    if(!Number.isInteger(i))return;
-   tracked(()=>{const prop=current().equipment[i];if($('propLocked').checked)prop.locked=true;else delete prop.locked;});syncProps(String(i));show();
+   tracked(()=>{const prop=current().equipment[i];if($('propLocked').checked)prop.locked=true;else delete prop.locked;});syncProps(String(i));syncEquipmentSelection();show();
  };
  $('deleteProp').onclick=()=>{
    stopPreview();closeGesture();const locations=propLocations();
    if(locations.some(({frame,index})=>pose.frames[frame].equipment[index].locked)){msg('Előbb oldd fel az eszköz rögzítését.');return;}
-   tracked(()=>{for(const {frame,index} of locations)pose.frames[frame].equipment.splice(index,1);});
+   tracked(()=>{for(const {frame,index} of locations)pose.frames[frame].equipment.splice(index,1);});selectedEquipment=null;
    sync();msg('Kijelölt eszköz eltávolítva.');
  };
  $('moveProp').onclick=()=>{
@@ -637,27 +658,35 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('bandAnchorC').onchange=updateFixedAnchorInputs;
  $('applyBand').onclick=()=>{
    const a=$('bandAnchorA').value,b=$('bandAnchorB').value;
-   if(a===b){msg('A szalag két vége nem lehet ugyanazon a ponton.');return;}
+   if(a===b&&a!=='fixed'){msg('A szalag két vége nem lehet ugyanazon a ponton.');return;}
    let old=$('bandSelect').value==='new'?null:current().equipment[+$('bandSelect').value];
    let o={type:old?.type||'band',anchorA:a,anchorB:b,route:$('bandRoute').value};
+   if(old?.id!=null)o.id=old.id;else if(!old)o.id=MozduljRig.newEquipmentId(pose.frames);
    if($('bandAnchorC').value!=='none')o.anchorC=$('bandAnchorC').value;
    try{if(a==='fixed')o.position=readFixedInputs('A');if(b==='fixed')o.positionB=readFixedInputs('B');if(o.anchorC==='fixed')o.positionC=readFixedInputs('C');}
    catch(e){msg(e.message);return;}
    const i=$('bandSelect').value;
    const result=guardedEdit(f=>{if(i==='new')f.equipment.push(o);else f.equipment[+i]=o;});
    if(result.limited)return;
-   syncBands(i==='new'?String(current().equipment.length-1):i);
+   syncBands(i==='new'?String(current().equipment.length-1):i);syncEquipmentSelection();
    msg(window.rigText('Szalagrögzítés mentve: ')+$('bandAnchorA').selectedOptions[0].textContent+' – '+$('bandAnchorB').selectedOptions[0].textContent);
  };
  $('deleteBand').onclick=()=>{stopPreview();const i=$('bandSelect').value;
    if(i==='new'){msg('Válassz egy meglévő szalagot a törléshez.');return;}
-   closeGesture();tracked(()=>current().equipment.splice(+i,1));syncBands('new');show();msg('Szalag eltávolítva.');
+   closeGesture();tracked(()=>current().equipment.splice(+i,1));selectedEquipment=null;sync();show();msg('Szalag eltávolítva.');
  };
  for(const [id,a,e] of [['front',0,0],['side',Math.PI/2,0],['leftView',-Math.PI/2,0],['backView',Math.PI,0],['topView',0,Math.PI/2-.001],['threequarter',.66,.33]])$(''+id).onclick=()=>{let c=studio.getCamera();c.azimuth=a;c.elevation=e;show();};
  $('projection').onchange=e=>{studio.setProjection(e.target.value);show();};
  $('focusTarget').onclick=()=>{const key=selectedTarget||'root',point=MozduljRig.bodyPoint(MozduljRig.joints(current()),key);if(point){studio.getCamera().target=[...point];show();}};
  $('fit').onclick=()=>{let c=studio.getCamera();Object.assign(c,{azimuth:.58,elevation:.34,distance:3.55,target:[0,.72,0]});sync();};
- for(const m of ['orbit','move','pan'])$(m).onclick=()=>{closeGesture();setMode(m);msg(m==='move'?'Válassz testpontot, majd húzd a kívánt helyre.':m==='pan'?'Húzással eltolhatod az egész képet, a testarányok változtatása nélkül.':'Húzással elforgathatod a kamerát.');};
+ for(const m of ['orbit','move','pan','editEquipment'])$(m).onclick=()=>{closeGesture();setMode(m);msg(m==='editEquipment'?'Válassz eszközpontot, majd húzd a kívánt helyre.':m==='move'?'Válassz testpontot, majd húzd a kívánt helyre.':m==='pan'?'Húzással eltolhatod az egész képet, a testarányok változtatása nélkül.':'Húzással elforgathatod a kamerát.');};
+ $('equipmentPoint').onchange=e=>chooseEquipment(e.target.value);
+ $('detachBandPoint').onclick=()=>{
+   const h=selectedEquipment;if(!h||h.kind!=='band')return;
+   closeGesture();
+   tracked(()=>MozduljRig.detachBandPoint(current(),h.index,h.which));
+   sync();msg('A szalagpont leválasztva, a helyzete változatlan.');
+ };
  $('export').onclick=()=>{let s=window.exportRigJson();$('json').value=s;try{let blob=new Blob([s],{type:'application/json;charset=utf-8'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.download='mozdulj-3d-poz.json';a.href=url;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{}msg('3D pózadat mentve.');};
  $('import').onclick=()=>{try{load(JSON.parse($('json').value),true);}catch(e){msg(window.rigText('Hibás JSON: ')+e.message);}};
  function loc(e){let r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
@@ -671,7 +700,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      drag=null;multiGesture=true;pinch=MozduljRig.gestureMetrics([...pointers.values()]);return;
    }
    if(multiGesture)return;
-   if(mode==='move')stopPreview();
+   if(mode==='move'||mode==='editEquipment')stopPreview();
    let sel=null;
    if(mode==='move'){
      const explicit=explicitTarget($('targetSelect').value),hits=explicit?[explicit]:studio.pickAll(p.x,p.y,$('showAllTargets').checked);
@@ -684,6 +713,15 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      selectedTarget=targetKey(sel);
      if(sel){focusBody(bodyFocusFor(selectedTarget));if(sel.kind!=='inspect')beginGesture(canvas);else sel=null;}
      show();
+   }
+   if(mode==='editEquipment'&&e.button!==2){
+     const hits=studio.pickEquipment(current(),p.x,p.y);
+     const selected=hits.find(h=>h.key===selectedEquipment?.key);
+     if(hits.length>1&&!selected){msg('Több eszközpont fedi egymást. Válassz az eszközpontok listájából.');selectTab('props');}
+     else{
+       const hit=selected||hits[0];
+       if(hit){chooseEquipment(hit.key);if(hit.movable){sel=hit;beginGesture(canvas);}else msg($('equipmentPointStatus').textContent);}
+     }
    }
    drag={id:e.pointerId,x:p.x,y:p.y,sel,button:e.button};
  });
@@ -701,6 +739,26 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
      const sel=drag.sel,central=sel.kind==='root',middle=['elbow','knee'].includes(sel.kind),symmetric=$('symmetricEdit').checked&&!central;
      const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg',other=sel.side==='left'?'right':'left';
      guardedEdit(f=>{const before=clone(f);studio.dragTarget(f,sel,dx,dy,e.shiftKey,$('moveAxis').value);if(symmetric){if(middle)MozduljRig.mirrorBendDelta(f,before,sel.kind,sel.side);else MozduljRig.mirrorTargetDelta(f,before,sel.kind,sel.side);}},f=>central||(MozduljRig.prepareTargetMode(f,kind,sel.side)&&(!symmetric||MozduljRig.prepareTargetMode(f,kind,other))),central);
+   }
+ }else if(mode==='editEquipment'&&drag.button!==2){
+   const h=drag.sel;if(h){
+     const delta=MozduljRig.equipmentDragDelta(c,canvas.clientHeight,dx,dy,e.shiftKey?'depth':$('equipmentAxis').value);
+     if(h.kind==='prop'){
+       const prop=current().equipment[h.index];
+       if(prop&&!prop.locked){
+         const pos=MozduljRig.math.add(MozduljRig.propPosition(prop),delta).map((v,i)=>Math.max(i===1?0:-3,Math.min(3,v)));
+         const result=MozduljRig.editProps(pose.frames,propLocations(),pos,MozduljRig.propYaw(prop));
+         if(result.ok){tracked(()=>{pose.frames=result.frames;});fillProp();}
+         else {activeIssue=result.issue;msg(window.rigText('Az eszköz módosítása nem lehetséges ebben a fázisban: ')+(result.frame+1)+' · '+result.issue);}
+       }
+     }else{
+       const candidate=clone(current()),wasBlocked=studio.bandIssues(current()).includes(h.index);
+       if(MozduljRig.moveBandPoint(candidate,h.index,h.which,delta)){
+         const blocked=studio.bandIssues(candidate).includes(h.index);
+         if(blocked&&!wasBlocked)msg('A szalag új útvonala akadályba ütközne.');
+         else{tracked(()=>{pose.frames[frameIndex]=candidate;});fillSelectedBand();}
+       }
+     }
    }
  }else if(mode==='pan'||drag.button===2){MozduljRig.panCamera(c,dx,dy,canvas.clientHeight);}else{c.azimuth-=dx*.012;c.elevation=Math.max(-1.25,Math.min(1.25,c.elevation+dy*.008));}drag.x=p.x;drag.y=p.y;show();});
  ['pointerup','pointercancel','lostpointercapture'].forEach(n=>canvas.addEventListener(n,e=>{

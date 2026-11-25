@@ -22,14 +22,36 @@ const PROP_POSITIONS={chair:[0,.30,-.14],ball:[0,.36,.20],softBall:[0,.36,.20],r
 function propPosition(prop){return prop.position||PROP_POSITIONS[prop.type];}
 function propYaw(prop){return prop.yaw||0;}
 function propTransform(prop,local){return add(propPosition(prop),rotY(local,propYaw(prop)));}
-// A matching occurrence is identified by type + its occurrence number within
-// each frame, not by the absolute equipment array index.
+// IDs are local to a pose and shared by copies of an object across phases.
+// Never assign IDs to legacy objects merely by opening a pose.
+function newEquipmentId(frames){
+ const used=new Set(frames.flatMap(f=>(f.equipment||[]).map(p=>p.id)));
+ let n=1;while(used.has('eq-'+n))n++;return 'eq-'+n;
+}
+function validEquipmentIds(frames){
+ const types=new Map();
+ for(const frame of frames){
+   const seen=new Set();
+   for(const prop of frame.equipment||[]){
+     if(prop.id==null)continue;
+     if(typeof prop.id!=='string'||!/^[a-zA-Z0-9_-]{1,64}$/.test(prop.id)||seen.has(prop.id)||(types.has(prop.id)&&types.get(prop.id)!==prop.type))return false;
+     seen.add(prop.id);types.set(prop.id,prop.type);
+   }
+ }
+ return true;
+}
+// Explicit identities take precedence; retain the legacy ordinal fallback
+// only for ID-less objects, never match them to newly created objects.
 function matchingProp(frames,sourceFrame,sourceIndex){
  const prop=frames[sourceFrame].equipment[sourceIndex];
  if(!prop||!PROP_POSITIONS[prop.type])return [];
- const ordinal=frames[sourceFrame].equipment.slice(0,sourceIndex).filter(x=>x.type===prop.type).length;
+ if(prop.id!=null)return frames.flatMap((f,frame)=>{
+   const index=(f.equipment||[]).findIndex(x=>x.id===prop.id&&x.type===prop.type);
+   return index<0?[]:[{frame,index}];
+ });
+ const ordinal=frames[sourceFrame].equipment.slice(0,sourceIndex).filter(x=>x.type===prop.type&&x.id==null).length;
  return frames.flatMap((f,frame)=>{
-   const indexes=(f.equipment||[]).flatMap((x,i)=>x.type===prop.type?[i]:[]);
+   const indexes=(f.equipment||[]).flatMap((x,i)=>x.type===prop.type&&x.id==null?[i]:[]);
    return indexes[ordinal]===undefined?[]:[{frame,index:indexes[ordinal]}];
  });
 }
@@ -828,6 +850,53 @@ function fitSupport(frame,type,keys,index=null,lock=false){
  if(lock)for(const key of keys)setPointLock(accepted,key,true);
  return {ok:true,frame:accepted};
 }
+ function bandAnchorPoint(anchor,frame,j,prop,which){
+   const fixed=which==='A' ? prop.position : which==='C' ? prop.positionC : (prop.positionB||prop.position);
+   const look={leftHand:j.hands.left,rightHand:j.hands.right,
+     leftAnkle:j.feet.left,rightAnkle:j.feet.right,leftKnee:j.knee.left,rightKnee:j.knee.right,
+     leftToe:j.toes.left,rightToe:j.toes.right,
+     floorLeft:[j.feet.left[0],.035,j.feet.left[2]],floorRight:[j.feet.right[0],.035,j.feet.right[2]],
+     fixed:fixed||[0,.25,.85]};
+   if(!Object.hasOwn(look,anchor))throw Error('Ismeretlen szalagrögzítés: '+anchor);
+   return [...look[anchor]];
+ }
+
+const BAND_TYPES=['band','miniband','strap'];
+const bandPositionKey=which=>({A:'position',B:'positionB',C:'positionC'})[which];
+function equipmentHandles(frame,j=joints(frame)){
+ const out=[];
+ for(const [index,prop] of (frame.equipment||[]).entries()){
+   if(PROP_POSITIONS[prop.type])out.push({key:'prop:'+index,index,kind:'prop',position:propPosition(prop),movable:!prop.locked});
+   if(BAND_TYPES.includes(prop.type)&&prop.anchorA&&prop.anchorB)
+     for(const which of ['A','B','C']){
+       const anchor=prop['anchor'+which];if(!anchor)continue;
+       out.push({key:'band:'+index+':'+which,index,kind:'band',which,position:bandAnchorPoint(anchor,frame,j,prop,which),movable:anchor==='fixed'});
+     }
+ }
+ return out;
+}
+// Explicit detachment preserves the currently rendered endpoint, not a default.
+function detachBandPoint(frame,index,which){
+ const prop=frame.equipment?.[index],key=bandPositionKey(which);
+ if(!prop||!BAND_TYPES.includes(prop.type)||!key||!prop['anchor'+which])return false;
+ const position=bandAnchorPoint(prop['anchor'+which],frame,joints(frame),prop,which);
+ prop['anchor'+which]='fixed';prop[key]=position;return true;
+}
+function moveBandPoint(frame,index,which,delta){
+ const prop=frame.equipment?.[index],key=bandPositionKey(which);
+ if(!prop||!BAND_TYPES.includes(prop.type)||!key||prop['anchor'+which]!=='fixed')return false;
+ const position=bandAnchorPoint('fixed',frame,joints(frame),prop,which);
+ prop[key]=add(position,delta).map((v,i)=>clamp(v,i===1?0:-3,3));
+ return true;
+}
+function equipmentDragDelta(camera,height,dx,dy,axis='free'){
+ const {right,up,forward}=cameraBasis(camera),size=pixelScale(camera,height);
+ if(axis==='x')return [dx*size,0,0];
+ if(axis==='y')return [0,-dy*size,0];
+ if(axis==='z')return [0,0,-dy*size];
+ if(axis==='depth')return mul(forward,-dy*size);
+ return add(mul(right,dx*size),mul(up,-dy*size));
+}
 function moveRoot(frame,delta){
  frame.root=frame.root.map((v,i)=>clamp(v+delta[i],i===1?0:-3,3));
  return frame;
@@ -855,16 +924,6 @@ function shaded3D(canvas){
  function poly(points,th,color){for(let i=1;i<points.length;i++)limb(points[i-1],points[i],th,color);}
  function bezier(a,b,c,d,t){let u=1-t;return add(add(mul(a,u*u*u),mul(b,3*u*u*t)),add(mul(c,3*u*t*t),mul(d,t*t*t)));}
  // Stable attachment names shared with the editor and the JSON validator.
- function bandAnchorPoint(anchor,frame,j,prop,which){
-   const fixed=which==='A' ? prop.position : which==='C' ? prop.positionC : (prop.positionB||prop.position);
-   const look={leftHand:j.hands.left,rightHand:j.hands.right,
-     leftAnkle:j.feet.left,rightAnkle:j.feet.right,leftKnee:j.knee.left,rightKnee:j.knee.right,
-     leftToe:j.toes.left,rightToe:j.toes.right,
-     floorLeft:[j.feet.left[0],.035,j.feet.left[2]],floorRight:[j.feet.right[0],.035,j.feet.right[2]],
-     fixed:fixed||[0,.25,.85]};
-   if(!Object.hasOwn(look,anchor))throw Error('Ismeretlen szalagrögzítés: '+anchor);
-   return [...look[anchor]];
- }
  function distanceToSegment(p,a,b){const d=sub(b,a),l=dot(d,d),t=clamp(dot(sub(p,a),d)/Math.max(l,1e-8),0,1);return len(sub(p,add(a,mul(d,t))));}
  function bandPath(a,b,j,route='auto',frame={euler:[0,0,0]}){
    // Avoid a crude forced arc. If a straight strap clears the ribcage, keep it
@@ -961,7 +1020,7 @@ function shaded3D(canvas){
   }
   if(type==='dumbbell'){for(let s of ['left','right']){let p=j.hands[s];limb(add(p,[-.10,0,0]),add(p,[.10,0,0]),.025,'metal');ell(add(p,[-.12,0,0]),[.035,.06,.06],'metal');ell(add(p,[.12,0,0]),[.035,.06,.06],'metal');}}
  }}
- function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],dark?[.26,.23,.34]:'floor');
@@ -999,10 +1058,20 @@ function shaded3D(canvas){
  ell(add(head,add(mul(faceForward,.129),mul(headUp,-.035))),[.022,.018,.025],'skin');
  if(edit){
    const handle=(pos,key)=>{const r=key===selected? .068:.045;ell(pos,[r,r,r],key===selected?[.15,.8,.48]:'handle');};
-   for(const target of BODY_TARGETS){if(target.kind==='inspect'&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
+   if(!equipmentMode)for(const target of BODY_TARGETS){if(target.kind==='inspect'&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
    for(const key of Object.keys(frame.pointLocks||{})){
      if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
    }
+ }
+ if(edit&&equipmentMode){
+   gl.disable(gl.DEPTH_TEST);
+   try{
+     for(const h of equipmentHandles(frame,j)){
+       const r=h.key===equipmentSelection?.key? .075:.052;
+       const color=h.key===equipmentSelection?.key?[.15,.8,.48]:h.movable?[.95,.55,.2]:[.19,.49,.92];
+       ell(h.position,[r,r,r],color);
+     }
+   }finally{gl.enable(gl.DEPTH_TEST);}
  }
  if(edit&&issue){
    // Draw crosses facing the camera, including on otherwise occluded limbs.
@@ -1031,6 +1100,7 @@ function shaded3D(canvas){
    return {target:t,distance:screen?Math.hypot(x-screen[0],y-screen[1]):Infinity};
  }).filter(x=>x.distance<=28).sort((a,b)=>a.distance-b.distance).map(x=>x.target);
  }
+ function pickEquipment(frame,x,y){return equipmentHandles(frame,lastJoints||joints(frame)).map(h=>{const s=project(h.position);return {h,d:s?Math.hypot(x-s[0],y-s[1]):Infinity};}).filter(v=>v.d<=28).sort((a,b)=>a.d-b.d).map(v=>v.h);}
  function pick(x,y,showAll=false){return pickAll(x,y,showAll)[0]||null;}
  function dragTarget(frame,sel,dx,dy,depth=false,axis='free'){const c=camera,right=[Math.cos(c.azimuth),0,-Math.sin(c.azimuth)],up=[-Math.sin(c.azimuth)*Math.sin(c.elevation),Math.cos(c.elevation),-Math.cos(c.azimuth)*Math.sin(c.elevation)],forward=[Math.sin(c.azimuth),0,Math.cos(c.azimuth)];let size=pixelScale(c,dims.h);let delta=depth||axis==='depth'?mul(forward,-dy*size):add(mul(right,dx*size),mul(up,-dy*size));
  if(axis==='x')delta=[dx*size,0,0];else if(axis==='y')delta=[0,-dy*size,0];else if(axis==='z')delta=[0,0,-dy*size];
@@ -1044,9 +1114,9 @@ function shaded3D(canvas){
  let point=add(origin,delta);
  if(key==='feet')point[1]=Math.max(.05,point[1]);
  frame[key][sel.side]=point;return joints(frame).clamped;}
- return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
+ return {draw,bandIssues,setCamera(c){camera=c;},getCamera:()=>camera,setProjection(value){projectionMode=value==='ortho'?'ortho':'perspective';},pick,pickAll,pickEquipment,dragTarget,project,setup,getJoints:()=>lastJoints,release(){gl.getExtension('WEBGL_lose_context')?.loseContext();}};
 }
-function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');for(let f of p.frames){if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
+function checkPose(p){if(!p||p.version!==1||!Array.isArray(p.frames)||p.frames.length<1||p.frames.length>MAX_PHASES)throw Error('Nem támogatott 3D pózformátum.');if(!validEquipmentIds(p.frames))throw Error('Érvénytelen eszközazonosító.');for(let f of p.frames){if(!validPhaseTiming(f))throw Error('Érvénytelen fázisidőzítés.');if(f.direction!=null&&!PHASE_DIRECTIONS.includes(f.direction))throw Error('Érvénytelen fázisirány.');for(let k of ['root','euler'])if(!Array.isArray(f[k])||f[k].length!==3||f[k].some(x=>!Number.isFinite(x)))throw Error('Hibás testhelyzet: '+k);for(const k of ['headYaw','headPitch','headRoll','shoulderLift','pelvicTilt'])if(f[k]!==undefined&&(!Number.isFinite(f[k])||Math.abs(f[k])>2))throw Error('Hibás ízületi vezérlő: '+k);if(Math.abs(f.pelvicTilt||0)>.35)throw Error('Túl nagy medencebillentés.');
 if(f.pointLocks!=null){
  if(typeof f.pointLocks!=='object'||Array.isArray(f.pointLocks))throw Error('Érvénytelen rögzítési pont.');
  for(const [key,pos] of Object.entries(f.pointLocks))if(!LOCK_KEYS.includes(key)||!Array.isArray(pos)||pos.length!==3||pos.some(x=>!Number.isFinite(x)||Math.abs(x)>10))throw Error('Érvénytelen rögzítési pont.');
@@ -1078,5 +1148,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

@@ -75,6 +75,8 @@ public sealed class Rig3DArmControl
 }
 public sealed class Rig3DEquipment
 {
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Id { get; set; }
     public string Type { get; set; } = "mat";
     public string Anchor { get; set; } = "feet";
     public float[]? Position { get; set; }
@@ -117,6 +119,7 @@ public static class Rig3DValidator
         if(rig.Version != 1 || rig.Frames is null || rig.Frames.Count is < 1 or > 16 ||
            rig.ReviewStatus is not ("illustrative" or "reviewed"))
             throw new InvalidDataException(AppLocalization.Text("Validation102"));
+        var equipmentIdentities=new Dictionary<string,string>(StringComparer.Ordinal);
         foreach(var f in rig.Frames)
         {
             if(f.Direction is not null && !RepetitionDirections.Options.Any(d=>d.Id==f.Direction))
@@ -171,10 +174,18 @@ public static class Rig3DValidator
                    Math.Abs(arm.ForearmRotation) > 1.57f)
                     throw new InvalidDataException(AppLocalization.Text("Validation108"));
             foreach(var p in f.Poles.Values)CheckVector(p,"hajlítási irány");
+            var frameEquipmentIds=new HashSet<string>(StringComparer.Ordinal);
             foreach(var obj in f.Equipment)
             {
                 if(obj is null || !EquipmentTypes.Contains(obj.Type))
                     throw new InvalidDataException(AppLocalization.Text("Validation109"));
+                if(obj.Id is string id)
+                {
+                    if(id.Length is < 1 or > 64 || id.Any(c=>!(char.IsAsciiLetterOrDigit(c)||c=='_'||c=='-')) || !frameEquipmentIds.Add(id) ||
+                       (equipmentIdentities.TryGetValue(id,out var existingType)&&existingType!=obj.Type))
+                        throw new InvalidDataException(AppLocalization.Text("RigInvalidEquipmentId"));
+                    equipmentIdentities[id]=obj.Type;
+                }
                 if(obj.Yaw is float yaw && (!PositionableTypes.Contains(obj.Type) || !float.IsFinite(yaw) || Math.Abs(yaw)>Math.PI+1e-6) ||
                    obj.Locked is not null && !PositionableTypes.Contains(obj.Type))
                     throw new InvalidDataException(AppLocalization.Text("RigInvalidEquipmentTransform"));

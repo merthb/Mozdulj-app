@@ -725,4 +725,5 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="RigInvalidPhaseDirection" xml:space="preserve"><value>Invalid phase direction.</value></data>
   <data name="RigInvalidEquipmentTransform" xml:space="preserve"><value>Invalid equipment rotation or lock.</value></data>
   <data name="RigInvalidPhaseTiming" xml:space="preserve"><value>Invalid phase timing.</value></data>
+  <data name="RigInvalidEquipmentId" xml:space="preserve"><value>Invalid equipment ID.</value></data>
 </root>
