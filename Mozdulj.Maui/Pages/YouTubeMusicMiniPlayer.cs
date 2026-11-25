@@ -1,5 +1,7 @@
 using Microsoft.Maui.Dispatching;
+#if ANDROID
 using Mozdulj.Maui.Platforms.Android;
+#endif
 
 namespace Mozdulj.Maui.Pages;
 
@@ -7,6 +9,7 @@ namespace Mozdulj.Maui.Pages;
 /// A compact Android MediaSession controller for the *existing* YouTube Music
 /// session. This is not a YouTube player and does not access music streams.
 /// </summary>
+#if ANDROID
 public sealed class YouTubeMusicMiniPlayer : ContentView
 {
     private readonly IDispatcherTimer _timer;
@@ -91,3 +94,12 @@ public sealed class YouTubeMusicMiniPlayer : ContentView
             : "Szünetel a YouTube Music lejátszása";
     }
 }
+
+#else
+public sealed class YouTubeMusicMiniPlayer : ContentView
+{
+    public YouTubeMusicMiniPlayer(IDispatcher dispatcher) { }
+    public void Start() { }
+    public void Stop() { }
+}
+#endif

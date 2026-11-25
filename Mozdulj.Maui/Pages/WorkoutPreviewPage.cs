@@ -52,7 +52,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 preferences.RelaxationMusicEnabled &&
                 preferences.RelaxationMusicSource == "youtube_music" &&
                 preferences.RelaxationYouTubeMusicPremiumConfirmed &&
-                YouTubeMusicSupport.IsInstalled() &&
+                YouTubeMusicSupport.CanOpenPlaylist &&
                 Uri.TryCreate(preferences.RelaxationYouTubeMusicPlaylistUrl, UriKind.Absolute, out var url) &&
                 url.Scheme == Uri.UriSchemeHttps)
             {
@@ -62,8 +62,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 {
                     try
                     {
-                        Mozdulj.Maui.Platforms.Android.YouTubeMusicMediaBridge
-                            .OpenPlaylistInYouTubeMusic(musicUrl);
+                        await YouTubeMusicSupport.OpenPlaylistAsync(musicUrl);
                     }
                     catch (Exception ex)
                     {
@@ -75,9 +74,11 @@ public sealed class WorkoutPreviewPage : ContentPage
                     "A mentett lejátszási lista a YouTube Musicban nyílik meg. " +
                     "Indítsd el a zenét, majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
                     12, color:UI.Muted));
+#if ANDROID
                 _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
                 _content.Children.Add(_musicPanel);
                 _musicPanel.Start();
+#endif
             }
         }
         else

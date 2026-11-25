@@ -1,0 +1,76 @@
+name: iOS simulator CI (unsigned)
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-simulator:
+    runs-on: xcode-27
+    timeout-minutes: 90
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+    steps:
+      - name: Verify Apple toolchain
+        run: xcodebuild -version
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Run core regression tests
+        run: dotnet run --project Mozdulj.Tests/Mozdulj.Tests.csproj --configuration Release -- --backup-recovery-only
+      - name: Install MAUI iOS workload
+        run: dotnet workload install maui
+      - name: Compile iOS simulator (no signing)
+        run: |
+          dotnet build Mozdulj.Maui/Mozdulj.Maui.csproj -f net10.0-ios -c Debug \
+            -p:RuntimeIdentifier=iossimulator-arm64 \
+            -p:CodesignKey= \
+            -p:CodesignProvision=
+      - name: Boot simulator and smoke-test app launch
+        shell: bash
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          device="$(xcrun simctl list -j devices available | python3 -c '
+          import json,sys
+          devices=json.load(sys.stdin)["devices"]
+          phones=[x for group in devices.values() for x in group if x.get("isAvailable") and x.get("name","").startswith("iPhone")]
+          if not phones: sys.exit("No available iPhone simulator on runner")
+          print(phones[0]["udid"])
+          ')"
+          echo "Selected iOS simulator: $device"
+          xcrun simctl boot "$device" || true
+          xcrun simctl bootstatus "$device" -b
+          app="$(find Mozdulj.Maui/bin/Debug/net10.0-ios/iossimulator-arm64 -type d -name '*.app' -print -quit)"
+          if [[ -z "$app" ]]; then
+            echo "::error::Simulator .app bundle missing"
+            exit 1
+          fi
+          xcrun simctl install "$device" "$app"
+          xcrun simctl launch "$device" hu.mozdulj.preview
+          echo "Simulator app installed and launch command returned successfully"
+          xcrun simctl shutdown "$device" || true
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mozdulj-ios-simulator
+          path: Mozdulj.Maui/bin/Debug/net10.0-ios/iossimulator-arm64/**/*.app
+          if-no-files-found: error
+          retention-days: 14
+      - name: Ensure no distributable IPA was produced
+        shell: bash
+        run: |
+          if find Mozdulj.Maui/bin -name '*.ipa' -print | grep -q .; then
+            echo "::error::Simulator CI must not publish an IPA."
+            exit 1
+          fi

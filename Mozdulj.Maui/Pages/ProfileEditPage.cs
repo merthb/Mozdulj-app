@@ -37,7 +37,7 @@ public sealed class ProfileEditPage : ContentPage
         _state=state;
         UI.Setup(this,"Profil szerkesztése");
         var p=state.Preferences;
-        var youtubeInstalled = YouTubeMusicSupport.IsInstalled();
+        var youtubeInstalled = YouTubeMusicSupport.CanOpenPlaylist;
         _initialMinutes=p.WorkoutMinutes;_initialDifficulty=p.MaximumDifficulty;_initialTransition=p.TransitionSeconds;
         _draft=new UserPreferences
         {
@@ -174,7 +174,8 @@ public sealed class ProfileEditPage : ContentPage
                     PickerTitle = "Válassz relaxációs zenéket",
                     FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                     {
-                        { DevicePlatform.Android, new[] { "audio/*" } }
+                        { DevicePlatform.Android, new[] { "audio/*" } },
+                        { DevicePlatform.iOS, new[] { "public.audio" } }
                     })
                 });
                 if (selected is null) return;
@@ -233,7 +234,7 @@ public sealed class ProfileEditPage : ContentPage
         localMusicPanel.Children.Add(selectTracks);
         localMusicPanel.Children.Add(defaultTracks);
         youtubeMusicPanel.Children.Add(UI.Label(
-            "A link a telefon YouTube Music alkalmazásában nyílik meg. A Premium háttérlejátszás a YouTube Musicban működik; a Mozdulj! nem kezeli a zeneszámokat.",
+            "A lista külső alkalmazásban nyílik meg. A háttérlejátszást a YouTube Music kezeli; a Mozdulj! nem kezeli a zeneszámokat.",
             13, color: UI.Muted));
         youtubeMusicPanel.Children.Add(UI.Label("YouTube Music-lejátszási lista linkje", 14, true));
         youtubeMusicPanel.Children.Add(_youtubePlaylistUrl);
@@ -278,7 +279,7 @@ public sealed class ProfileEditPage : ContentPage
             localMusicPanel, youtubeMusicPanel,
             UI.Label("Napi streak-emlékeztető",14),_reminderEnabled,
             UI.Label("Értesítés időpontja",14),_reminderTime,
-            UI.Label("Csak akkor jelez, ha aznap még nem volt mozgás vagy teljes regeneráció. Az értesítésekhez Android-engedély szükséges.",12,color:UI.Muted)
+            UI.Label("Csak akkor jelez, ha aznap még nem volt mozgás vagy teljes regeneráció. Az értesítésekhez rendszerengedély szükséges.",12,color:UI.Muted)
         ));
         body.Children.Add(UI.Card(UI.Label("Fókusztesttájak",18,true),
             RegionChoices.Create(_state.Exercises,_draft.FocusRegions)));
@@ -318,7 +319,7 @@ public sealed class ProfileEditPage : ContentPage
             _draft.CountdownSoundsEnabled=_countdownSounds.IsToggled;
             _draft.RelaxationMusicEnabled=_relaxationMusic.IsToggled;
             _draft.RelaxationYouTubeMusicPremiumConfirmed =
-                YouTubeMusicSupport.IsInstalled() && _youtubePremium.IsToggled;
+                YouTubeMusicSupport.CanOpenPlaylist && _youtubePremium.IsToggled;
             _draft.RelaxationMusicSource =
                 _draft.RelaxationYouTubeMusicPremiumConfirmed &&
                 _relaxationSource.SelectedIndex == 2 ? RelaxationAudioReferences.YouTubeMusic
@@ -379,6 +380,19 @@ public sealed class ProfileEditPage : ContentPage
             {
                 await DisplayAlertAsync("Beállítások elmentve",
                     "Az emlékeztetőt nem sikerült beállítani: "+notificationError.Message,"Rendben");
+            }
+#elif IOS
+            try
+            {
+                if (_draft.DailyReminderEnabled &&
+                    !await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.RequestPermissionAsync())
+                    await DisplayAlertAsync("Értesítések kikapcsolva",
+                        "Az iOS nem engedélyezte az emlékeztetőket. Később a Beállításokban engedélyezheted.", "Rendben");
+                await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(_state.Data);
+            }
+            catch (Exception error)
+            {
+                await DisplayAlertAsync("Beállítások elmentve", "Az értesítést nem sikerült beállítani: " + error.Message, "Rendben");
             }
 #endif
             await Navigation.PopModalAsync();

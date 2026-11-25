@@ -133,6 +133,8 @@ public sealed class AppState
 #if ANDROID
         await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences));
+#elif IOS
+        await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(Data);
 #endif
     }
 
@@ -500,6 +502,10 @@ public sealed class AppState
         }
         Rewards.UnlockAchievements(Data, finishedOn);
         await SaveAsync();
+#if IOS
+        // Cancel today's pending alert as soon as a finished workout or full recovery credits the day.
+        await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(Data);
+#endif
     }
 
     /// <summary>Creates the day's recovery workout only when requested, then keeps its
@@ -711,6 +717,8 @@ public sealed class AppState
             await SaveAsync();
 #if ANDROID
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences);
+#elif IOS
+            await Mozdulj.Maui.Platforms.iOS.StreakReminderScheduler.ScheduleAsync(Data);
 #endif
             LastAudioRestoreCheck = audioCheck;
         }
