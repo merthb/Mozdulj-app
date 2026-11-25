@@ -1038,8 +1038,8 @@ const BAND_ANCHORS=['leftHand','rightHand','leftAnkle','rightAnkle','leftKnee','
 // Move the root in world coordinates. IK endpoints retain their positions;
 // FK limbs follow the root. The swept collision guard owns final acceptance.
 const BODY_TARGETS=[
- {key:'root',kind:'root'},{key:'head',kind:'inspect'},{key:'neck',kind:'inspect'},{key:'chest',kind:'inspect'},{key:'waist',kind:'inspect'},
- ...['left','right'].flatMap(side=>[{key:side+'Shoulder',kind:'inspect',side},{key:side+'Hip',kind:'inspect',side},{key:side+'Elbow',kind:'elbow',side},{key:side+'Hand',kind:'hands',side},{key:side+'Knee',kind:'knee',side},{key:side+'Foot',kind:'feet',side},{key:side+'Toe',kind:'inspect',side}])];
+ {key:'root',kind:'root'},{key:'head',kind:'articulate',secondary:true},{key:'neck',kind:'articulate',secondary:true},{key:'chest',kind:'articulate',secondary:true},{key:'waist',kind:'articulate',secondary:true},
+ ...['left','right'].flatMap(side=>[{key:side+'Shoulder',kind:'articulate',secondary:true,side},{key:side+'Hip',kind:'articulate',secondary:true,side},{key:side+'Elbow',kind:'elbow',side},{key:side+'Hand',kind:'hands',side},{key:side+'Knee',kind:'knee',side},{key:side+'Foot',kind:'feet',side},{key:side+'Toe',kind:'articulate',secondary:true,side}])];
 function bodyTarget(key){return BODY_TARGETS.find(t=>t.key===key)||null;}
 function bodyPoint(j,key){
  const central={root:'root',head:'head',neck:'neck',chest:'spineUpper',waist:'spineMid'};
@@ -1336,7 +1336,7 @@ function targetAxes(frame,sel,camera,space='world'){
  const unit=[[1,0,0],[0,1,0],[0,0,1]];
  if(space!=='body')return unit;
  const axes=articulationAxes(frame);
- const transform=['root','feet','knee'].includes(sel?.kind)?axes.pelvis:axes.upper;
+ const transform=(['root','feet','knee'].includes(sel?.kind)||/Hip|Toe/.test(sel?.key||''))?axes.pelvis:axes.upper;
  return unit.map(transform);
 }
 function pointDragDelta(frame,sel,camera,height,dx,dy,axis='free',space='world'){
@@ -1351,9 +1351,86 @@ function pointDragDelta(frame,sel,camera,height,dx,dy,axis='free',space='world')
  const amount=screen>.15?(dx*horizontal-dy*vertical)/screen:-dy;
  return mul(vector,amount*size);
 }
-function moveTargetBy(frame,sel,delta){
+// Approximate inverse articulation with bounded existing controls only.
+function articulationControls(sel){
+ const k=sel.key,s=sel.side;
+ const spec=(key,lo,hi,side=null)=>({key,lo,hi,side});
+ const limited=key=>spec(key,-ARTICULATION_LIMITS[key],ARTICULATION_LIMITS[key]);
+ if(k==='head')return [spec('headPitch',-Math.PI/2,Math.PI/2),spec('headRoll',-Math.PI/3,Math.PI/3),spec('headYaw',-Math.PI/2,Math.PI/2)];
+ if(k==='waist')return ['lumbarBend','lumbarSideBend'].map(limited);
+ if(k==='neck'||k==='chest')return ['thoracicBend','thoracicSideBend','lumbarBend','lumbarSideBend'].map(limited);
+ if(k.endsWith('Shoulder'))return ['ShoulderElevation','ShoulderProtraction'].map(suffix=>({...limited(s+suffix),suffix}));
+ if(k.endsWith('Hip'))return ['pelvisPitch','pelvisYaw','pelvisRoll'].map(limited);
+ if(k.endsWith('Toe'))return [spec('footPitch',-.65,.95,s),{...limited(s+'AnkleYaw'),suffix:'AnkleYaw'}];
+ return [];
+}
+function fitArticulatedPoint(frame,sel,delta,symmetric=false){
+ const controls=articulationControls(sel),start=bodyPoint(joints(frame),sel.key),goal=add(start,delta);
+ if(!controls.length||len(delta)<1e-8)return false;
+ const working=cloneFrame(frame);
+ const get=(f,c)=>c.side?(f[c.key]?.[c.side]||0):(f[c.key]||0);
+ const set=(f,c,value)=>{
+   value=clamp(value,c.lo,c.hi);
+   if(c.suffix){editSideArticulation(f,sel.side,c.suffix,value,symmetric);return;}
+   if(c.side){
+     f[c.key]??={};const previous=get(f,c);
+     if(symmetric){const other=swapSide(c.side),old=f[c.key][other]||0;value=previous+clamp(value-previous,c.lo-old,c.hi-old);f[c.key][other]=old+value-previous;}
+     f[c.key][c.side]=value;
+   }else f[c.key]=value;
+ };
+ let best=len(delta);
+ for(let pass=0;pass<4;pass++){
+   let improved=false;
+   for(const c of controls){
+     const current=get(working,c),probe=cloneFrame(working),step=current+.005<=c.hi?.005:-.005;
+     set(probe,c,current+step);
+     const actualStep=get(probe,c)-current;
+     if(Math.abs(actualStep)<1e-8)continue;
+     const point=bodyPoint(joints(working),sel.key),derivative=mul(sub(bodyPoint(joints(probe),sel.key),point),1/actualStep);
+     const amount=clamp(dot(sub(goal,point),derivative)/(dot(derivative,derivative)+.0001),-.25,.25);
+     if(Math.abs(amount)<1e-6)continue;
+     for(const scale of [1,.5,.25]){
+       const trial=cloneFrame(working);set(trial,c,current+amount*scale);
+       const error=len(sub(goal,bodyPoint(joints(trial),sel.key)));
+       if(error<best-1e-7){Object.assign(working,trial);best=error;improved=true;break;}
+     }
+   }
+   if(!improved||best<.0005)break;
+ }
+ if(best>=len(delta)-1e-7)return false;
+ Object.assign(frame,working);return true;
+}
+function targetEditOptions(sel,symmetric=false,adaptRoot=false){
+ const central=sel.kind==='root',articulated=sel.kind==='articulate';
+ const mirror=!central&&!articulated&&symmetric;
+ const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg',other=sel.side?swapSide(sel.side):null;
+ return {prepare:f=>central||articulated||(prepareTargetMode(f,kind,sel.side)&&(!mirror||prepareTargetMode(f,kind,other))),
+   adapt:central?(adaptRoot?'root':true):articulated&&!sel.key.endsWith('Toe')&&sel.key!=='head',
+   move:(f,delta)=>{
+     const before=cloneFrame(f);
+     if(!moveTargetBy(f,sel,delta,symmetric))return false;
+     if(mirror){if(['elbow','knee'].includes(sel.kind))mirrorBendDelta(f,before,sel.kind,sel.side);else mirrorTargetDelta(f,before,sel.kind,sel.side);}
+     return true;
+   }};
+}
+function probeTargetDirections(frame,sel,camera,space='world',symmetric=false){
+ if(!sel||sel.kind==='inspect')return [];
+ const opts=targetEditOptions(sel,symmetric,false),base=cloneFrame(frame);
+ if(!opts.prepare(base))return [];
+ if(opts.adapt)prepareSupportEdit(base);
+ const point=bodyPoint(joints(base),sel.key),axes=targetAxes(base,sel,camera,space);
+ return axes.flatMap((axis,i)=>[-1,1].map(sign=>{
+   const direction=mul(axis,sign),candidate=cloneFrame(base);
+   const changed=opts.move(candidate,mul(direction,.01));
+   const result=changed?Collision3D.transition(base,candidate,6,opts.adapt):null;
+   const progress=result?dot(sub(bodyPoint(joints(result.frame),sel.key),point),direction):0;
+   return {axis:['X','Y','Z'][i],sign,direction,allowed:!!result&&!result.limited&&progress>=.001,progress};
+ }));
+}
+function moveTargetBy(frame,sel,delta,symmetric=false){
  if(!sel||sel.kind==='inspect'||!Array.isArray(delta)||delta.length!==3||delta.some(v=>!Number.isFinite(v)))return false;
  if(sel.kind==='root'){moveRoot(frame,delta);return true;}
+ if(sel.kind==='articulate')return fitArticulatedPoint(frame,sel,delta,symmetric);
  const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg';
  if(frame[modeKeys[kind]]?.[sel.side])return false;
  if(sel.kind==='elbow'||sel.kind==='knee')return moveBendPoint(frame,sel.kind,sel.side,delta);
@@ -1502,7 +1579,7 @@ function shaded3D(canvas){
     for(const sign of [-1,1])ell(add(p,mul(axis,sign*.12)),[.035,.06,.06],'metal');
   }}
  }}
- function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false,axisSpace='world',moveAxis='free'}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false,axisSpace='world',moveAxis='free',directionHints=[]}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],dark?[.26,.23,.34]:'floor');
@@ -1566,7 +1643,7 @@ function shaded3D(canvas){
    const handle=(pos,key)=>{const r=key===selected? .068:.045;ell(pos,[r,r,r],key===selected?[.15,.8,.48]:'handle');};
    if(ghost||skeleton)gl.disable(gl.DEPTH_TEST);
    try{
-     if(!equipmentMode)for(const target of BODY_TARGETS){if(target.kind==='inspect'&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
+     if(!equipmentMode)for(const target of BODY_TARGETS){if(target.secondary&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
      for(const key of Object.keys(frame.pointLocks||{})){
        if(LOCK_KEYS.includes(key))ell(lockPoint(j,key),[.055,.055,.055],[.19,.49,.92]);
      }
@@ -1582,6 +1659,15 @@ function shaded3D(canvas){
        limb(origin,end,active?.013:.007,colors[i]);ell(end,[.022,.022,.022],colors[i]);
      }}finally{gl.enable(gl.DEPTH_TEST);}
    }
+ }
+ if(edit&&!equipmentMode&&selected&&directionHints.length){
+   const origin=bodyPoint(j,selected);
+   gl.disable(gl.DEPTH_TEST);
+   try{for(const hint of directionHints){
+     const end=add(origin,mul(hint.direction,.27)),color=hint.allowed?[.10,.72,.36]:[.95,.18,.22];
+     if(hint.allowed){limb(add(origin,mul(hint.direction,.20)),end,.012,color);ell(end,[.028,.028,.028],color);}
+     else{const side=norm(cross(hint.direction,Math.abs(hint.direction[1])<.85?[0,1,0]:[1,0,0]));limb(add(end,mul(side,-.035)),add(end,mul(side,.035)),.012,color);}
+   }}finally{gl.enable(gl.DEPTH_TEST);}
  }
  if(edit&&equipmentMode){
    gl.disable(gl.DEPTH_TEST);
@@ -1615,7 +1701,7 @@ function shaded3D(canvas){
  function project(p){let q=[p[0],p[1],p[2],1],r=[];for(let i=0;i<4;i++)r.push(viewproj[i]*q[0]+viewproj[4+i]*q[1]+viewproj[8+i]*q[2]+viewproj[12+i]*q[3]);if(r[3]<=.001)return null;return [(r[0]/r[3]*.5+.5)*dims.w,(-r[1]/r[3]*.5+.5)*dims.h];}
  function pickAll(x,y,showAll=false){
  if(!lastJoints)return [];
- return BODY_TARGETS.filter(t=>showAll||t.kind!=='inspect').map(t=>{
+ return BODY_TARGETS.filter(t=>showAll||!t.secondary).map(t=>{
    const screen=project(bodyPoint(lastJoints,t.key));
    return {target:t,distance:screen?Math.hypot(x-screen[0],y-screen[1]):Infinity};
  }).filter(x=>x.distance<=28).sort((a,b)=>a.distance-b.distance).map(x=>x.target);
@@ -1663,5 +1749,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

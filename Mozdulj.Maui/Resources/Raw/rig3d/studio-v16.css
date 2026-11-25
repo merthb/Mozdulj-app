@@ -281,3 +281,5 @@ html.dark .phase-editor input{background:var(--surface);color:#f3f0fa;border-col
 html.dark .quick-camera button{background:var(--surface);color:var(--purple-dark);border-color:var(--outline)}
 
 .axis-legend{display:flex;gap:10px;font-weight:750}.axis-legend span{border-bottom:3px solid;padding:2px 8px}.axis-legend span:nth-child(1){border-color:#e52e38}.axis-legend span:nth-child(2){border-color:#20a34b}.axis-legend span:nth-child(3){border-color:#226df2}#pointCoordinates[hidden]{display:none!important}#pointCoordinates input{min-height:44px}#resetBodyPart{min-height:44px}
+
+#directionStatus:empty{display:none}#checkDirections{min-height:44px}

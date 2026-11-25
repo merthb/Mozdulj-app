@@ -1,6 +1,10 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "A húzás a kapcsolódó ízületi szögeket módosítja; a pont nem mozgatható tetszőlegesen.":"Dragging changes the connected joint angles; this point cannot move arbitrarily.",
+  "Lehetséges mozgásirányok ellenőrzése":"Check possible movement directions",
+  "1 cm-es próba – elérhető: ":"1 cm trial – reachable: ",
+  "Nem igazolt: ":"Not confirmed: ",
   "Mozgatás koordinátarendszere":"Movement coordinate system",
   "Világ":"World",
   "Testhez igazított":"Body-relative",

@@ -723,3 +723,21 @@ test('body-part reset preserves unrelated settings, locks and equipment',()=>{
  assert.equal(f.leftHandCurl,.8);
  assert.equal(rig.resetBodyPart(f,baseline,'all'),null);
 });
+
+test('secondary targets use bounded articulation and preserve segment lengths',()=>{
+ const rig=loadRig(),m=rig.math;
+ for(const key of ['head','neck','chest','waist','leftShoulder','rightHip','leftToe']){
+   const f=rig.baseFrame('stand'),sel=rig.bodyTarget(key),start=rig.bodyPoint(rig.joints(f),key),delta=[.015,0,.02];
+   assert.equal(sel.kind,'articulate');assert.equal(rig.moveTargetBy(f,sel,delta),true,key);
+   const j=rig.joints(f);assert.ok(m.len(m.sub(m.add(start,delta),rig.bodyPoint(j,key)))<m.len(delta),key);
+   for(const side of ['left','right'])for(const [a,b,l] of [['hip','knee',.45],['knee','feet',.43],['shoulder','elbow',.31],['elbow','hands',.28]])assert.ok(Math.abs(m.len(m.sub(j[a][side],j[b][side]))-l)<1e-8);
+   const pose=rig.initialPose();pose.frames[0]=f;assert.doesNotThrow(()=>rig.checkPose(pose));
+ }
+});
+test('direction probes do not mutate the frame and respect locks',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),c=rig.initialPose().camera;
+ rig.setPointLock(f,'root',true);const before=JSON.stringify(f),hints=rig.probeTargetDirections(f,rig.bodyTarget('root'),c,'world');
+ assert.equal(hints.length,6);assert.ok(hints.every(h=>!h.allowed));assert.equal(JSON.stringify(f),before);
+ const free=rig.baseFrame('stand'),raw=JSON.stringify(free);
+ assert.ok(rig.probeTargetDirections(free,rig.bodyTarget('leftHand'),c,'world').some(h=>h.allowed));assert.equal(JSON.stringify(free),raw);
+});
