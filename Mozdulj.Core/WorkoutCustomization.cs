@@ -56,7 +56,7 @@ public sealed class WorkoutCustomization
         Id=existingItemId ?? Guid.NewGuid().ToString("N"),
         ExerciseId=exercise.Id, Revision=exercise.Revision,Name=exercise.Name,
         Category=exercise.Category,Phase=exercise.Phase,Measure=exercise.Measure,
-        TargetSeconds=exercise.TargetSeconds,EstimatedSeconds=exercise.EstimatedSeconds,
+        TargetSeconds=exercise.TargetSeconds,TimeTargets=TimedTargets.Clone(exercise.TimeTargets),EstimatedSeconds=exercise.EstimatedSeconds,
         RepTargets=exercise.RepTargets.Select(x=>new RepTarget
             {Code=x.Code,Label=x.Label,Count=x.Count}).ToList(),
         Status="pending",IsRequired=false
@@ -99,6 +99,7 @@ public sealed class WorkoutCustomization
             Id=it.Id,ExerciseId=it.ExerciseId,Revision=it.Revision,Name=it.Name,
             Instruction=it.Instruction,Category=it.Category,Phase=it.Phase,
             IsRequired=it.IsRequired,Measure=it.Measure,TargetSeconds=it.TargetSeconds,
+            TimeTargets=TimedTargets.Clone(it.TimeTargets),CurrentTimeTargetIndex=it.CurrentTimeTargetIndex,
             RepTargets=it.RepTargets.Select(x=>new RepTarget{Code=x.Code,Label=x.Label,Count=x.Count}).ToList(),
             EstimatedSeconds=it.EstimatedSeconds,Status=it.Status,ActiveSeconds=it.ActiveSeconds,
             TransitionAfterSeconds=i==projected.Count-1?0:gap

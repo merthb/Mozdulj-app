@@ -149,6 +149,7 @@ public sealed class PlanGenerator
                         {
                             ExerciseId=e.Id,Revision=e.Revision,Name=e.Name,Category=e.Category,Phase=e.Phase,
                             IsRequired=required.Any(r=>r.Id==e.Id || SidePairing.Counterpart(catalog,e)?.Id==r.Id),Measure=e.Measure,TargetSeconds=e.TargetSeconds,
+                            TimeTargets=TimedTargets.Clone(e.TimeTargets),
                             RepTargets=e.RepTargets.Select(r=>new RepTarget {Code=r.Code,Label=r.Label,Count=r.Count}).ToList(),
                             EstimatedSeconds=e.EstimatedSeconds, TransitionAfterSeconds=i==all.Count-1?0:gap
                         });

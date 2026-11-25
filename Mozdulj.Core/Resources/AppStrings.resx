@@ -711,4 +711,14 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="RepDirection_clockwise" xml:space="preserve"><value>óramutató járásával megegyezően</value></data>
   <data name="RepDirection_counterclockwise" xml:space="preserve"><value>óramutató járásával ellentétesen</value></data>
   <data name="RepDirection_each_side" xml:space="preserve"><value>oldalanként</value></data>
+  <data name="TimeTargets" xml:space="preserve"><value>Időcélok</value></data>
+  <data name="TimeTargetsHelp" xml:space="preserve"><value>Add meg az időt irányonként. A szakaszok egymás után futnak, és egy gyakorlatnak számítanak.</value></data>
+  <data name="TimeAdd" xml:space="preserve"><value>＋ Időcél hozzáadása</value></data>
+  <data name="TimeRemove" xml:space="preserve"><value>Időcél eltávolítása</value></data>
+  <data name="TimeSeconds" xml:space="preserve"><value>Másodperc</value></data>
+  <data name="TimeTargetsInvalid" xml:space="preserve"><value>Válassz irányt minden időcélhoz; szakaszonként legalább 5 másodperc, összesen legfeljebb 3600 másodperc adható meg.</value></data>
+  <data name="TimeEstimateInvalid" xml:space="preserve"><value>A becsült idő nem lehet rövidebb az időcélok összegénél.</value></data>
+  <data name="TimeSegment" xml:space="preserve"><value>Szakasz {0}/{1}</value></data>
+  <data name="TimeNext" xml:space="preserve"><value>Következő: {0} · {1} mp</value></data>
+  <data name="TimeCompleteAll" xml:space="preserve"><value>A teljesítéshez minden időszakaszt be kell fejezni.</value></data>
 </root>

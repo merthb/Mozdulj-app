@@ -46,12 +46,13 @@ public static class CatalogCodec
                 throw new InvalidDataException(AppLocalization.Format("Validation120", e.Id));
             if (e.Measure == "time")
             {
-                if (e.TargetSeconds is null or <= 0 || e.RepTargets.Count != 0)
+                if (e.TargetSeconds is null or <= 0 || e.RepTargets.Count != 0 ||
+                    (e.TimeTargets is not null && (!TimedTargets.IsValid(e.TargetSeconds,e.TimeTargets) || e.EstimatedSeconds < e.TargetSeconds)))
                     throw new InvalidDataException(AppLocalization.Format("Validation121", e.Id));
             }
             else if (e.Measure == "reps")
             {
-                if (e.TargetSeconds != null || e.RepTargets.Count == 0 ||
+                if (e.TargetSeconds != null || e.TimeTargets is not null || e.RepTargets.Count == 0 ||
                     e.RepTargets.Any(r => r.Count <= 0 || string.IsNullOrWhiteSpace(r.Label)))
                     throw new InvalidDataException(AppLocalization.Format("Validation122", e.Id));
             }

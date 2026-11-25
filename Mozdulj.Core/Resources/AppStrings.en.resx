@@ -711,4 +711,14 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="RepDirection_clockwise" xml:space="preserve"><value>clockwise</value></data>
   <data name="RepDirection_counterclockwise" xml:space="preserve"><value>counterclockwise</value></data>
   <data name="RepDirection_each_side" xml:space="preserve"><value>each side</value></data>
+  <data name="TimeTargets" xml:space="preserve"><value>Time targets</value></data>
+  <data name="TimeTargetsHelp" xml:space="preserve"><value>Set the duration for each direction. Intervals run in order and count as one exercise.</value></data>
+  <data name="TimeAdd" xml:space="preserve"><value>＋ Add time target</value></data>
+  <data name="TimeRemove" xml:space="preserve"><value>Remove time target</value></data>
+  <data name="TimeSeconds" xml:space="preserve"><value>Seconds</value></data>
+  <data name="TimeTargetsInvalid" xml:space="preserve"><value>Select a direction for each time target; at least 5 seconds per interval and at most 3600 seconds in total.</value></data>
+  <data name="TimeEstimateInvalid" xml:space="preserve"><value>Estimated duration cannot be shorter than the sum of time targets.</value></data>
+  <data name="TimeSegment" xml:space="preserve"><value>Interval {0}/{1}</value></data>
+  <data name="TimeNext" xml:space="preserve"><value>Next: {0} · {1} sec</value></data>
+  <data name="TimeCompleteAll" xml:space="preserve"><value>Complete all timed intervals to finish the exercise.</value></data>
 </root>

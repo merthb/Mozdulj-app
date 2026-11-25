@@ -62,12 +62,13 @@ public static class ExerciseLibraryRules
             errors.Add(AppLocalization.Text("Validation052"));
         if (e.Measure == "time")
         {
-            if (e.TargetSeconds is null or < 5 or > 3600) errors.Add(AppLocalization.Text("Validation053"));
+            if (!TimedTargets.IsValid(e.TargetSeconds,e.TimeTargets)) errors.Add(AppLocalization.Text("TimeTargetsInvalid"));
+            if (e.TimeTargets is not null && e.EstimatedSeconds < e.TargetSeconds.GetValueOrDefault()) errors.Add(AppLocalization.Text("TimeEstimateInvalid"));
             if (e.RepTargets is { Count: > 0 }) errors.Add(AppLocalization.Text("Validation054"));
         }
         else if (e.Measure == "reps")
         {
-            if (e.TargetSeconds.HasValue) errors.Add(AppLocalization.Text("Validation055"));
+            if (e.TargetSeconds.HasValue || e.TimeTargets is not null) errors.Add(AppLocalization.Text("Validation055"));
             if (e.RepTargets is null || e.RepTargets.Count == 0 ||
                 e.RepTargets.Any(r => r.Count is < 1 or > 200 || string.IsNullOrWhiteSpace(r.Label)))
                 errors.Add(AppLocalization.Text("Validation056"));

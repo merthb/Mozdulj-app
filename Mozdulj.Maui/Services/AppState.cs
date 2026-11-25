@@ -453,6 +453,8 @@ public sealed class AppState
 
     public async Task<int> CompleteItemAsync(Workout workout, WorkoutItem item)
     {
+        if (!TimedTargets.CanComplete(workout,item))
+            throw new InvalidOperationException(AppLocalization.Text("TimeCompleteAll"));
         if (item.Status == "completed" || Data.Completions.Any(x => x.ItemId == item.Id)) return 0;
         // Guided relaxation earns no XP and no monthly active-day completion.
         // Only FinishWorkoutAsync awards the recovery-day streak protection.
@@ -758,6 +760,8 @@ public sealed class AppState
         if (!RepetitionDirections.TryCanonicalize(draft.RepTargets ?? [],out var canonicalTargets))
             throw new InvalidOperationException(AppLocalization.Text("RepInvalid"));
         draft.RepTargets=canonicalTargets;
+        if (draft.TimeTargets is not null && (draft.Measure!="time" || !TimedTargets.IsValid(draft.TargetSeconds,draft.TimeTargets) || draft.EstimatedSeconds<draft.TargetSeconds))
+            throw new InvalidOperationException(AppLocalization.Text("TimeTargetsInvalid"));
         if (draft.Regions.Any(r=>!RegionTaxonomy.IsDetail(r)))
             throw new InvalidOperationException(AppLocalization.IsEnglish ? "Choose body parts from the fixed list." : "A testrészeket a fix listából válaszd ki.");
         if (status is not (LibraryStatuses.Draft or LibraryStatuses.Active or LibraryStatuses.Disabled))
@@ -860,6 +864,9 @@ public sealed class AppState
             if (!RepetitionDirections.TryCanonicalize(entry.Exercise.RepTargets,out var canonicalTargets))
                 throw new InvalidDataException(AppLocalization.Format("RepImportInvalid",entry.Exercise.DisplayName));
             entry.Exercise.RepTargets=canonicalTargets;
+            var e=entry.Exercise;
+            if(e.TimeTargets is not null && (e.Measure!="time" || !TimedTargets.IsValid(e.TargetSeconds,e.TimeTargets) || e.EstimatedSeconds<e.TargetSeconds))
+                throw new InvalidDataException(AppLocalization.Text("TimeTargetsInvalid"));
         }
         if (package.UserExercises.Any(x=>x.Exercise.Regions.Any(r=>!RegionTaxonomy.IsDetail(r))))
             throw new InvalidDataException(AppLocalization.IsEnglish ? "The imported library contains unsupported body parts." : "Az importált gyakorlattár nem támogatott testrészeket tartalmaz.");

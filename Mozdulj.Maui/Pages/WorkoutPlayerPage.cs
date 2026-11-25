@@ -119,7 +119,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         content.Children.Add(stop);
         Content=new ScrollView { Content=content };
         if(workout.Items.Count>0 && workout.RemainingSeconds<=0 && workout.PlaybackPhase=="exercise" && workout.Items[_index].Measure=="time")
-            workout.RemainingSeconds=workout.Items[_index].TargetSeconds??30;
+            workout.RemainingSeconds=TimedTargets.Seconds(workout.Items[_index]);
         Refresh();
     }
     protected override async void OnAppearing()
@@ -291,7 +291,7 @@ public sealed class WorkoutPlayerPage : ContentPage
                 if(_workout.PlaybackPhase=="preparation")
                 {
                     _workout.PlaybackPhase="exercise";
-                    _workout.RemainingSeconds=_workout.Items[_index].TargetSeconds??0;
+                    TimedTargets.Start(_workout,_workout.Items[_index]);
                     await _state.SaveAsync();
                 }
                 else if(_workout.PlaybackPhase=="transition")
@@ -299,8 +299,15 @@ public sealed class WorkoutPlayerPage : ContentPage
                     _index++;
                     _workout.CurrentIndex=_index;
                     _workout.PlaybackPhase="exercise";
-                    _workout.RemainingSeconds=_workout.Items[_index].TargetSeconds??0;
+                    TimedTargets.Start(_workout,_workout.Items[_index]);
                     await _state.SaveAsync();
+                }
+                else if(TimedTargets.TryAdvance(_workout,_workout.Items[_index]))
+                {
+                    // Persist the new segment and its full timer before the next tick.
+                    _busy=true;
+                    try { await _state.SaveAsync(); }
+                    finally { _busy=false; }
                 }
                 else await FinishCurrentAsync(false);
             }
@@ -317,6 +324,7 @@ public sealed class WorkoutPlayerPage : ContentPage
         try
         {
             var item=_workout.Items[_index];
+            if(!skip && !TimedTargets.CanComplete(_workout,item)) return;
             if(skip)
             {
                 if(item.Status=="pending") item.Status="skipped";
@@ -360,6 +368,15 @@ public sealed class WorkoutPlayerPage : ContentPage
         _headline.Text = _workout.Kind == "recovery" ? AppLocalization.Text("WorkoutUi177")
             : preparing ? AppLocalization.Text("WorkoutUi178")+(_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name)
             : transition ? AppLocalization.Text("WorkoutUi179")+(_state.FindExercise(_workout.Items[_index+1].ExerciseId)?.DisplayName ?? _workout.Items[_index+1].Name) : (_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name);
+        if(!transition && !preparing && item.Measure=="time" && item.TimeTargets is {Count:>0} segments)
+        {
+            int index=TimedTargets.Index(item);
+            var current=segments[index];
+            _meta.Text += " · "+AppLocalization.Format("TimeSegment",index+1,segments.Count);
+            if(current.Code!="all")_headline.Text+="\n"+TimedTargets.Direction(current.Code);
+            if(index+1<segments.Count)
+                _meta.Text+="\n"+AppLocalization.Format("TimeNext",TimedTargets.Direction(segments[index+1].Code),segments[index+1].Seconds);
+        }
         _value.Text=preparing ? _workout.RemainingSeconds.ToString() :
             transition || item.Measure=="time" ? UI.FormatSeconds(_workout.RemainingSeconds) : item.TargetLabel;
         _value.FontSize=preparing||transition||item.Measure=="time"?48:28;

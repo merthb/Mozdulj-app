@@ -10,6 +10,7 @@ public static class SidePairing
     private static string Key(string name) => SideWord.Replace(name.ToLowerInvariant(), "{oldal}");
     public static bool IsExplicitlyOneSided(Exercise exercise)
     {
+        if (TimedTargets.HasBothSides(exercise)) return false;
         var name=exercise.Name.ToLowerInvariant();
         var right=Regex.IsMatch(name,@"\b(jobbra|jobb)\b");
         var left=Regex.IsMatch(name,@"\b(balra|bal)\b");

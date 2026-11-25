@@ -36,6 +36,8 @@ public sealed class Exercise
     public string Phase { get; set; } = "main"; // warmup/main/cooldown
     public string Measure { get; set; } = "reps"; // reps/time
     public int? TargetSeconds { get; set; }
+    // Optional for compatibility with single-timer exercises and legacy signed backups.
+    public List<TimeTarget>? TimeTargets { get; set; }
     public List<RepTarget> RepTargets { get; set; } = [];
     public int EstimatedSeconds { get; set; } = 45;
     public string StartingPosition { get; set; } = "";
@@ -46,7 +48,7 @@ public sealed class Exercise
     public string ReviewStatus { get; set; } = "draft"; // draft/reviewed/withdrawn
     public MotionPose Pose { get; set; } = new();
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
+        ? TimedTargets.Format(TargetSeconds, TimeTargets) : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
     [JsonIgnore] public string EquipmentLabel => Equipment.Count == 0 ? AppLocalization.Text("WorkoutUi200") : string.Join(", ", Equipment.Select(PresentationText.Known));
     [JsonIgnore] public IReadOnlyList<string> RegionAreaIds => RegionTaxonomy.AreaIds(Regions);
     [JsonIgnore] public string RegionAreaLabel => RegionTaxonomy.AreaLabels(Regions);
@@ -232,14 +234,18 @@ public sealed class WorkoutItem
     public bool IsRequired { get; set; } = false; // user-selected non-negotiable exercise
     public string Measure { get; set; } = "";
     public int? TargetSeconds { get; set; }
+    // Optional for compatibility with single-timer exercises and legacy signed backups.
+    public List<TimeTarget>? TimeTargets { get; set; }
     public List<RepTarget> RepTargets { get; set; } = [];
     public int EstimatedSeconds { get; set; }
+    // Current timed segment is saved with the workout item; null is the legacy state.
+    public int? CurrentTimeTargetIndex { get; set; }
     public int TransitionAfterSeconds { get; set; }
     public string Status { get; set; } = "pending";
     /// <summary>Unpaused seconds in this exercise, excluding transitions.</summary>
     public int ActiveSeconds { get; set; }
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} {(AppLocalization.IsEnglish ? "sec" : "mp")}" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
+        ? TimedTargets.Format(TargetSeconds, TimeTargets) : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
 }
 public sealed class CompletionRecord
 {

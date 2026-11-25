@@ -19,7 +19,9 @@ public sealed class ExerciseEditorPage : ContentPage
     private readonly Picker _phase = new() { Title = AppLocalization.Text("WorkoutUi055") };
     private readonly Picker _difficulty = new() { Title = AppLocalization.Text("Difficulty") };
     private readonly Picker _measure = new() { Title = AppLocalization.Text("WorkoutUi056") };
-    private readonly Entry _seconds = new() { Placeholder = AppLocalization.Text("WorkoutUi057"), Keyboard = Keyboard.Numeric };
+    private readonly VerticalStackLayout _timeRows = new() { Spacing = 8 };
+    private readonly List<(Picker Direction, Entry Count, View Row)> _timeInputs = [];
+    private readonly VerticalStackLayout _timePanel = new() { Spacing = 8 };
     private readonly VerticalStackLayout _repRows = new() { Spacing = 8 };
     private readonly List<(Picker Direction, Entry Count, View Row)> _repInputs = [];
     private readonly VerticalStackLayout _repPanel = new() { Spacing = 8 };
@@ -66,7 +68,10 @@ public sealed class ExerciseEditorPage : ContentPage
         _phase.SelectedIndex = Array.IndexOf(ExerciseLibraryRules.Phases,_draft.Phase);
         _difficulty.SelectedIndex = Math.Clamp(_draft.Difficulty-1,0,2);
         _measure.SelectedIndex = _draft.Measure=="time"?1:0;
-        _seconds.Text = _draft.TargetSeconds?.ToString() ?? "";
+        if (_draft.TimeTargets is {Count:>0} timeTargets)
+            foreach(var target in timeTargets) AddTimeRow(target);
+        else if (_draft.Measure=="time" && _draft.TargetSeconds is int seconds)
+            AddTimeRow(new TimeTarget {Code="all",Seconds=seconds});
         foreach (var target in _draft.RepTargets) AddRepRow(target);
         _estimate.Text = _draft.EstimatedSeconds.ToString();
         _equipment.Text = string.Join(", ",_draft.Equipment);
@@ -133,8 +138,13 @@ public sealed class ExerciseEditorPage : ContentPage
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi072"),_phase));
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi073"),_difficulty));
         _content.Children.Add(Field(AppLocalization.Text("WorkoutUi074"),_measure));
-        var timeField = Field(AppLocalization.Text("WorkoutUi075"),_seconds);
-        _content.Children.Add(timeField);
+        _timePanel.Children.Add(UI.Label(AppLocalization.Text("TimeTargets"),15,true));
+        _timePanel.Children.Add(UI.Label(AppLocalization.Text("TimeTargetsHelp"),12,color:UI.Muted));
+        _timePanel.Children.Add(_timeRows);
+        var addTime = UI.Button(AppLocalization.Text("TimeAdd"),false);
+        addTime.Clicked += (_,_)=>AddTimeRow();
+        _timePanel.Children.Add(addTime);
+        _content.Children.Add(_timePanel);
         _repPanel.Children.Add(UI.Label(AppLocalization.Text("RepTargets"), 15, true));
         _repPanel.Children.Add(UI.Label(AppLocalization.Text("RepHelp"), 12, color:UI.Muted));
         _repPanel.Children.Add(_repRows);
@@ -145,7 +155,7 @@ public sealed class ExerciseEditorPage : ContentPage
         void UpdateMeasureFields()
         {
             var timed = _measure.SelectedIndex == 1;
-            timeField.IsVisible = timed;
+            _timePanel.IsVisible = timed;
             _repPanel.IsVisible = !timed;
         }
         _measure.SelectedIndexChanged += (_,_)=>UpdateMeasureFields();
@@ -221,6 +231,49 @@ public sealed class ExerciseEditorPage : ContentPage
             RegionTaxonomy.AreaLabels(_details);
     }
 
+    private static List<RepetitionDirection> TimeDirections =>
+        RepetitionDirections.Options.Where(d=>d.Id!="each_side").ToList();
+
+    private void AddTimeRow(TimeTarget? existing=null)
+    {
+        var options=TimeDirections;
+        var direction=new Picker {Title=AppLocalization.Text("RepDirection")};
+        foreach(var option in options)direction.Items.Add(option.DisplayLabel);
+        direction.SelectedIndex=existing is null?0:options.FindIndex(d=>d.Id==existing.Code);
+        var seconds=new Entry {Keyboard=Keyboard.Numeric,Placeholder=AppLocalization.Text("TimeSeconds"),
+            Text=existing?.Seconds.ToString(System.Globalization.CultureInfo.InvariantCulture)??""};
+        var remove=UI.Button("×",false);
+        SemanticProperties.SetDescription(remove,AppLocalization.Text("TimeRemove"));
+        var row=new Grid {ColumnSpacing=6,ColumnDefinitions={
+            new ColumnDefinition{Width=new GridLength(2,GridUnitType.Star)},
+            new ColumnDefinition{Width=new GridLength(5,GridUnitType.Star)},
+            new ColumnDefinition{Width=GridLength.Auto}}};
+        row.Add(Field(AppLocalization.Text("TimeSeconds"),seconds),0,0);
+        row.Add(Field(AppLocalization.Text("RepDirection"),direction),1,0);
+        row.Add(remove,2,0);
+        _timeInputs.Add((direction,seconds,row));
+        _timeRows.Children.Add(row);
+        remove.Clicked+=(_,_)=>{_timeInputs.RemoveAll(x=>ReferenceEquals(x.Row,row));_timeRows.Children.Remove(row);};
+    }
+
+    private bool TryReadTimeTargets(out List<TimeTarget>? targets)
+    {
+        targets=null;
+        if(_measure.SelectedIndex!=1)return true;
+        if(_timeInputs.Count==0)return true; // an incomplete draft is allowed
+        var options=TimeDirections;
+        var result=new List<TimeTarget>();
+        foreach(var row in _timeInputs)
+        {
+            var index=row.Direction.SelectedIndex;
+            if(index<0||index>=options.Count||!int.TryParse(row.Count.Text,out var seconds)||seconds is <5 or >3600)
+                return false;
+            result.Add(new TimeTarget{Code=options[index].Id,Seconds=seconds});
+        }
+        if(result.Sum(t=>(long)t.Seconds)>3600)return false;
+        targets=result;return true;
+    }
+
     private void AddRepRow(RepTarget? existing = null)
     {
         var direction = new Picker { Title = AppLocalization.Text("RepDirection") };
@@ -262,7 +315,7 @@ public sealed class ExerciseEditorPage : ContentPage
         return true;
     }
 
-    private void Gather(List<RepTarget> targets)
+    private void Gather(List<RepTarget> targets,List<TimeTarget>? timeTargets)
     {
         _draft.Name=_name.Text?.Trim()??"";
         _draft.Category=_category.SelectedIndex>=0 ? ExerciseLibraryRules.Categories[_category.SelectedIndex] : "";
@@ -271,9 +324,11 @@ public sealed class ExerciseEditorPage : ContentPage
         _draft.Phase=(_phase.SelectedIndex>=0 && _phase.SelectedIndex<3)?ExerciseLibraryRules.Phases[_phase.SelectedIndex]:"";
         _draft.Difficulty=_difficulty.SelectedIndex+1;
         _draft.Measure=_measure.SelectedIndex==1?"time":"reps";
-        _draft.TargetSeconds = _draft.Measure=="time" && int.TryParse(_seconds.Text,out var sec)?sec:null;
+        _draft.TimeTargets=timeTargets;
+        _draft.TargetSeconds=timeTargets?.Sum(t=>t.Seconds);
         _draft.RepTargets=targets;
         _draft.EstimatedSeconds=int.TryParse(_estimate.Text,out var estimated)?estimated:0;
+        if(timeTargets is not null)_draft.EstimatedSeconds=Math.Max(_draft.EstimatedSeconds,_draft.TargetSeconds!.Value);
         _draft.Equipment=Csv(_equipment.Text);
         _draft.Summary=_summary.Text?.Trim()??"";
         _draft.StartingPosition=_position.Text?.Trim()??"";
@@ -292,7 +347,12 @@ public sealed class ExerciseEditorPage : ContentPage
             await DisplayAlertAsync(AppLocalization.Text("WorkoutUi084"),AppLocalization.Text("RepInvalid"),AppLocalization.Text("OK"));
             return;
         }
-        Gather(targets);
+        if(!TryReadTimeTargets(out var timeTargets))
+        {
+            await DisplayAlertAsync(AppLocalization.Text("WorkoutUi084"),AppLocalization.Text("TimeTargetsInvalid"),AppLocalization.Text("OK"));
+            return;
+        }
+        Gather(targets,timeTargets);
         var derived = RegionTaxonomy.AreaIds(_details);
         if (_areas.Any(id => !derived.Contains(id)) || (_legacyDetails.Count > 0 && _details.Count == 0))
         {
