@@ -843,11 +843,12 @@ test('support mode selectors cover all lock keys and preserve relative identity 
  const mk=key=>({dataset:{lockPoint:key},options:[],value:'',appendChild(o){this.options.push(o)},replaceChildren(){this.options=[]}});
  const selects=keys.map(mk),pose={frames:[rig.baseFrame('stand')]},frameIndex=0,current=()=>pose.frames[0];
  current().equipment=[{type:'wall'},{type:'chair',id:'eq-1'}];
- const environment={MozduljRig:rig,document:{createElement:()=>({}),querySelectorAll:()=>selects},POSITIONABLE:Object.keys(rig.PROP_POSITIONS),current,pose,frameIndex,
+ const bodyLinkStatus={textContent:''};
+ const environment={$:id=>{assert.equal(id,'bodyLinkStatus');return bodyLinkStatus;},window:{rigText:s=>s},targetLabels:Object.fromEntries(rig.LINK_KEYS.map(key=>[key,key])),MozduljRig:rig,document:{createElement:()=>({}),querySelectorAll:()=>selects},POSITIONABLE:Object.keys(rig.PROP_POSITIONS),current,pose,frameIndex,
  clone:o=>JSON.parse(JSON.stringify(o)),equipmentLabel:(p,i)=>p.type+' '+(i+1),syncContactSurfaces:()=>{},closeGesture:()=>{},stopPreview:()=>{},tracked:f=>f(),sync:()=>{},msg:()=>{}};
  const code=source.slice(source.indexOf('function lockOption('),source.indexOf('function syncContactSurfaces('));
  const fns=new Function(...Object.keys(environment),code+';return {syncLocks,changePointLock};')(...Object.values(environment));
- fns.syncLocks();assert.equal(selects[0].options.length,4);assert.equal(selects[0].value,'free');
+ fns.syncLocks();assert.equal(bodyLinkStatus.textContent,'Nincs testpontkapcsolat.');assert.equal(selects[0].options.length,4);assert.equal(selects[0].value,'free');
  const hand=selects.find(s=>s.dataset.lockPoint==='rightHand');
  hand.value='equipment:0';fns.changePointLock(hand);
  assert.equal(current().equipment[0].id,'eq-2');assert.equal(current().equipmentPointLocks.rightHand.equipmentId,'eq-2');
