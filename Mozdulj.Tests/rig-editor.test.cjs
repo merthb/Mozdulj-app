@@ -397,3 +397,25 @@ test('explicit three-point band handles detach at the rendered position and move
  assert.equal(JSON.stringify(handles[1].position),other);
  assert.equal(JSON.stringify(f.equipment[0].positionC),JSON.stringify([0,.1,.4]));
 });
+
+test('four-point band follows A-C-D-B, retains legacy routes and mirrors each anchor',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),j=rig.joints(f);
+ const band={type:'band',anchorA:'leftHand',anchorB:'rightHand',anchorC:'leftToe',anchorD:'rightToe'};
+ f.equipment=[band];
+ const seg=rig.bandSegments(band,f,j);
+ assert.equal(seg.length,3);
+ assert.equal(JSON.stringify(seg),JSON.stringify([[j.hands.left,j.toes.left],[j.toes.left,j.toes.right],[j.toes.right,j.hands.right]]));
+ assert.equal(rig.equipmentHandles(f).length,4);
+ const mirror=rig.mirrorFrame(f).equipment[0];assert.equal(mirror.anchorC,'rightToe');assert.equal(mirror.anchorD,'leftToe');
+ const old={...band};delete old.anchorD;assert.equal(rig.bandSegments(old,f,j).length,2);
+ delete old.anchorC;assert.equal(rig.bandSegments(old,f,j).length,1);
+ assert.equal(rig.detachBandPoint(f,0,'D'),true);
+ const previous=JSON.stringify(f.equipment[0].positionD);
+ assert.equal(rig.moveBandPoint(f,0,'D',[.12,0,0]),true);
+ assert.notEqual(JSON.stringify(f.equipment[0].positionD),previous);
+ const reflected=rig.mirrorFrame(f).equipment[0].positionD;
+ assert.equal(reflected[0],-f.equipment[0].positionD[0]);
+ const pose=rig.initialPose('stand');pose.frames[0]=f;
+ assert.doesNotThrow(()=>rig.checkPose(pose));
+ delete band.anchorC;assert.throws(()=>rig.checkPose(pose));
+});

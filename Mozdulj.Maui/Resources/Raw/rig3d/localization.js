@@ -1,6 +1,17 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Harmadik pont (C) – első támasz / vezetés":"Third point (C) – first support / guide",
+  "Negyedik pont (D) – második támasz / vezetés":"Fourth point (D) – second support / guide",
+  "Nincs negyedik pont":"No fourth point",
+  "Negyedik pont koordinátája (méter)":"Fourth point coordinates (metres)",
+  "Negyedik pont X":"Fourth point X",
+  "Negyedik pont Y":"Fourth point Y",
+  "Negyedik pont Z":"Fourth point Z",
+  "A szalag útvonala: A → C → D → B. A C és D pont opcionális; D csak C után adható meg.":"Band path: A → C → D → B. C and D are optional; D requires C.",
+  "Hibás negyedik szalagpont.":"Invalid fourth band point.",
+  "Hibás negyedik szalagkoordináta.":"Invalid fourth band coordinates.",
+  "Szalag beszúrva; lent beállíthatod a rögzítési pontjait.":"Band inserted; set its attachment points below.",
   "Eszközpont":"Equipment point",
   "Szerkesztett eszközpont":"Equipment point to edit",
   "Szalagpont leválasztása":"Detach band point",

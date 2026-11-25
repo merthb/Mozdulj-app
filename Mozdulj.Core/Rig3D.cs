@@ -93,6 +93,11 @@ public sealed class Rig3DEquipment
     public string? AnchorC { get; set; }
     /// <summary>World-space position if AnchorC is fixed.</summary>
     public float[]? PositionC { get; set; }
+    /// <summary>Optional second guide point; path order A, C, D, B.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? AnchorD { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public float[]? PositionD { get; set; }
     /// <summary>auto, direct, front, back, left, right.</summary>
     public string Route { get; set; } = "auto";
 }
@@ -192,6 +197,7 @@ public static class Rig3DValidator
                 if(obj.Position is not null)CheckVector(obj.Position,"eszköz pozíció");
                 if(obj.PositionB is not null)CheckVector(obj.PositionB,"második rögzítési pont");
                 if(obj.PositionC is not null)CheckVector(obj.PositionC,"harmadik szalagpont");
+                if(obj.PositionD is not null)CheckVector(obj.PositionD,"negyedik szalagpont");
                 if(obj.Type is "band" or "miniband" or "strap")
                 {
                     if((obj.AnchorA is not null || obj.AnchorB is not null) &&
@@ -200,6 +206,8 @@ public static class Rig3DValidator
                         throw new InvalidDataException(AppLocalization.Text("Validation110"));
                     if(obj.AnchorC is not null && !BandAttachments.Contains(obj.AnchorC))
                         throw new InvalidDataException(AppLocalization.Text("Validation111"));
+                    if(obj.AnchorD is not null && (!BandAttachments.Contains(obj.AnchorD) || !BandAttachments.Contains(obj.AnchorA ?? "") || !BandAttachments.Contains(obj.AnchorB ?? "") || !BandAttachments.Contains(obj.AnchorC ?? "") || (obj.AnchorD=="fixed" && obj.PositionD is null)))
+                        throw new InvalidDataException(AppLocalization.Text("RigInvalidFourthBandPoint"));
                     if(!BandRoutes.Contains(obj.Route ?? "auto"))
                         throw new InvalidDataException(AppLocalization.Text("Validation112"));
                 }

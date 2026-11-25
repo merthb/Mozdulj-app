@@ -306,9 +306,9 @@ function mirrorFrame(frame){
  for(const key of ['armAngles','legAngles'])if(f[key]!=null)
    f[key]=Object.fromEntries(Object.entries(f[key]).map(([side,a])=>[swapSide(side),mirrorControls(a)]));
  for(const prop of f.equipment||[]){
-   for(const key of ['position','positionB','positionC'])if(prop[key]!=null)prop[key]=reflectX(prop[key]);
+   for(const key of ['position','positionB','positionC','positionD'])if(prop[key]!=null)prop[key]=reflectX(prop[key]);
    if(prop.yaw!=null)prop.yaw=-prop.yaw;
-   for(const key of ['anchor','anchorA','anchorB','anchorC','route'])if(typeof prop[key]==='string')prop[key]=swapSide(prop[key]);
+   for(const key of ['anchor','anchorA','anchorB','anchorC','anchorD','route'])if(typeof prop[key]==='string')prop[key]=swapSide(prop[key]);
  }
  return f;
 }
@@ -851,7 +851,7 @@ function fitSupport(frame,type,keys,index=null,lock=false){
  return {ok:true,frame:accepted};
 }
  function bandAnchorPoint(anchor,frame,j,prop,which){
-   const fixed=which==='A' ? prop.position : which==='C' ? prop.positionC : (prop.positionB||prop.position);
+   const fixed=which==='A' ? prop.position : which==='C' ? prop.positionC : which==='D' ? prop.positionD : (prop.positionB||prop.position);
    const look={leftHand:j.hands.left,rightHand:j.hands.right,
      leftAnkle:j.feet.left,rightAnkle:j.feet.right,leftKnee:j.knee.left,rightKnee:j.knee.right,
      leftToe:j.toes.left,rightToe:j.toes.right,
@@ -861,14 +861,29 @@ function fitSupport(frame,type,keys,index=null,lock=false){
    return [...look[anchor]];
  }
 
+ function bandSegments(prop,frame,j){
+   const chosen=prop.anchorA&&prop.anchorB;
+   if(chosen){const a=bandAnchorPoint(prop.anchorA,frame,j,prop,'A'),b=bandAnchorPoint(prop.anchorB,frame,j,prop,'B');
+     if(prop.anchorC){const c=bandAnchorPoint(prop.anchorC,frame,j,prop,'C');if(prop.anchorD){const d=bandAnchorPoint(prop.anchorD,frame,j,prop,'D');return [[a,c],[c,d],[d,b]];}return [[a,c],[c,b]];}
+     return [[a,b]];}
+   // Backward-compatibility with the 158 bundled movement records.
+   switch(prop.anchor){
+     case 'hands':return [[j.hands.left,j.hands.right]];
+     case 'knees':return [[j.knee.left,j.knee.right]];
+     case 'ankle':return [[j.feet.left,j.feet.right]];
+     case 'fixed':return [[[ -.82,.35,.58],j.hands.left],[[.82,.35,.58],j.hands.right]];
+     default:return [[j.feet.left,j.hands.left],[j.feet.right,j.hands.right]];
+   }
+ }
+
 const BAND_TYPES=['band','miniband','strap'];
-const bandPositionKey=which=>({A:'position',B:'positionB',C:'positionC'})[which];
+const bandPositionKey=which=>({A:'position',B:'positionB',C:'positionC',D:'positionD'})[which];
 function equipmentHandles(frame,j=joints(frame)){
  const out=[];
  for(const [index,prop] of (frame.equipment||[]).entries()){
    if(PROP_POSITIONS[prop.type])out.push({key:'prop:'+index,index,kind:'prop',position:propPosition(prop),movable:!prop.locked});
    if(BAND_TYPES.includes(prop.type)&&prop.anchorA&&prop.anchorB)
-     for(const which of ['A','B','C']){
+     for(const which of ['A','B','C','D']){
        const anchor=prop['anchor'+which];if(!anchor)continue;
        out.push({key:'band:'+index+':'+which,index,kind:'band',which,position:bandAnchorPoint(anchor,frame,j,prop,which),movable:anchor==='fixed'});
      }
@@ -965,20 +980,6 @@ function shaded3D(canvas){
    // Never draw an intersecting fallback through the body. The editor will
    // signal that the anchor/route must be changed instead.
    return score>=.005 ? best : null;
- }
- function bandSegments(prop,frame,j){
-   const chosen=prop.anchorA&&prop.anchorB;
-   if(chosen){const a=bandAnchorPoint(prop.anchorA,frame,j,prop,'A'),b=bandAnchorPoint(prop.anchorB,frame,j,prop,'B');
-     if(prop.anchorC){const c=bandAnchorPoint(prop.anchorC,frame,j,prop,'C');return [[a,c],[c,b]];}
-     return [[a,b]];}
-   // Backward-compatibility with the 158 bundled movement records.
-   switch(prop.anchor){
-     case 'hands':return [[j.hands.left,j.hands.right]];
-     case 'knees':return [[j.knee.left,j.knee.right]];
-     case 'ankle':return [[j.feet.left,j.feet.right]];
-     case 'fixed':return [[[ -.82,.35,.58],j.hands.left],[[.82,.35,.58],j.hands.right]];
-     default:return [[j.feet.left,j.hands.left],[j.feet.right,j.hands.right]];
-   }
  }
  function bandIssues(frame){
    const j=joints(frame),issues=[];
@@ -1145,8 +1146,11 @@ for(const prop of f.equipment||[]){
    if((prop.anchorA||prop.anchorB)&&(!BAND_ANCHORS.includes(prop.anchorA)||!BAND_ANCHORS.includes(prop.anchorB)))throw Error('Hibás gumiszalag-rögzítés.');
    if(prop.anchorC&&!BAND_ANCHORS.includes(prop.anchorC))throw Error('Hibás harmadik szalagpont.');
    if(prop.positionC&&(!Array.isArray(prop.positionC)||prop.positionC.length!==3||prop.positionC.some(x=>!Number.isFinite(x)||Math.abs(x)>10)))throw Error('Hibás harmadik szalagkoordináta.');
+   if(prop.anchorD!=null&&(!BAND_ANCHORS.includes(prop.anchorD)||!BAND_ANCHORS.includes(prop.anchorA)||!BAND_ANCHORS.includes(prop.anchorB)||!BAND_ANCHORS.includes(prop.anchorC)))throw Error('Hibás negyedik szalagpont.');
+   if(prop.positionD!=null&&(!Array.isArray(prop.positionD)||prop.positionD.length!==3||prop.positionD.some(x=>!Number.isFinite(x)||Math.abs(x)>10)))throw Error('Hibás negyedik szalagkoordináta.');
+   if(prop.anchorD==='fixed'&&prop.positionD==null)throw Error('Hibás negyedik szalagkoordináta.');
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

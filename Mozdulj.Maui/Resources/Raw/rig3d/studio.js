@@ -308,18 +308,22 @@ function updateFixedAnchorInputs(){
  $('fixedAnchorA').hidden=$('bandAnchorA').value!=='fixed';
  $('fixedAnchorB').hidden=$('bandAnchorB').value!=='fixed';
  $('fixedAnchorC').hidden=$('bandAnchorC').value!=='fixed';
+ const hasC=$('bandAnchorC').value!=='none';
+ $('bandAnchorD').disabled=!hasC;
+ if(!hasC)$('bandAnchorD').value='none';
+ $('fixedAnchorD').hidden=!hasC||$('bandAnchorD').value!=='fixed';
 }
 function setFixedInputs(prefix,v){const a=v|| (prefix==='A'?[-.8,.35,.45]:[.8,.35,.45]);for(const [idx,k] of ['X','Y','Z'].entries())$('band'+prefix+k).value=a[idx];}
 function readFixedInputs(prefix){const v=['X','Y','Z'].map(k=>Number($('band'+prefix+k).value));if(v.some((n,i)=>!Number.isFinite(n)||Math.abs(n)>3||(i===1&&n<0)))throw Error('A rögzített pont koordinátája nem megengedett.');return v;}
 function fillSelectedBand(){
  const i=$('bandSelect').value;
- if(i==='new'){ $('bandAnchorA').value='leftHand';$('bandAnchorB').value='rightHand';$('bandRoute').value='auto';$('bandAnchorC').value='none';setFixedInputs('A');setFixedInputs('B');setFixedInputs('C',[0,.35,.45]);updateFixedAnchorInputs();return; }
+ if(i==='new'){ $('bandAnchorA').value='leftHand';$('bandAnchorB').value='rightHand';$('bandRoute').value='auto';$('bandAnchorC').value='none';$('bandAnchorD').value='none';setFixedInputs('D',[.25,.35,.45]);setFixedInputs('A');setFixedInputs('B');setFixedInputs('C',[0,.35,.45]);updateFixedAnchorInputs();return; }
  const obj=current().equipment[+i];
  if(!obj)return;
  const legacy=obj.anchor||'feet';
  $('bandAnchorA').value=obj.anchorA||({knees:'leftKnee',ankle:'leftAnkle',hands:'leftHand'}[legacy]||'leftAnkle');
  $('bandAnchorB').value=obj.anchorB||({knees:'rightKnee',ankle:'rightAnkle',hands:'rightHand'}[legacy]||'leftHand');
- $('bandRoute').value=obj.route||'auto';$('bandAnchorC').value=obj.anchorC||'none';setFixedInputs('A',obj.position);setFixedInputs('B',obj.positionB);setFixedInputs('C',obj.positionC||[0,.35,.45]);updateFixedAnchorInputs();
+ $('bandRoute').value=obj.route||'auto';$('bandAnchorC').value=obj.anchorC||'none';$('bandAnchorD').value=obj.anchorD||'none';setFixedInputs('D',obj.positionD||[.25,.35,.45]);setFixedInputs('A',obj.position);setFixedInputs('B',obj.positionB);setFixedInputs('C',obj.positionC||[0,.35,.45]);updateFixedAnchorInputs();
 }
 function switchFrame(i){selectedEquipment=null;$('contactStatus').textContent='';activeIssue=null;stopPreview();closeGesture();frameIndex=Math.max(0,Math.min(i,pose.frames.length-1));sync();}
 function setPreset(name){selectedEquipment=null;activeIssue=null;pendingPreset=null;$('presetConfirm').hidden=true;stopPreview();const apply=()=>{const camera=pose?studio.getCamera():null;pose=MozduljRig.initialPose(name);frameIndex=0;studio.setCamera(camera||pose.camera);sync();};if(pose){closeGesture();tracked(apply);}else apply();msg(window.rigText('Pózsablon betöltve: ')+$('preset').selectedOptions[0].textContent);}
@@ -630,7 +634,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('addEquipment').onclick=()=>{
    const type=$('equip').value;
    if(['band','miniband','strap'].includes(type)){const id=MozduljRig.newEquipmentId(pose.frames);const result=guardedEdit(f=>f.equipment.push({type,id,anchorA:type==='miniband'?'leftKnee':'leftHand',anchorB:type==='miniband'?'rightKnee':'rightHand',route:'auto'}));
-     if(!result.limited){syncBands(String(current().equipment.length-1));syncEquipmentSelection();msg('Szalag beszúrva; lent beállíthatod mindhárom pontját.');}return;}
+     if(!result.limited){syncBands(String(current().equipment.length-1));syncEquipmentSelection();msg('Szalag beszúrva; lent beállíthatod a rögzítési pontjait.');}return;}
    if(POSITIONABLE.includes(type)||!current().equipment.some(o=>o.type===type)){
      const pos=POSITIONABLE.includes(type)?freePlacement(type):null;
      if(POSITIONABLE.includes(type)&&!pos){msg('Az eszköznek nem találtam akadálymentes helyet. Módosítsd a pózt vagy válassz másik eszközt.');return;}
@@ -668,6 +672,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('bandAnchorA').onchange=updateFixedAnchorInputs;
  $('bandAnchorB').onchange=updateFixedAnchorInputs;
  $('bandAnchorC').onchange=updateFixedAnchorInputs;
+ $('bandAnchorD').onchange=updateFixedAnchorInputs;
  $('applyBand').onclick=()=>{
    const a=$('bandAnchorA').value,b=$('bandAnchorB').value;
    if(a===b&&a!=='fixed'){msg('A szalag két vége nem lehet ugyanazon a ponton.');return;}
@@ -675,7 +680,8 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    let o={type:old?.type||'band',anchorA:a,anchorB:b,route:$('bandRoute').value};
    if(old?.id!=null)o.id=old.id;else if(!old)o.id=MozduljRig.newEquipmentId(pose.frames);
    if($('bandAnchorC').value!=='none')o.anchorC=$('bandAnchorC').value;
-   try{if(a==='fixed')o.position=readFixedInputs('A');if(b==='fixed')o.positionB=readFixedInputs('B');if(o.anchorC==='fixed')o.positionC=readFixedInputs('C');}
+   if(o.anchorC&&$('bandAnchorD').value!=='none')o.anchorD=$('bandAnchorD').value;
+   try{if(a==='fixed')o.position=readFixedInputs('A');if(b==='fixed')o.positionB=readFixedInputs('B');if(o.anchorC==='fixed')o.positionC=readFixedInputs('C');if(o.anchorD==='fixed')o.positionD=readFixedInputs('D');}
    catch(e){msg(e.message);return;}
    if(a==='fixed'&&b==='fixed'&&MozduljRig.math.len(MozduljRig.math.sub(o.position,o.positionB))<.001){msg('A szalag két vége nem lehet ugyanazon a ponton.');return;}
    const i=$('bandSelect').value,index=i==='new'?current().equipment.length:+i;

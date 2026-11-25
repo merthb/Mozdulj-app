@@ -29,7 +29,16 @@ internal static class RigPhaseTimingRegression
         frame.Equipment.Add(new Rig3DEquipment{Type="block",Id="eq-1"});Reject(pose);
         frame.Equipment[2].Id="bad id";Reject(pose);
         frame.Equipment[2].Id="eq-2";Rig3DValidator.Validate(pose);
-        Console.WriteLine("PASS 3D phase timing and equipment identity compatibility and validation");
+        var band=new Rig3DEquipment{Type="band",AnchorA="leftHand",AnchorB="rightHand",AnchorC="leftToe"};
+        frame.Equipment=[band];Rig3DValidator.Validate(pose);
+        var oldBand=JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions);
+        Check(!oldBand.Contains("anchorD")&&!oldBand.Contains("positionD"),"legacy fourth-point omission");
+        band.AnchorD="rightToe";Rig3DValidator.Validate(pose);
+        band.AnchorD="fixed";Reject(pose);band.PositionD=[.3f,.2f,.4f];Rig3DValidator.Validate(pose);
+        var bandRestored=JsonSerializer.Deserialize<Rig3DPose>(JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions),CatalogCodec.JsonOptions)!;
+        Check(bandRestored.Frames[0].Equipment[0].AnchorD=="fixed" && bandRestored.Frames[0].Equipment[0].PositionD![0]==.3f,"fourth point round trip");
+        band.AnchorC=null;Reject(pose);band.AnchorC="leftToe";band.AnchorD="invalid";Reject(pose);
+        Console.WriteLine("PASS 3D phase timing, equipment identities and four-point band compatibility");
     }
     private static void Reject(Rig3DPose p){try{Rig3DValidator.Validate(p);}catch(InvalidDataException){return;}throw new Exception("TEST FAIL: invalid 3D phase timing accepted");}
     private static void Check(bool ok,string label){if(!ok)throw new Exception("TEST FAIL: "+label);}
