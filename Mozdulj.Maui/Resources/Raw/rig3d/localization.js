@@ -1,6 +1,9 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Ehhez az irányhoz nincs hozzárendelt 3D mozgás.":"No 3D movement is assigned to this direction.",
+  "Az animáció nem lejátszható biztonságosan; csak állókép jelenik meg.":"The animation cannot be played with the current geometry checks; only a still image is shown.",
+  "Szemléltető 3D útmutató":"Illustrative 3D guide",
   "Fázisok összehasonlítása":"Compare phases",
   "Referencia-csontváz (onion skin)":"Reference skeleton (onion skin)",
   "Kikapcsolva":"Off",
