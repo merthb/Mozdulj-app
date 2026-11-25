@@ -19,7 +19,7 @@ function tracked(change){
  syncHistory();
 }
 function restoreHistory(state){
- if(!state)return;activeIssue=null;
+ if(!state)return;selectedEquipment=null;activeIssue=null;
  const camera=studio.getCamera();
  pose=clone(state.pose);pose.camera=camera;
  frameIndex=Math.min(state.frameIndex,pose.frames.length-1);
@@ -222,7 +222,19 @@ function updatePhaseControls(){
  $('phasePrev').setAttribute('aria-disabled',String(frameIndex===0));
  $('phaseNext').setAttribute('aria-disabled',String(frameIndex>=n-1));
 }
-function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked,issue:activeIssue,dark:document.documentElement.classList.contains('dark'),equipmentMode:mode==='editEquipment',equipmentSelection:selectedEquipment});$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='inspect'?window.rigText('Ez a pont kijelölhető; a hozzá tartozó vezérlőkkel módosítható.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
+function drawEquipmentLabels(frame,j){
+ const overlay=$('equipmentLabels');
+ overlay.replaceChildren();
+ if(mode!=='editEquipment'||animation||document.body.classList.contains('view-only'))return;
+ for(const h of MozduljRig.equipmentHandles(frame,j)){
+   const point=studio.project(h.position);if(!point)continue;
+   const label=document.createElement('span');
+   label.className='equipment-handle-label'+(h.key===selectedEquipment?.key?' selected':'')+(!h.movable?' locked':'');
+   label.textContent=h.which?(h.index+1)+'·'+h.which:String(h.index+1);
+   label.style.left=point[0]+'px';label.style.top=point[1]+'px';overlay.appendChild(label);
+ }
+}
+function show(){if(!studio)return;let f=animation?.display||current();const j=studio.draw(f,{edit:!animation&&!document.body.classList.contains('view-only'),selected:mode==='move'?selectedTarget:null,showAll:mode==='move'&&$('showAllTargets').checked,issue:activeIssue,dark:document.documentElement.classList.contains('dark'),equipmentMode:mode==='editEquipment',equipmentSelection:selectedEquipment});drawEquipmentLabels(f,j);$('activeTarget').textContent=selectedTarget?window.rigText(targetLabels[selectedTarget]):window.rigText('Nincs kiválasztott testpont');$('targetHelp').textContent=selectedTarget&&MozduljRig.bodyTarget(selectedTarget)?.kind==='inspect'?window.rigText('Ez a pont kijelölhető; a hozzá tartozó vezérlőkkel módosítható.'):selectedTarget&&['elbow','knee'].includes(MozduljRig.bodyTarget(selectedTarget)?.kind)?window.rigText('A húzás a hajlítási síkot módosítja, a végtag hossza nem változik.'):'';const collisions=MozduljRig.Collision.report(f);$('canvasStatus').textContent=j.bandBlocked?'A gumiszalag útvonala akadályba ütközik; módosítsd a rögzítést vagy a vezetést.':j.clamped.length?window.rigText('A célpont elérési korlátra került: ')+j.clamped.join(', '):collisions.count?window.rigText('Régi pózadatban ')+collisions.count+window.rigText(' geometriai átfedés; új mozgás nem mélyítheti.'):'Rögzített végtaghossz · test-, felület- és eszközütközés-védelem';$('frameNumber').textContent=(frameIndex+1)+' / '+pose.frames.length+window.rigText(' fázis');}
 
 function syncJointValues(){let f=current();$('yaw').value=Math.round(deg(f.headYaw||0));$('pitch').value=Math.round(deg(f.headPitch||0));$('torso').value=Math.round(deg(f.euler[0]));$('roll').value=Math.round(deg(f.headRoll||0));$('shoulderLift').value=Math.round((f.shoulderLift||0)*100);$('pelvicTilt').value=Math.round(deg(f.pelvicTilt||0));$('rootHeight').value=Number((f.root[1]*100).toFixed(1));$('upperYaw').value=Math.round(deg(f.upperYaw||0));$('spineBend').value=Math.round(deg(f.spineBend||0));
  const side=$('legSide').value||'right';const leg=f.legAngles?.[side]||MozduljRig.inferAngles(f,'leg',side)?.angles||{};
@@ -652,7 +664,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(!result.ok){msg(window.rigText('Az eszköz módosítása nem lehetséges ebben a fázisban: ')+(result.frame+1)+' · '+(result.issue==='propLocked'?window.rigText('Rögzített eszköz'):result.issue));return;}
    tracked(()=>{pose.frames=result.frames;});sync();msg('Eszköz áthelyezve.');
  };
- $('bandSelect').onchange=fillSelectedBand;
+ $('bandSelect').onchange=()=>{fillSelectedBand();const i=$('bandSelect').value;if(i==='new'){selectedEquipment=null;syncEquipmentSelection();show();}else chooseEquipment('band:'+i+':A');};
  $('bandAnchorA').onchange=updateFixedAnchorInputs;
  $('bandAnchorB').onchange=updateFixedAnchorInputs;
  $('bandAnchorC').onchange=updateFixedAnchorInputs;
@@ -665,10 +677,13 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if($('bandAnchorC').value!=='none')o.anchorC=$('bandAnchorC').value;
    try{if(a==='fixed')o.position=readFixedInputs('A');if(b==='fixed')o.positionB=readFixedInputs('B');if(o.anchorC==='fixed')o.positionC=readFixedInputs('C');}
    catch(e){msg(e.message);return;}
-   const i=$('bandSelect').value;
-   const result=guardedEdit(f=>{if(i==='new')f.equipment.push(o);else f.equipment[+i]=o;});
-   if(result.limited)return;
-   syncBands(i==='new'?String(current().equipment.length-1):i);syncEquipmentSelection();
+   if(a==='fixed'&&b==='fixed'&&MozduljRig.math.len(MozduljRig.math.sub(o.position,o.positionB))<.001){msg('A szalag két vége nem lehet ugyanazon a ponton.');return;}
+   const i=$('bandSelect').value,index=i==='new'?current().equipment.length:+i;
+   const candidate=clone(current()),wasBlocked=i!=='new'&&studio.bandIssues(current()).includes(index);
+   if(i==='new')candidate.equipment.push(o);else candidate.equipment[index]=o;
+   if(studio.bandIssues(candidate).includes(index)&&!wasBlocked){msg('A szalag új útvonala akadályba ütközne.');return;}
+   closeGesture();tracked(()=>{pose.frames[frameIndex]=candidate;});
+   syncBands(i==='new'?String(current().equipment.length-1):i);syncEquipmentSelection();show();
    msg(window.rigText('Szalagrögzítés mentve: ')+$('bandAnchorA').selectedOptions[0].textContent+' – '+$('bandAnchorB').selectedOptions[0].textContent);
  };
  $('deleteBand').onclick=()=>{stopPreview();const i=$('bandSelect').value;
@@ -682,7 +697,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  for(const m of ['orbit','move','pan','editEquipment'])$(m).onclick=()=>{closeGesture();setMode(m);msg(m==='editEquipment'?'Válassz eszközpontot, majd húzd a kívánt helyre.':m==='move'?'Válassz testpontot, majd húzd a kívánt helyre.':m==='pan'?'Húzással eltolhatod az egész képet, a testarányok változtatása nélkül.':'Húzással elforgathatod a kamerát.');};
  $('equipmentPoint').onchange=e=>chooseEquipment(e.target.value);
  $('detachBandPoint').onclick=()=>{
-   const h=selectedEquipment;if(!h||h.kind!=='band')return;
+   const h=selectedEquipment;if(!h||h.kind!=='band'||h.movable)return;
    closeGesture();
    tracked(()=>MozduljRig.detachBandPoint(current(),h.index,h.which));
    sync();msg('A szalagpont leválasztva, a helyzete változatlan.');

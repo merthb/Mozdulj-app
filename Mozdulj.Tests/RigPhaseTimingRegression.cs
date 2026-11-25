@@ -20,7 +20,16 @@ internal static class RigPhaseTimingRegression
         frame.HoldSeconds=-1;Reject(pose);frame.HoldSeconds=0;
         frame.TransitionSeconds=float.NaN;Reject(pose);frame.TransitionSeconds=1.2f;
         frame.PhaseType="invalid";Reject(pose);
-        Console.WriteLine("PASS 3D phase timing compatibility and validation");
+        frame.PhaseType=null;frame.TransitionSeconds=null;frame.HoldSeconds=null;
+        frame.Equipment=[new Rig3DEquipment{Type="block"},new Rig3DEquipment{Type="block",Id="eq-1"}];
+        Rig3DValidator.Validate(pose);
+        var eqJson=JsonSerializer.Serialize(pose,CatalogCodec.JsonOptions);
+        var eq=JsonSerializer.Deserialize<Rig3DPose>(eqJson,CatalogCodec.JsonOptions)!;
+        Check(eq.Frames[0].Equipment[0].Id is null && eq.Frames[0].Equipment[1].Id=="eq-1","legacy and explicit equipment identity");
+        frame.Equipment.Add(new Rig3DEquipment{Type="block",Id="eq-1"});Reject(pose);
+        frame.Equipment[2].Id="bad id";Reject(pose);
+        frame.Equipment[2].Id="eq-2";Rig3DValidator.Validate(pose);
+        Console.WriteLine("PASS 3D phase timing and equipment identity compatibility and validation");
     }
     private static void Reject(Rig3DPose p){try{Rig3DValidator.Validate(p);}catch(InvalidDataException){return;}throw new Exception("TEST FAIL: invalid 3D phase timing accepted");}
     private static void Check(bool ok,string label){if(!ok)throw new Exception("TEST FAIL: "+label);}
