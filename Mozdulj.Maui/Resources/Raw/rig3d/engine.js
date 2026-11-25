@@ -645,7 +645,7 @@ function mirrorFrame(frame){
  for(const key of ['hands','feet','poles','pointLocks']){
    if(f[key]!=null)f[key]=Object.fromEntries(Object.entries(f[key]).map(([name,pos])=>[swapSide(name),reflectX(pos)]));
  }
- if(f.bodyPointLinks!=null)f.bodyPointLinks=Object.fromEntries(Object.entries(f.bodyPointLinks).map(([key,b])=>[swapSide(key),{leader:swapSide(b.leader),offset:reflectX(b.offset)}]));
+ if(f.bodyPointLinks!=null)f.bodyPointLinks=Object.fromEntries(Object.entries(f.bodyPointLinks).map(([key,b])=>[swapSide(key),{...b,leader:swapSide(b.leader),offset:reflectX(b.offset)}]));
  if(f.equipmentPointLocks!=null)f.equipmentPointLocks=Object.fromEntries(Object.entries(f.equipmentPointLocks).map(([key,binding])=>[swapSide(key),mirrorEquipmentSupport(binding)]));
  if(f.footPitch!=null)f.footPitch=Object.fromEntries(Object.entries(f.footPitch).map(([side,value])=>[swapSide(side),value]));
  for(const suffix of [...SIDE_ARTICULATION.arm,...SIDE_ARTICULATION.leg]){
@@ -710,7 +710,8 @@ function mirrorTargetDelta(frame,before,kind,side){
  frame[kind][other]=add(before[kind][other],mirrored);
 }
 const ANGLE_LIMITS={arm:{flexion:[-.52,3.05],abduction:[0,2.70],elbowFlexion:[0,2.62],wristFlexion:[-1.04,1.04],forearmRotation:[-1.57,1.57],axialRotation:[-Math.PI/2,Math.PI/2]},leg:{flexion:[-.3,2.36],abduction:[-.7,.7],kneeFlexion:[0,2.36],axialRotation:[-Math.PI/2,Math.PI/2]}};
-function editLimbAngle(frame,kind,side,field,value,symmetric=false){
+function editLimbAngle(frame,kind,side,field,value,symmetric=false,rhythm=false){
+ const before=kind==='arm'&&rhythm?cloneFrame(frame):null;
  const controls=frame[modeKeys[kind]],other=swapSide(side),limits=ANGLE_LIMITS[kind][field];
  const old=controls[side][field]||0;
  let delta=clamp(value,...limits)-old;
@@ -722,6 +723,15 @@ function editLimbAngle(frame,kind,side,field,value,symmetric=false){
    controls[other][field]=otherOld+sign*delta;
  }
  controls[side][field]=old+delta;
+ if(before&&['flexion','abduction'].includes(field)){
+   const elevation=a=>Math.acos(clamp(Math.cos(a.flexion||0)*Math.cos(a.abduction||0),-1,1));
+   const contribution=a=>clamp((elevation(a)-Math.PI/6)/3,0,Math.PI/6);
+   for(const key of symmetric?[side,other]:[side]){
+     const change=contribution(controls[key])-contribution(before.armAngles[key]);
+     const k=key+'ScapulaRotation',limit=ARTICULATION_LIMITS[k];
+     if(Math.abs(change)>1e-8)frame[k]=clamp((frame[k]||0)+change,-limit,limit);
+   }
+ }
 }
 const PHASE_TYPES=['start','movement','hold'];
 function phaseTiming(frame){
@@ -863,19 +873,39 @@ function validBodyLinks(frame){
  if(typeof links!=='object'||Array.isArray(links))return false;
  const used=new Set();
  for(const [key,b] of Object.entries(links)){
-   if(!LINK_KEYS.includes(key)||!b||!LINK_KEYS.includes(b.leader)||key===b.leader||used.has(key)||used.has(b.leader)||
+   if(!LINK_KEYS.includes(key)||!b||(b.mode!=null&&b.mode!=='surface'&&b.mode!=='world')||!LINK_KEYS.includes(b.leader)||key===b.leader||used.has(key)||used.has(b.leader)||
       frame.pointLocks?.[key]||frame.equipmentPointLocks?.[key]||!Array.isArray(b.offset)||b.offset.length!==3||b.offset.some(x=>!Number.isFinite(x)||Math.abs(x)>6))return false;
    const c=linkChain(key);if(frame[modeKeys[c.kind]]?.[c.side])return false;
    used.add(key);used.add(b.leader);
  }
  return true;
 }
-function setBodyLink(frame,follower,leader){
+function contactPoint(j,key){
+ const {side,kind}=linkChain(key);
+ return kind==='arm'?j.handDetails?.[side]?.grip||mul(add(j.hands[side],j.palms[side]),.5):mul(add(j.feet[side],j.toeJoints[side]),.5);
+}
+function contactBasis(j,key){
+ const {side,kind}=linkChain(key);
+ const forward=kind==='arm'?norm(sub(j.palms[side],j.hands[side])):j.footAxes[side].forward;
+ const normal=kind==='arm'?j.palmNormals[side]:j.footAxes[side].up;
+ const right=norm(cross(normal,forward)),up=norm(cross(forward,right));
+ return [right,up,forward];
+}
+function bodyLinkGoal(j,b){
+ if(b.mode!=='surface')return add(lockPoint(j,b.leader),b.offset);
+ return add(contactPoint(j,b.leader),contactBasis(j,b.leader).reduce((sum,v,i)=>add(sum,mul(v,b.offset[i])),[0,0,0]));
+}
+function bodyLinkPoint(j,key,b){return b.mode==='surface'?contactPoint(j,key):lockPoint(j,key);}
+function setBodyLink(frame,follower,leader,mode='world'){
  if(!LINK_KEYS.includes(follower)||!LINK_KEYS.includes(leader)||follower===leader)return false;
  const candidate=cloneFrame(frame),c=linkChain(follower),j=joints(candidate);
  if(!prepareTargetMode(candidate,c.kind,c.side))return false;
  candidate.bodyPointLinks??={};
- candidate.bodyPointLinks[follower]={leader,offset:sub(lockPoint(j,follower),lockPoint(j,leader))};
+ if(mode==='surface'){
+   const delta=sub(contactPoint(j,follower),contactPoint(j,leader));
+   candidate.bodyPointLinks[follower]={leader,mode,offset:contactBasis(j,leader).map(v=>dot(v,delta))};
+ }else if(mode==='world')candidate.bodyPointLinks[follower]={leader,offset:sub(lockPoint(j,follower),lockPoint(j,leader))};
+ else return false;
  if(!validBodyLinks(candidate))return false;
  Object.assign(frame,candidate);return true;
 }
@@ -887,7 +917,7 @@ function removeBodyLink(frame,key){
 function bodyLinkErrors(j,frame){
  const errors=new Map();
  for(const [key,b] of Object.entries(frame.bodyPointLinks||{})){
-   const d=len(sub(lockPoint(j,key),add(lockPoint(j,b.leader),b.offset)));
+   const d=len(sub(bodyLinkPoint(j,key,b),bodyLinkGoal(j,b)));
    if(d>0)errors.set(key,d);
  }
  return errors;
@@ -897,9 +927,16 @@ function adaptBodyLinks(frame,reference=null){
  const j=joints(frame);
  for(const [key,b] of Object.entries(frame.bodyPointLinks)){
    // A direct edit of a follower cannot silently move its leader.
-   if(reference&&len(sub(lockPoint(j,b.leader),lockPoint(reference,b.leader)))<1e-8)continue;
+   if(reference&&len(sub(bodyLinkGoal(j,b),bodyLinkGoal(reference,b)))<1e-8)continue;
    const c=linkChain(key);
-   if(!frame[modeKeys[c.kind]]?.[c.side])frame[c.target][c.side]=add(lockPoint(j,b.leader),b.offset);
+   if(frame[modeKeys[c.kind]]?.[c.side])continue;
+   if(b.mode!=='surface'){frame[c.target][c.side]=bodyLinkGoal(j,b);continue;}
+   const goal=bodyLinkGoal(j,b);
+   for(let i=0;i<12;i++){
+     const current=joints(frame),error=sub(goal,contactPoint(current,key));
+     if(len(error)<.001)break;
+     frame[c.target][c.side]=add(lockPoint(current,key),error);
+   }
  }
  return frame;
 }
@@ -2046,7 +2083,7 @@ function shaded3D(canvas){
    try{
      if(!equipmentMode)for(const target of BODY_TARGETS){if(target.secondary&&!showAll&&target.key!==selected)continue;handle(bodyPoint(j,target.key),target.key);}
      for(const [key,b] of Object.entries(frame.bodyPointLinks||{})){
-       const a=lockPoint(j,key),end=lockPoint(j,b.leader),color=[.70,.32,.86];
+       const a=bodyLinkPoint(j,key,b),end=bodyLinkPoint(j,b.leader,b),color=[.70,.32,.86];
        if(len(sub(a,end))>.001)limb(a,end,.012,color);
        ell(a,[.045,.045,.045],color);ell(end,[.035,.035,.035],color);
      }
@@ -2168,5 +2205,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,fitHingeFloor,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,LINK_KEYS,validBodyLinks,setBodyLink,removeBodyLink,bodyLinkErrors,adaptBodyLinks,bendFlip,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,fitHingeFloor,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,LINK_KEYS,validBodyLinks,setBodyLink,removeBodyLink,contactPoint,bodyLinkGoal,bodyLinkErrors,adaptBodyLinks,bendFlip,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
