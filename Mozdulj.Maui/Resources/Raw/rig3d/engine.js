@@ -158,6 +158,75 @@ function joints(frame){
  }
  return j;
 }
+// Convert rendered joint vectors into local body axes. Only accept a mode
+// switch if the existing geometry is representable by the destination mode.
+const unrotate=(p,e)=>rotX(rotZ(rotY(p,-e[1]),-e[2]),-e[0]);
+const cloneFrame=f=>JSON.parse(JSON.stringify(f));
+const modeKeys={arm:'armAngles',leg:'legAngles'};
+function limbError(a,b,kind,side){
+ const keys=kind==='arm'?['elbow','hands','palms','thumbs']:['knee','feet','toes'];
+ return Math.max(...keys.map(k=>len(sub(a[k][side],b[k][side]))));
+}
+function inferAngles(frame,kind,side){
+ const j=joints(frame),e=frame.euler,s=side==='left'?-1:1;
+ const upper=norm(unrotate(sub(kind==='arm'?j.elbow[side]:j.knee[side],kind==='arm'?j.shoulder[side]:j.hip[side]),e));
+ const lower=norm(unrotate(sub(kind==='arm'?j.hands[side]:j.feet[side],kind==='arm'?j.elbow[side]:j.knee[side]),e));
+ const options=[];
+ if(kind==='leg'){
+   const abduction=Math.asin(clamp(s*upper[0],-1,1));
+   const flexion=Math.atan2(upper[2],-upper[1]);
+   let kneeFlexion=flexion-Math.atan2(lower[2],-lower[1]);
+   while(kneeFlexion< -Math.PI)kneeFlexion+=2*Math.PI;
+   while(kneeFlexion>Math.PI)kneeFlexion-=2*Math.PI;
+   options.push({flexion:clamp(flexion,-.3,2.36),abduction:clamp(abduction,-.7,.7),kneeFlexion:clamp(kneeFlexion,0,2.36)});
+ }else{
+   const primary=Math.asin(clamp(upper[2],-1,1));
+   const elbowFlexion=clamp(Math.acos(clamp(dot(upper,lower),-1,1)),0,2.62);
+   for(const flexion of [primary,Math.PI-primary,-Math.PI-primary]){
+     const c=Math.cos(flexion);
+     if(Math.abs(c)<1e-7){
+       // At 90 degrees the upper-arm direction is independent of abduction;
+       // infer the hinge plane from the lower arm instead.
+       const abduction=Math.atan2(-s*lower[0],lower[1]);
+       options.push({flexion:clamp(flexion,-.52,3.05),abduction:clamp(abduction,0,2.70),elbowFlexion,wristFlexion:0,forearmRotation:0});
+     }else{
+       const abduction=Math.atan2(s*upper[0]/c,-upper[1]/c);
+       options.push({flexion:clamp(flexion,-.52,3.05),abduction:clamp(abduction,0,2.70),elbowFlexion,wristFlexion:0,forearmRotation:0});
+     }
+   }
+ }
+ let best=null;
+ for(const angles of options){
+   const candidate=cloneFrame(frame),key=modeKeys[kind];
+   candidate[key]??={};candidate[key][side]=angles;
+   const error=limbError(j,joints(candidate),kind,side);
+   if(!best||error<best.error)best={angles,error};
+ }
+ return best;
+}
+// A representable conversion does not alter other limbs or the frame.
+// Unsupported configurations remain in their original mode, rather than
+// being silently snapped into a different anatomical position.
+function prepareAngleMode(frame,kind,side){
+ const key=modeKeys[kind];
+ if(frame[key]?.[side])return true;
+ const fit=inferAngles(frame,kind,side);
+ if(!fit||fit.error>1e-5)return false;
+ frame[key]??={};frame[key][side]=fit.angles;
+ return true;
+}
+function prepareTargetMode(frame,kind,side){
+ const key=modeKeys[kind];
+ if(!frame[key]?.[side])return true;
+ const j=joints(frame),candidate=cloneFrame(frame),target=kind==='arm'?'hands':'feet';
+ const middle=kind==='arm'?'elbow':'knee',pole=middle+(side==='left'?'Left':'Right');
+ candidate[target][side]=[...j[target][side]];
+ candidate.poles??={};candidate.poles[pole]=[...j[middle][side]];
+ delete candidate[key][side];
+ if(limbError(j,joints(candidate),kind,side)>1e-5)return false;
+ frame[target]=candidate[target];frame.poles=candidate.poles;frame[key]=candidate[key];
+ return true;
+}
 // Approximate 3D contact solids: sphere-sampled bone capsules against planes,
 // boxes and spheres. This is an editor safety guard, NOT a continuous rigid-body
 // simulation. Existing historical poses may have errors; edits cannot worsen
@@ -525,15 +594,9 @@ function shaded3D(canvas){
  if(axis==='x')delta=[dx*size,0,0];else if(axis==='y')delta=[0,-dy*size,0];else if(axis==='z')delta=[0,0,-dy*size];
  if(sel.kind==='root'){moveRoot(frame,delta);return joints(frame).clamped;}
  let key=sel.kind==='hands'?'hands':'feet';let origin=frame[key][sel.side];
- if(key==='feet' && frame.legAngles?.[sel.side]){
-   // Avoid a visual jump when switching from angle-driven leg controls to IK.
-   origin=joints(frame).feet[sel.side];
-   delete frame.legAngles[sel.side];
- }
- if(key==='hands' && frame.armAngles?.[sel.side]){
-   origin=joints(frame).hands[sel.side];
-   delete frame.armAngles[sel.side];
- }
+ // The studio prepares an equivalent target-mode frame before interpolation.
+ if((key==='feet'&&frame.legAngles?.[sel.side])||(key==='hands'&&frame.armAngles?.[sel.side]))return null;
+ origin=frame[key][sel.side];
  let point=add(origin,delta);
  if(key==='feet')point[1]=Math.max(.05,point[1]);
  frame[key][sel.side]=point;return joints(frame).clamped;}
@@ -566,5 +629,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

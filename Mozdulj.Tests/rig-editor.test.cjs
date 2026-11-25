@@ -84,3 +84,44 @@ test('knee and hand locks refer to real joint positions and survive JSON',()=>{
  const pose=rig.initialPose('stand');pose.frames[0].pointLocks={bad:[0,0,0]};
  assert.throws(()=>rig.checkPose(pose));
 });
+
+test('angle inference recovers representable limb geometry and does not mutate frame',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand');
+ f.armAngles.right={flexion:.4,abduction:.3,elbowFlexion:.7,wristFlexion:0,forearmRotation:0};
+ f.legAngles.left={flexion:.5,abduction:.15,kneeFlexion:.4};
+ const before=JSON.stringify(f),j=rig.joints(f);
+ for(const [kind,side,key] of [['arm','right','armAngles'],['leg','left','legAngles']]){
+   const fit=rig.inferAngles(f,kind,side);
+   assert.ok(fit.error<1e-5,kind+' fit: '+fit.error);
+   const copy=JSON.parse(before);copy[key][side]=fit.angles;
+   assert.ok(rig.limbError(j,rig.joints(copy),kind,side)<1e-5);
+ }
+ assert.equal(JSON.stringify(f),before);
+});
+test('unrepresentable mode changes are atomic; accepted changes preserve joints',()=>{
+ const rig=loadRig();
+ for(const preset of ['stand','crosslegged','tabletop','lunge','supine']){
+   const f=rig.baseFrame(preset);
+   for(const kind of ['arm','leg'])for(const side of ['left','right']){
+     const copy=JSON.parse(JSON.stringify(f)),before=JSON.stringify(copy),j=rig.joints(copy);
+     const ok=rig.prepareAngleMode(copy,kind,side);
+     if(ok)assert.ok(rig.limbError(j,rig.joints(copy),kind,side)<=1e-5);
+     else assert.equal(JSON.stringify(copy),before);
+   }
+ }
+ const f=rig.baseFrame('stand');f.armAngles.right={flexion:.4,abduction:.3,elbowFlexion:.7,wristFlexion:.6,forearmRotation:.7};
+ const before=JSON.stringify(f);
+ assert.equal(rig.prepareTargetMode(f,'arm','right'),false);
+ assert.equal(JSON.stringify(f),before);
+});
+test('chest rotation and spine bend are independent of pelvis and retain limb lengths',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),a=rig.joints(f);
+ f.upperYaw=.4;f.spineBend=.25;
+ const b=rig.joints(f),m=rig.math;
+ assert.equal(JSON.stringify(a.hip),JSON.stringify(b.hip));
+ assert.ok(m.len(m.sub(a.shoulder.left,b.shoulder.left))>.01);
+ for(const side of ['left','right']){
+   assert.ok(Math.abs(m.len(m.sub(b.shoulder[side],b.elbow[side]))-.31)<1e-6);
+   assert.ok(Math.abs(m.len(m.sub(b.elbow[side],b.hands[side]))-.28)<1e-6);
+ }
+});

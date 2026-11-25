@@ -1,6 +1,9 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "Mellkas csavarása a medencéhez képest": "Chest rotation relative to pelvis",
+  "Gerinc görbítése / homorítása": "Spinal flexion / extension",
+  "A jelenlegi póz ebben a vezérlési módban nem adható meg pontosan. A póz változatlan maradt.": "The current pose cannot be represented precisely in this control mode. The pose has been preserved.",
   "Támaszpontok rögzítése": "Lock support points",
   "A kijelölt pontok maradnak a jelenlegi térbeli helyükön. A kék jelölés a rögzített pontokat mutatja. Ha a póz így nem megoldható, a mozgatás megáll.": "Selected points stay at their current world positions. Blue markers show locked points. Motion stops if the pose cannot satisfy the constraints.",
   "Rögzített testpontok": "Locked body points",
