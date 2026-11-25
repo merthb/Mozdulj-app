@@ -17,6 +17,28 @@ function solve2(a,target,upper,lower,pole,minBend=0.04,maxBend=2.62){
   const along=(upper*upper-lower*lower+d*d)/(2*d),h=Math.sqrt(Math.max(0,upper*upper-along*along));
   return {mid:add(add(a,mul(u,along)),mul(p,h)),end,reachClamped:len(sub(target,end))>.025};
 }
+
+// Project the preferred bend direction onto the feasible arc of the fixed-length
+// two-bone circle. This preserves the endpoint and avoids an abrupt pole swap.
+// An impossible floor constraint remains visible to the collision guard.
+function fitHingeFloor(a,solution,side,minY=.075){
+ if(solution.mid[1]>=minY)return solution;
+ const axis=norm(sub(solution.end,a)),v=sub(solution.mid,a);
+ const center=add(a,mul(axis,dot(v,axis))),radial=sub(solution.mid,center),radius=len(radial);
+ const up=sub([0,1,0],mul(axis,axis[1])),upLen=len(up);
+ if(radius<1e-8||upLen<1e-8)return solution;
+ const y=norm(up),needed=(minY-center[1])/(radius*upLen);
+ const q=norm(radial),lateral=sub(q,mul(y,dot(q,y)));
+ let tangent=norm(lateral);
+ if(len(lateral)<1e-7){
+   const project=p=>sub(sub(p,mul(axis,dot(p,axis))),mul(y,dot(p,y)));
+   tangent=norm(project([side==='left'?-1:1,0,0]));
+   if(len(tangent)<1e-7)tangent=norm(project([0,0,1]));
+ }
+ const c=clamp(needed,-1,1),r=add(mul(y,c),mul(tangent,Math.sqrt(Math.max(0,1-c*c))));
+ return {...solution,mid:add(center,mul(r,radius))};
+}
+
 const MAX_PHASES=16;
 const PROP_POSITIONS={chair:[0,.30,-.14],ball:[0,.36,.20],softBall:[0,.36,.20],roller:[0,.18,-.20],wall:[0,1,-.62],step:[0,.13,.48],block:[0,.09,.23],balancePad:[0,.04,.3]};
 function propPosition(prop){return prop.position||PROP_POSITIONS[prop.type];}
@@ -414,10 +436,8 @@ function joints(frame){
   let k=solve2(hip[side],frame.feet[side],bones.thigh,bones.shin,
      safePole(frame.poles['knee'+(side==='left'?'Left':'Right')],hip[side],anatomicKnee),.04,2.43);
   // Contact floor constraint: elbows/knees cannot penetrate the floor plane.
-  if(h.mid[1]<.05)h=solve2(shoulder[side],frame.hands[side],bones.armUpper,bones.armLower,
-       add(shoulder[side],[s*.1,.65,0]),.04,2.60);
-  if(k.mid[1]<.05)k=solve2(hip[side],frame.feet[side],bones.thigh,bones.shin,
-       add(hip[side],[s*.1,.65,0]),.04,2.43);
+  h=fitHingeFloor(shoulder[side],h,side);
+  k=fitHingeFloor(hip[side],k,side,.085);
   // Optional forward-kinematic leg controls: move the femur about the hip,
   // then the shin about the knee, with physically fixed segment lengths.
   // This enables >90° hip flexion without an IK pole flipping the knee.
@@ -2017,5 +2037,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,bendFlip,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,auditPreset,PRESET_NAMES,joints,solve2,fitHingeFloor,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,workoutGuidePlan,workoutGuideAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,supportAlignment,alignSupport,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,CAMERA_VIEWS,setCameraView,cameraViewName,workspaceShare,skeletonSegments,targetAxes,pointDragDelta,moveTargetBy,targetEditOptions,probeTargetDirections,resetBodyPart,phaseReferences,copyPhaseBodyPart,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,captureEquipmentSupport,resolveEquipmentSupport,mirrorEquipmentSupport,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,setEquipmentPointLock,effectiveLocks,validEquipmentPointLocks,lockErrors,bendFlip,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);
