@@ -40,8 +40,8 @@ public static class WeeklyGoalTracker
             date>=monday && date<=sunday && date<=day);
         var target=Math.Clamp(data.Preferences.WeeklyTargetDays,1,7);
         int remaining=Math.Max(0,sunday.DayNumber-day.DayNumber+1);
-        string message=active>=target ? "Elérted a heti célodat. Nyugodtan választhatsz pihenést is."
-            : $"Még {target-active} aktív nap kell a heti célodhoz. A relaxáció a sorozatot védi, de nem számít aktív napnak.";
+        string message=active>=target ? AppLocalization.Text("SettingsUi097")
+            : AppLocalization.Format("SettingsUi120", target-active);
         return new WeeklyGoalStatus(monday,target,active,remaining,active>=target,message);
     }
 }

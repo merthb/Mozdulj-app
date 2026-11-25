@@ -1,3 +1,4 @@
+using Mozdulj.Core;
 using Microsoft.Maui.Dispatching;
 using Mozdulj.Maui.Platforms.Android;
 
@@ -13,7 +14,7 @@ public sealed class YouTubeMusicMiniPlayer : ContentView
     private readonly Label _track = UI.Label("", 15, true);
     private readonly Label _artist = UI.Label("", 12, color: UI.Muted);
     private readonly Label _status = UI.Label("", 12, color: UI.Muted);
-    private readonly Button _access = UI.Button("Értesítés-hozzáférés beállítása", false);
+    private readonly Button _access = UI.Button(AppLocalization.Text("SettingsUi087"), false);
     private readonly Button _previous = UI.Button("⏮", false);
     private readonly Button _playPause = UI.Button("▶", false);
     private readonly Button _next = UI.Button("⏭", false);
@@ -54,7 +55,7 @@ public sealed class YouTubeMusicMiniPlayer : ContentView
     private void Send(YouTubeMusicMediaBridge.MusicCommand command)
     {
         if (!YouTubeMusicMediaBridge.TryControl(command))
-            _status.Text = "A YouTube Music nem fogadta a vezérlést.";
+            _status.Text = AppLocalization.Text("SettingsUi088");
         else
             Refresh();
     }
@@ -68,16 +69,16 @@ public sealed class YouTubeMusicMiniPlayer : ContentView
         _artist.IsVisible = state.HasSession && !string.IsNullOrWhiteSpace(state.Artist);
         if (!state.HasAccess)
         {
-            _status.Text = "A mini-lejátszóhoz Android-értesítés-hozzáférést kell adnod. " +
-                "Ez rendszerszinten más alkalmazások értesítéseihez is hozzáférést biztosít. " +
-                "A Mozdulj! kizárólag a YouTube Music aktív médiaállapotát kéri le; " +
-                "az engedély bármikor visszavonható.";
+            _status.Text = AppLocalization.Text("SettingsUi089") +
+                AppLocalization.Text("SettingsUi090") +
+                AppLocalization.Text("SettingsUi091") +
+                AppLocalization.Text("SettingsUi092");
             return;
         }
         if (!state.HasSession)
         {
-            _status.Text = "Nincs aktív YouTube Music-lejátszás. Indítsd el a listát a YouTube Musicban; " +
-                "utána itt vezérelheted a zenét.";
+            _status.Text = AppLocalization.Text("SettingsUi093") +
+                AppLocalization.Text("SettingsUi094");
             return;
         }
         _track.Text = string.IsNullOrWhiteSpace(state.Title)
@@ -87,7 +88,7 @@ public sealed class YouTubeMusicMiniPlayer : ContentView
         _previous.IsEnabled = state.CanPrevious;
         _next.IsEnabled = state.CanNext;
         _status.Text = state.Playing
-            ? "Lejátszás a YouTube Music alkalmazásban"
-            : "Szünetel a YouTube Music lejátszása";
+            ? AppLocalization.Text("SettingsUi095")
+            : AppLocalization.Text("SettingsUi096");
     }
 }

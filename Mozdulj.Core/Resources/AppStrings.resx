@@ -389,4 +389,171 @@
   <data name="WorkoutUi261" xml:space="preserve"><value>🏅 Havi jelvény: {0} ({1} aktív nap)</value></data>
   <data name="WorkoutUi262" xml:space="preserve"><value>{0} 3D fázis · preset: {1}</value></data>
   <data name="WorkoutUi263" xml:space="preserve"><value>{0} fázisú 3D póz · preset: {1}</value></data>
+  <data name="SettingsUi001" xml:space="preserve"><value>Válassz időtartamot</value></data>
+  <data name="SettingsUi002" xml:space="preserve"><value>Válassz átvezetést</value></data>
+  <data name="SettingsUi003" xml:space="preserve"><value>Relaxációs zene forrása</value></data>
+  <data name="SettingsUi004" xml:space="preserve"><value>Beállítások mentése</value></data>
+  <data name="SettingsUi005" xml:space="preserve"><value>Profil szerkesztése</value></data>
+  <data name="SettingsUi006" xml:space="preserve"><value>Szerkesztés</value></data>
+  <data name="SettingsUi007" xml:space="preserve"><value>A módosítások a Mentés gombbal lépnek érvénybe; a Mégse nem változtat semmit.</value></data>
+  <data name="SettingsUi008" xml:space="preserve"><value>Átvezetés két gyakorlat között</value></data>
+  <data name="SettingsUi009" xml:space="preserve"><value>Beépített zene</value></data>
+  <data name="SettingsUi010" xml:space="preserve"><value>Saját zenék</value></data>
+  <data name="SettingsUi011" xml:space="preserve"><value>Nincs kiválasztott saját zenefájl. A saját lejátszáshoz adj hozzá legalább egy elérhető fájlt.</value></data>
+  <data name="SettingsUi012" xml:space="preserve"><value>Nincs saját zeneszám</value></data>
+  <data name="SettingsUi013" xml:space="preserve"><value>♫ Zenék hozzáadása</value></data>
+  <data name="SettingsUi014" xml:space="preserve"><value>Válassz relaxációs zenéket</value></data>
+  <data name="SettingsUi015" xml:space="preserve"><value>MP3, WAV, M4A, AAC, OGG vagy FLAC hangfájl választható.</value></data>
+  <data name="SettingsUi016" xml:space="preserve"><value>Egy hangfájl legfeljebb 40 MB lehet.</value></data>
+  <data name="SettingsUi017" xml:space="preserve"><value>Üres hangfájl.</value></data>
+  <data name="SettingsUi018" xml:space="preserve"><value>Hangfájl nem választható</value></data>
+  <data name="SettingsUi019" xml:space="preserve"><value>Vissza az alapzenére</value></data>
+  <data name="SettingsUi020" xml:space="preserve"><value>A link a telefon YouTube Music alkalmazásában nyílik meg. A Premium háttérlejátszás a YouTube Musicban működik; a Mozdulj! nem kezeli a zeneszámokat.</value></data>
+  <data name="SettingsUi021" xml:space="preserve"><value>YouTube Music-lejátszási lista linkje</value></data>
+  <data name="SettingsUi022" xml:space="preserve"><value>YouTube Music Premium vagy YouTube Premium előfizetéssel rendelkezem</value></data>
+  <data name="SettingsUi023" xml:space="preserve"><value>A Mozdulj! csak a telepített alkalmazást tudja ellenőrizni. Az előfizetést neked kell megerősítened; a zene és a háttérlejátszás a YouTube Musicban működik.</value></data>
+  <data name="SettingsUi024" xml:space="preserve"><value>Hangok és emlékeztető</value></data>
+  <data name="SettingsUi025" xml:space="preserve"><value>Visszaszámlálás: jelzés az utolsó három másodpercben</value></data>
+  <data name="SettingsUi026" xml:space="preserve"><value>Nyugtató zene a regeneráló relaxációhoz</value></data>
+  <data name="SettingsUi027" xml:space="preserve"><value>Napi streak-emlékeztető</value></data>
+  <data name="SettingsUi028" xml:space="preserve"><value>Értesítés időpontja</value></data>
+  <data name="SettingsUi029" xml:space="preserve"><value>Csak akkor jelez, ha aznap még nem volt mozgás vagy teljes regeneráció. Az értesítésekhez Android-engedély szükséges.</value></data>
+  <data name="SettingsUi030" xml:space="preserve"><value>A saját zenék nem érhetők el. Válassz működő hangfájlt, vagy állítsd be a beépített zenét.</value></data>
+  <data name="SettingsUi031" xml:space="preserve"><value>Érvényes YouTube Music-lejátszási lista linkjét add meg.</value></data>
+  <data name="SettingsUi032" xml:space="preserve"><value>Mikortól érvényesüljön?</value></data>
+  <data name="SettingsUi033" xml:space="preserve"><value>A még el nem kezdett mai sorokat is áttervezzük az új beállítások szerint, vagy csak holnaptól alkalmazzuk őket? A már elkezdett és teljesített sorok nem változnak.</value></data>
+  <data name="SettingsUi034" xml:space="preserve"><value>Már ma</value></data>
+  <data name="SettingsUi035" xml:space="preserve"><value>Csak holnaptól</value></data>
+  <data name="SettingsUi036" xml:space="preserve"><value>Havi kihívások módosítása?</value></data>
+  <data name="SettingsUi037" xml:space="preserve"><value>Az új beállításokhoz igazítsuk a folyamatban lévő havi kihívásokat is? A korábbi teljesítések és a megszerzett jelvények megmaradnak.</value></data>
+  <data name="SettingsUi038" xml:space="preserve"><value>Igen, új célokat</value></data>
+  <data name="SettingsUi039" xml:space="preserve"><value>Nem, maradjanak</value></data>
+  <data name="SettingsUi040" xml:space="preserve"><value>Értesítések kikapcsolva</value></data>
+  <data name="SettingsUi041" xml:space="preserve"><value>A rendszer nem engedélyezte az értesítéseket. Később a telefon beállításaiban engedélyezheted.</value></data>
+  <data name="SettingsUi042" xml:space="preserve"><value>Beállítások elmentve</value></data>
+  <data name="SettingsUi043" xml:space="preserve"><value>Az emlékeztetőt nem sikerült beállítani: </value></data>
+  <data name="SettingsUi044" xml:space="preserve"><value>A mentés nem sikerült</value></data>
+  <data name="SettingsUi045" xml:space="preserve"><value>Kihívások</value></data>
+  <data name="SettingsUi046" xml:space="preserve"><value>A havi kihívások most nem jeleníthetők meg.</value></data>
+  <data name="SettingsUi047" xml:space="preserve"><value>Fejlődésed és kihívásaid ✨</value></data>
+  <data name="SettingsUi048" xml:space="preserve"><value>10 perc vezetett ellazulással a pihenőnap is beleszámíthat a sorozatodba.</value></data>
+  <data name="SettingsUi049" xml:space="preserve"><value>Gyűjts újabb szinteket és tartsd életben a sorozatod!</value></data>
+  <data name="SettingsUi050" xml:space="preserve"><value>A három havi kihívás a saját szokásaidhoz igazodik; a célok a hónap során változatlanok.</value></data>
+  <data name="SettingsUi051" xml:space="preserve"><value>🌱 Kezdő</value></data>
+  <data name="SettingsUi052" xml:space="preserve"><value>✦ Középhaladó</value></data>
+  <data name="SettingsUi053" xml:space="preserve"><value>♛ Haladó</value></data>
+  <data name="SettingsUi054" xml:space="preserve"><value>Állandó jelvények</value></data>
+  <data name="SettingsUi055" xml:space="preserve"><value>✓ Megszerezve</value></data>
+  <data name="SettingsUi056" xml:space="preserve"><value>Még feloldható</value></data>
+  <data name="SettingsUi057" xml:space="preserve"><value>Korábbi hónapok</value></data>
+  <data name="SettingsUi058" xml:space="preserve"><value>A kimaradt napokra használt freeze és a relaxáció nem számít havi aktív napnak. Egy napon belül ugyanaz a gyakorlat nem gyűjthető korlátlanul a kihívásokhoz.</value></data>
+  <data name="SettingsUi059" xml:space="preserve"><value>Statisztika</value></data>
+  <data name="SettingsUi060" xml:space="preserve"><value>Mozgásnapló</value></data>
+  <data name="SettingsUi061" xml:space="preserve"><value>Napi részletek</value></data>
+  <data name="SettingsUi062" xml:space="preserve"><value> + nem rögzített idő</value></data>
+  <data name="SettingsUi063" xml:space="preserve"><value>nincs korábbi időadat</value></data>
+  <data name="SettingsUi064" xml:space="preserve"><value>Nincs rögzített mozgás</value></data>
+  <data name="SettingsUi065" xml:space="preserve"><value>🌿 10 perc regeneráló relaxáció</value></data>
+  <data name="SettingsUi066" xml:space="preserve"><value>0 perc</value></data>
+  <data name="SettingsUi067" xml:space="preserve"><value>Válassz teljes Mozdulj! mentést</value></data>
+  <data name="SettingsUi068" xml:space="preserve"><value>Teljes adatvisszaállítás?</value></data>
+  <data name="SettingsUi069" xml:space="preserve"><value>A mentés visszatölti a profilt, saját gyakorlatokat és előzményeket. </value></data>
+  <data name="SettingsUi070" xml:space="preserve"><value>A jelenlegi adataid változhatnak. Csak saját mentést válassz!</value></data>
+  <data name="SettingsUi071" xml:space="preserve"><value>A mentés túllépi a méretkorlátot.</value></data>
+  <data name="SettingsUi072" xml:space="preserve"><value>Régi mentés – ellenőrizetlen aláírás</value></data>
+  <data name="SettingsUi073" xml:space="preserve"><value>A mentés titkos hitelesítése nem egyezik a jelenlegi telepítésével. </value></data>
+  <data name="SettingsUi074" xml:space="preserve"><value>Ez előfordulhat újratelepítés után, de módosított fájl esetén is. </value></data>
+  <data name="SettingsUi075" xml:space="preserve"><value>Az eredeti aláírás hitelessége így NEM ellenőrizhető. </value></data>
+  <data name="SettingsUi076" xml:space="preserve"><value>Csak akkor folytasd, ha a fájl a saját, megbízható mentésed! </value></data>
+  <data name="SettingsUi077" xml:space="preserve"><value>A fájl adatait és szerkezetét továbbra is ellenőrizzük.</value></data>
+  <data name="SettingsUi078" xml:space="preserve"><value>Visszaállítás így is</value></data>
+  <data name="SettingsUi079" xml:space="preserve"><value>A régi profil és haladás betöltődött. Készíts új teljes adatmentést a Profil oldalon: az már az új telepítés kulcsával lesz hitelesítve.</value></data>
+  <data name="SettingsUi080" xml:space="preserve"><value>A hitelesített mentésből a korábbi profil és haladás betöltődött.</value></data>
+  <data name="SettingsUi081" xml:space="preserve"><value>A meglévő zenék megmaradtak. A hiányzó fájlokat a Profil szerkesztése oldalon választhatod ki újra.</value></data>
+  <data name="SettingsUi082" xml:space="preserve"><value>Emlékeztető engedélye</value></data>
+  <data name="SettingsUi083" xml:space="preserve"><value>A visszaállított napi emlékeztetőhöz engedélyezed az értesítéseket?</value></data>
+  <data name="SettingsUi084" xml:space="preserve"><value>Engedélyezés</value></data>
+  <data name="SettingsUi085" xml:space="preserve"><value>Most nem</value></data>
+  <data name="SettingsUi086" xml:space="preserve"><value>Visszaállítás eredménye</value></data>
+  <data name="SettingsUi087" xml:space="preserve"><value>Értesítés-hozzáférés beállítása</value></data>
+  <data name="SettingsUi088" xml:space="preserve"><value>A YouTube Music nem fogadta a vezérlést.</value></data>
+  <data name="SettingsUi089" xml:space="preserve"><value>A mini-lejátszóhoz Android-értesítés-hozzáférést kell adnod. </value></data>
+  <data name="SettingsUi090" xml:space="preserve"><value>Ez rendszerszinten más alkalmazások értesítéseihez is hozzáférést biztosít. </value></data>
+  <data name="SettingsUi091" xml:space="preserve"><value>A Mozdulj! kizárólag a YouTube Music aktív médiaállapotát kéri le; </value></data>
+  <data name="SettingsUi092" xml:space="preserve"><value>az engedély bármikor visszavonható.</value></data>
+  <data name="SettingsUi093" xml:space="preserve"><value>Nincs aktív YouTube Music-lejátszás. Indítsd el a listát a YouTube Musicban; </value></data>
+  <data name="SettingsUi094" xml:space="preserve"><value>utána itt vezérelheted a zenét.</value></data>
+  <data name="SettingsUi095" xml:space="preserve"><value>Lejátszás a YouTube Music alkalmazásban</value></data>
+  <data name="SettingsUi096" xml:space="preserve"><value>Szünetel a YouTube Music lejátszása</value></data>
+  <data name="SettingsUi097" xml:space="preserve"><value>Elérted a heti célodat. Nyugodtan választhatsz pihenést is.</value></data>
+  <data name="SettingsUi098" xml:space="preserve"><value>Mozdulj! emlékeztető</value></data>
+  <data name="SettingsUi099" xml:space="preserve"><value>Emlékeztető az elmaradt napi mozgásról</value></data>
+  <data name="SettingsUi100" xml:space="preserve"><value>Egy kis mozgás ma is beleférhet 🌿</value></data>
+  <data name="SettingsUi101" xml:space="preserve"><value>Ma még nem volt gyakorlás vagy regeneráló relaxáció.</value></data>
+  <data name="SettingsUi102" xml:space="preserve"><value> + korábbi nem rögzített idő</value></data>
+  <data name="SettingsUi103" xml:space="preserve"><value>{0} zeneszám · sorrendben lejátszva, szükség esetén ismételve a teljes 10 perc alatt</value></data>
+  <data name="SettingsUi104" xml:space="preserve"><value>🔥 {0} aktív napos sorozat</value></data>
+  <data name="SettingsUi105" xml:space="preserve"><value>🧊 {0} / {1} streak freeze</value></data>
+  <data name="SettingsUi106" xml:space="preserve"><value>⭐ {0:N0} XP · {1}. szint</value></data>
+  <data name="SettingsUi107" xml:space="preserve"><value>Következő szint: {0:N0} XP (még {1:N0})</value></data>
+  <data name="SettingsUi108" xml:space="preserve"><value>Következő freeze: {0:N0} XP</value></data>
+  <data name="SettingsUi109" xml:space="preserve"><value>Heti cél · {0}/{1} aktív nap</value></data>
+  <data name="SettingsUi110" xml:space="preserve"><value>{0}.{1:D2}: korábbi havi jelvény · {2} aktív nap · {3}/3 fokozat</value></data>
+  <data name="SettingsUi111" xml:space="preserve"><value>{0} aktív nap · {1} gyakorlatsor</value></data>
+  <data name="SettingsUi112" xml:space="preserve"><value>{0} feladat · +{1:N0} XP</value></data>
+  <data name="SettingsUi113" xml:space="preserve"><value>Mozgásidő: {0}{1}</value></data>
+  <data name="SettingsUi114" xml:space="preserve"><value>{0} regeneráló alkalom</value></data>
+  <data name="SettingsUi115" xml:space="preserve"><value>Heti cél elérve: {0} alkalommal</value></data>
+  <data name="SettingsUi116" xml:space="preserve"><value>{0} feladat  ·  {1} sor  ·  +{2} XP</value></data>
+  <data name="SettingsUi117" xml:space="preserve"><value>Időtartam: {0}</value></data>
+  <data name="SettingsUi118" xml:space="preserve"><value> · {0} részben teljesített sor</value></data>
+  <data name="SettingsUi119" xml:space="preserve"><value>{0} perc {1:D2} mp</value></data>
+  <data name="SettingsUi120" xml:space="preserve"><value>Még {0} aktív nap kell a heti célodhoz. A relaxáció a sorozatot védi, de nem számít aktív napnak.</value></data>
+  <data name="SettingsUi121" xml:space="preserve"><value>
+
+{0} saját zenefájl nem található vagy nem olvasható, ezért nem került be a listába. </value></data>
+  <data name="SettingsUi122" xml:space="preserve"><value>
+
+Az értesítési engedély hiányzik, ezért a napi emlékeztető nem fog megjelenni.</value></data>
+  <data name="SettingsUi123" xml:space="preserve"><value>
+
+Az emlékeztető engedélyét nem sikerült ellenőrizni. Ellenőrizd az alkalmazás értesítési engedélyét a telefon beállításaiban.</value></data>
+  <data name="SettingsUi124" xml:space="preserve"><value>
+
+A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást és a Premium-beállítást a Profil oldalon.</value></data>
+  <data name="SettingsUi125" xml:space="preserve"><value>Januári újrakezdés</value></data>
+  <data name="SettingsUi126" xml:space="preserve"><value>Februári lendület</value></data>
+  <data name="SettingsUi127" xml:space="preserve"><value>Tavaszváró mozdulatok</value></data>
+  <data name="SettingsUi128" xml:space="preserve"><value>Áprilisi ébredés</value></data>
+  <data name="SettingsUi129" xml:space="preserve"><value>Májusi egyensúly</value></data>
+  <data name="SettingsUi130" xml:space="preserve"><value>Nyári lendület</value></data>
+  <data name="SettingsUi131" xml:space="preserve"><value>Júliusi kitartás</value></data>
+  <data name="SettingsUi132" xml:space="preserve"><value>Augusztusi felfedező</value></data>
+  <data name="SettingsUi133" xml:space="preserve"><value>Őszi újrakezdés</value></data>
+  <data name="SettingsUi134" xml:space="preserve"><value>Októberi harmónia</value></data>
+  <data name="SettingsUi135" xml:space="preserve"><value>Novemberi Mozduló</value></data>
+  <data name="SettingsUi136" xml:space="preserve"><value>Decemberi nyugalom</value></data>
+  <data name="SettingsUi137" xml:space="preserve"><value>Első mozdulat</value></data>
+  <data name="SettingsUi138" xml:space="preserve"><value>Teljesíts egy gyakorlatot.</value></data>
+  <data name="SettingsUi139" xml:space="preserve"><value>Felfedező</value></data>
+  <data name="SettingsUi140" xml:space="preserve"><value>Próbálj ki 10 különböző gyakorlatot.</value></data>
+  <data name="SettingsUi141" xml:space="preserve"><value>Sokszínű</value></data>
+  <data name="SettingsUi142" xml:space="preserve"><value>Próbálj ki 30 különböző gyakorlatot.</value></data>
+  <data name="SettingsUi143" xml:space="preserve"><value>Szokásépítő</value></data>
+  <data name="SettingsUi144" xml:space="preserve"><value>Mozogj 15 különböző napon.</value></data>
+  <data name="SettingsUi145" xml:space="preserve"><value>Kitartó</value></data>
+  <data name="SettingsUi146" xml:space="preserve"><value>Érj el 7 aktív napból álló sorozatot.</value></data>
+  <data name="SettingsUi147" xml:space="preserve"><value>Száz mozdulat</value></data>
+  <data name="SettingsUi148" xml:space="preserve"><value>Teljesíts 100 gyakorlatot.</value></data>
+  <data name="SettingsUi149" xml:space="preserve"><value>A pihenés mestere</value></data>
+  <data name="SettingsUi150" xml:space="preserve"><value>Fejezz be egy teljes 10 perces regenerációt.</value></data>
+  <data name="SettingsUi151" xml:space="preserve"><value>Egyensúlyban</value></data>
+  <data name="SettingsUi152" xml:space="preserve"><value>Teljesíts 5 regeneráló alkalmat.</value></data>
+  <data name="SettingsUi153" xml:space="preserve"><value>Mozgásnapok</value></data>
+  <data name="SettingsUi154" xml:space="preserve"><value>{0} fókusz</value></data>
+  <data name="SettingsUi155" xml:space="preserve"><value>{0} használata</value></data>
+  <data name="SettingsUi156" xml:space="preserve"><value>{0} hónapja</value></data>
+  <data name="SettingsUi157" xml:space="preserve"><value>aktív nap</value></data>
+  <data name="SettingsUi158" xml:space="preserve"><value>különböző gyakorlat</value></data>
+  <data name="SettingsUi159" xml:space="preserve"><value>különböző nap</value></data>
 </root>

@@ -12,7 +12,8 @@ public static class AppLocalization
     public static bool IsEnglish => _language == "en";
     public static CultureInfo Culture => CultureInfo.GetCultureInfo(IsEnglish ? "en-GB" : "hu-HU");
     public static void Apply(string? language) => _language = AppLanguage.Effective(language);
-    public static string Text(string key) => Resources.GetString(key, Culture)
+    public static string Text(string key) => TextFor(Language, key);
+    public static string TextFor(string? language, string key) => Resources.GetString(key, CultureInfo.GetCultureInfo(AppLanguage.Effective(language) == "en" ? "en-GB" : "hu-HU"))
         ?? throw new InvalidOperationException("Missing localization resource: " + key);
     public static string Format(string key, params object[] values) => string.Format(Culture, Text(key), values);
 }

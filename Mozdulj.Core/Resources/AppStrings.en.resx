@@ -389,4 +389,171 @@
   <data name="WorkoutUi261" xml:space="preserve"><value>🏅 Monthly badge: {0} ({1} active days)</value></data>
   <data name="WorkoutUi262" xml:space="preserve"><value>{0} 3D phases · preset: {1}</value></data>
   <data name="WorkoutUi263" xml:space="preserve"><value>{0}-phase 3D pose · preset: {1}</value></data>
+  <data name="SettingsUi001" xml:space="preserve"><value>Choose duration</value></data>
+  <data name="SettingsUi002" xml:space="preserve"><value>Choose transition</value></data>
+  <data name="SettingsUi003" xml:space="preserve"><value>Relaxation music source</value></data>
+  <data name="SettingsUi004" xml:space="preserve"><value>Save settings</value></data>
+  <data name="SettingsUi005" xml:space="preserve"><value>Edit profile</value></data>
+  <data name="SettingsUi006" xml:space="preserve"><value>Edit</value></data>
+  <data name="SettingsUi007" xml:space="preserve"><value>Changes take effect when you save; Cancel makes no changes.</value></data>
+  <data name="SettingsUi008" xml:space="preserve"><value>Transition between exercises</value></data>
+  <data name="SettingsUi009" xml:space="preserve"><value>Built-in music</value></data>
+  <data name="SettingsUi010" xml:space="preserve"><value>Custom music</value></data>
+  <data name="SettingsUi011" xml:space="preserve"><value>No custom audio file selected. Add at least one available file to play your own music.</value></data>
+  <data name="SettingsUi012" xml:space="preserve"><value>No custom tracks</value></data>
+  <data name="SettingsUi013" xml:space="preserve"><value>♫ Add music</value></data>
+  <data name="SettingsUi014" xml:space="preserve"><value>Choose relaxation music</value></data>
+  <data name="SettingsUi015" xml:space="preserve"><value>Choose an MP3, WAV, M4A, AAC, OGG or FLAC audio file.</value></data>
+  <data name="SettingsUi016" xml:space="preserve"><value>An audio file may be at most 40 MB.</value></data>
+  <data name="SettingsUi017" xml:space="preserve"><value>Empty audio file.</value></data>
+  <data name="SettingsUi018" xml:space="preserve"><value>Could not select audio file</value></data>
+  <data name="SettingsUi019" xml:space="preserve"><value>Return to built-in music</value></data>
+  <data name="SettingsUi020" xml:space="preserve"><value>The link opens in YouTube Music on your phone. Premium background playback works in YouTube Music; Mozdulj! does not manage the tracks.</value></data>
+  <data name="SettingsUi021" xml:space="preserve"><value>YouTube Music playlist link</value></data>
+  <data name="SettingsUi022" xml:space="preserve"><value>I have a YouTube Music Premium or YouTube Premium subscription</value></data>
+  <data name="SettingsUi023" xml:space="preserve"><value>Mozdulj! can only check the installed app. You must confirm your subscription; music and background playback are handled by YouTube Music.</value></data>
+  <data name="SettingsUi024" xml:space="preserve"><value>Sounds and reminder</value></data>
+  <data name="SettingsUi025" xml:space="preserve"><value>Countdown: sound in the final three seconds</value></data>
+  <data name="SettingsUi026" xml:space="preserve"><value>Calming music for recovery relaxation</value></data>
+  <data name="SettingsUi027" xml:space="preserve"><value>Daily streak reminder</value></data>
+  <data name="SettingsUi028" xml:space="preserve"><value>Notification time</value></data>
+  <data name="SettingsUi029" xml:space="preserve"><value>Only reminds you if you have not exercised or completed recovery that day. Notification permission is required on Android.</value></data>
+  <data name="SettingsUi030" xml:space="preserve"><value>Custom music is unavailable. Choose a working audio file or switch to built-in music.</value></data>
+  <data name="SettingsUi031" xml:space="preserve"><value>Enter a valid YouTube Music playlist link.</value></data>
+  <data name="SettingsUi032" xml:space="preserve"><value>When should changes take effect?</value></data>
+  <data name="SettingsUi033" xml:space="preserve"><value>Rebuild today's unstarted workouts with the new settings, or apply them from tomorrow? Started and completed workouts will not change.</value></data>
+  <data name="SettingsUi034" xml:space="preserve"><value>Today</value></data>
+  <data name="SettingsUi035" xml:space="preserve"><value>From tomorrow</value></data>
+  <data name="SettingsUi036" xml:space="preserve"><value>Update monthly challenges?</value></data>
+  <data name="SettingsUi037" xml:space="preserve"><value>Adapt the current monthly challenges to your new settings? Previous completions and earned badges are preserved.</value></data>
+  <data name="SettingsUi038" xml:space="preserve"><value>Yes, new goals</value></data>
+  <data name="SettingsUi039" xml:space="preserve"><value>No, keep them</value></data>
+  <data name="SettingsUi040" xml:space="preserve"><value>Notifications disabled</value></data>
+  <data name="SettingsUi041" xml:space="preserve"><value>The system did not grant notification permission. You can enable it later in your phone settings.</value></data>
+  <data name="SettingsUi042" xml:space="preserve"><value>Settings saved</value></data>
+  <data name="SettingsUi043" xml:space="preserve"><value>Could not configure the reminder: </value></data>
+  <data name="SettingsUi044" xml:space="preserve"><value>Save failed</value></data>
+  <data name="SettingsUi045" xml:space="preserve"><value>Challenges</value></data>
+  <data name="SettingsUi046" xml:space="preserve"><value>Monthly challenges are currently unavailable.</value></data>
+  <data name="SettingsUi047" xml:space="preserve"><value>Your progress and challenges ✨</value></data>
+  <data name="SettingsUi048" xml:space="preserve"><value>Ten minutes of guided relaxation can preserve your streak on a rest day.</value></data>
+  <data name="SettingsUi049" xml:space="preserve"><value>Reach new levels and keep your streak alive!</value></data>
+  <data name="SettingsUi050" xml:space="preserve"><value>The three monthly challenges adapt to your habits; goals stay fixed during the month.</value></data>
+  <data name="SettingsUi051" xml:space="preserve"><value>🌱 Beginner</value></data>
+  <data name="SettingsUi052" xml:space="preserve"><value>✦ Intermediate</value></data>
+  <data name="SettingsUi053" xml:space="preserve"><value>♛ Advanced</value></data>
+  <data name="SettingsUi054" xml:space="preserve"><value>Permanent badges</value></data>
+  <data name="SettingsUi055" xml:space="preserve"><value>✓ Earned</value></data>
+  <data name="SettingsUi056" xml:space="preserve"><value>Not yet earned</value></data>
+  <data name="SettingsUi057" xml:space="preserve"><value>Previous months</value></data>
+  <data name="SettingsUi058" xml:space="preserve"><value>Streak freezes and relaxation do not count as monthly active days. Repeating the same exercise on one day cannot accumulate unlimited challenge progress.</value></data>
+  <data name="SettingsUi059" xml:space="preserve"><value>Statistics</value></data>
+  <data name="SettingsUi060" xml:space="preserve"><value>Activity journal</value></data>
+  <data name="SettingsUi061" xml:space="preserve"><value>Daily details</value></data>
+  <data name="SettingsUi062" xml:space="preserve"><value> + unrecorded time</value></data>
+  <data name="SettingsUi063" xml:space="preserve"><value>no previous time data</value></data>
+  <data name="SettingsUi064" xml:space="preserve"><value>No activity recorded</value></data>
+  <data name="SettingsUi065" xml:space="preserve"><value>🌿 10 minutes of recovery relaxation</value></data>
+  <data name="SettingsUi066" xml:space="preserve"><value>0 min</value></data>
+  <data name="SettingsUi067" xml:space="preserve"><value>Choose a full Mozdulj! backup</value></data>
+  <data name="SettingsUi068" xml:space="preserve"><value>Restore full backup?</value></data>
+  <data name="SettingsUi069" xml:space="preserve"><value>The backup restores your profile, custom exercises and history. </value></data>
+  <data name="SettingsUi070" xml:space="preserve"><value>Your current data may change. Only choose your own backup!</value></data>
+  <data name="SettingsUi071" xml:space="preserve"><value>The backup exceeds the size limit.</value></data>
+  <data name="SettingsUi072" xml:space="preserve"><value>Old backup – unverified signature</value></data>
+  <data name="SettingsUi073" xml:space="preserve"><value>The backup authentication does not match the current installation. </value></data>
+  <data name="SettingsUi074" xml:space="preserve"><value>This can happen after reinstalling or if the file has been modified. </value></data>
+  <data name="SettingsUi075" xml:space="preserve"><value>The authenticity of the original signature therefore CANNOT be verified. </value></data>
+  <data name="SettingsUi076" xml:space="preserve"><value>Only continue if this is your own trusted backup! </value></data>
+  <data name="SettingsUi077" xml:space="preserve"><value>The file data and structure will still be checked.</value></data>
+  <data name="SettingsUi078" xml:space="preserve"><value>Restore anyway</value></data>
+  <data name="SettingsUi079" xml:space="preserve"><value>Your previous profile and progress have been restored. Create a new full backup in Profile; it will be signed with the current installation's key.</value></data>
+  <data name="SettingsUi080" xml:space="preserve"><value>Your previous profile and progress were restored from the authenticated backup.</value></data>
+  <data name="SettingsUi081" xml:space="preserve"><value>Available music was preserved. You can select missing files again in Edit profile.</value></data>
+  <data name="SettingsUi082" xml:space="preserve"><value>Reminder permission</value></data>
+  <data name="SettingsUi083" xml:space="preserve"><value>Allow notifications for the restored daily reminder?</value></data>
+  <data name="SettingsUi084" xml:space="preserve"><value>Allow</value></data>
+  <data name="SettingsUi085" xml:space="preserve"><value>Not now</value></data>
+  <data name="SettingsUi086" xml:space="preserve"><value>Restore result</value></data>
+  <data name="SettingsUi087" xml:space="preserve"><value>Set up notification access</value></data>
+  <data name="SettingsUi088" xml:space="preserve"><value>YouTube Music did not accept the command.</value></data>
+  <data name="SettingsUi089" xml:space="preserve"><value>The mini player requires Android notification access. </value></data>
+  <data name="SettingsUi090" xml:space="preserve"><value>This system permission also grants access to other apps' notifications. </value></data>
+  <data name="SettingsUi091" xml:space="preserve"><value>Mozdulj! only retrieves the active YouTube Music media state; </value></data>
+  <data name="SettingsUi092" xml:space="preserve"><value>the permission can be revoked at any time.</value></data>
+  <data name="SettingsUi093" xml:space="preserve"><value>No active YouTube Music session. Start the playlist in YouTube Music; </value></data>
+  <data name="SettingsUi094" xml:space="preserve"><value>you can then control it here.</value></data>
+  <data name="SettingsUi095" xml:space="preserve"><value>Playing in YouTube Music</value></data>
+  <data name="SettingsUi096" xml:space="preserve"><value>YouTube Music playback paused</value></data>
+  <data name="SettingsUi097" xml:space="preserve"><value>You have reached your weekly goal. You can choose to rest.</value></data>
+  <data name="SettingsUi098" xml:space="preserve"><value>Mozdulj! reminder</value></data>
+  <data name="SettingsUi099" xml:space="preserve"><value>Reminder for missed daily activity</value></data>
+  <data name="SettingsUi100" xml:space="preserve"><value>A little movement could fit into today 🌿</value></data>
+  <data name="SettingsUi101" xml:space="preserve"><value>You haven't exercised or completed recovery relaxation today.</value></data>
+  <data name="SettingsUi102" xml:space="preserve"><value> + previous unrecorded time</value></data>
+  <data name="SettingsUi103" xml:space="preserve"><value>{0} tracks · played in order and repeated if needed for the full ten minutes</value></data>
+  <data name="SettingsUi104" xml:space="preserve"><value>🔥 {0}-day active streak</value></data>
+  <data name="SettingsUi105" xml:space="preserve"><value>🧊 {0} / {1} streak freezes</value></data>
+  <data name="SettingsUi106" xml:space="preserve"><value>⭐ {0:N0} XP · level {1}</value></data>
+  <data name="SettingsUi107" xml:space="preserve"><value>Next level: {0:N0} XP ({1:N0} remaining)</value></data>
+  <data name="SettingsUi108" xml:space="preserve"><value>Next freeze: {0:N0} XP</value></data>
+  <data name="SettingsUi109" xml:space="preserve"><value>Weekly goal · {0}/{1} active days</value></data>
+  <data name="SettingsUi110" xml:space="preserve"><value>{0}.{1:D2}: previous monthly badge · {2} active days · tier {3}/3</value></data>
+  <data name="SettingsUi111" xml:space="preserve"><value>{0} active days · {1} workouts</value></data>
+  <data name="SettingsUi112" xml:space="preserve"><value>{0} exercises · +{1:N0} XP</value></data>
+  <data name="SettingsUi113" xml:space="preserve"><value>Activity time: {0}{1}</value></data>
+  <data name="SettingsUi114" xml:space="preserve"><value>{0} recovery sessions</value></data>
+  <data name="SettingsUi115" xml:space="preserve"><value>Weekly goal achieved: {0} times</value></data>
+  <data name="SettingsUi116" xml:space="preserve"><value>{0} exercises · {1} workouts · +{2} XP</value></data>
+  <data name="SettingsUi117" xml:space="preserve"><value>Duration: {0}</value></data>
+  <data name="SettingsUi118" xml:space="preserve"><value> · {0} partially completed workouts</value></data>
+  <data name="SettingsUi119" xml:space="preserve"><value>{0} min {1:D2} sec</value></data>
+  <data name="SettingsUi120" xml:space="preserve"><value>{0} more active days to reach your weekly goal. Relaxation protects your streak but does not count as an active day.</value></data>
+  <data name="SettingsUi121" xml:space="preserve"><value>
+
+{0} custom audio files could not be found or read and were excluded from the list. </value></data>
+  <data name="SettingsUi122" xml:space="preserve"><value>
+
+Notification permission is missing, so the daily reminder will not appear.</value></data>
+  <data name="SettingsUi123" xml:space="preserve"><value>
+
+Could not check reminder permission. Check the app's notification permission in your phone settings.</value></data>
+  <data name="SettingsUi124" xml:space="preserve"><value>
+
+YouTube Music is not ready. Check the installed app and Premium setting in Profile.</value></data>
+  <data name="SettingsUi125" xml:space="preserve"><value>January fresh start</value></data>
+  <data name="SettingsUi126" xml:space="preserve"><value>February momentum</value></data>
+  <data name="SettingsUi127" xml:space="preserve"><value>Spring awakening</value></data>
+  <data name="SettingsUi128" xml:space="preserve"><value>April renewal</value></data>
+  <data name="SettingsUi129" xml:space="preserve"><value>May balance</value></data>
+  <data name="SettingsUi130" xml:space="preserve"><value>Summer momentum</value></data>
+  <data name="SettingsUi131" xml:space="preserve"><value>July perseverance</value></data>
+  <data name="SettingsUi132" xml:space="preserve"><value>August explorer</value></data>
+  <data name="SettingsUi133" xml:space="preserve"><value>Autumn fresh start</value></data>
+  <data name="SettingsUi134" xml:space="preserve"><value>October harmony</value></data>
+  <data name="SettingsUi135" xml:space="preserve"><value>November mover</value></data>
+  <data name="SettingsUi136" xml:space="preserve"><value>December calm</value></data>
+  <data name="SettingsUi137" xml:space="preserve"><value>First move</value></data>
+  <data name="SettingsUi138" xml:space="preserve"><value>Complete an exercise.</value></data>
+  <data name="SettingsUi139" xml:space="preserve"><value>Explorer</value></data>
+  <data name="SettingsUi140" xml:space="preserve"><value>Try 10 different exercises.</value></data>
+  <data name="SettingsUi141" xml:space="preserve"><value>Variety</value></data>
+  <data name="SettingsUi142" xml:space="preserve"><value>Try 30 different exercises.</value></data>
+  <data name="SettingsUi143" xml:space="preserve"><value>Habit builder</value></data>
+  <data name="SettingsUi144" xml:space="preserve"><value>Exercise on 15 different days.</value></data>
+  <data name="SettingsUi145" xml:space="preserve"><value>Persistent</value></data>
+  <data name="SettingsUi146" xml:space="preserve"><value>Reach a streak of 7 active days.</value></data>
+  <data name="SettingsUi147" xml:space="preserve"><value>One hundred moves</value></data>
+  <data name="SettingsUi148" xml:space="preserve"><value>Complete 100 exercises.</value></data>
+  <data name="SettingsUi149" xml:space="preserve"><value>Master of rest</value></data>
+  <data name="SettingsUi150" xml:space="preserve"><value>Complete a full ten-minute recovery session.</value></data>
+  <data name="SettingsUi151" xml:space="preserve"><value>In balance</value></data>
+  <data name="SettingsUi152" xml:space="preserve"><value>Complete 5 recovery sessions.</value></data>
+  <data name="SettingsUi153" xml:space="preserve"><value>Active days</value></data>
+  <data name="SettingsUi154" xml:space="preserve"><value>{0} focus</value></data>
+  <data name="SettingsUi155" xml:space="preserve"><value>Use {0}</value></data>
+  <data name="SettingsUi156" xml:space="preserve"><value>Month of {0}</value></data>
+  <data name="SettingsUi157" xml:space="preserve"><value>active days</value></data>
+  <data name="SettingsUi158" xml:space="preserve"><value>different exercises</value></data>
+  <data name="SettingsUi159" xml:space="preserve"><value>different days</value></data>
 </root>

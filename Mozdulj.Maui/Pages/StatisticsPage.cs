@@ -12,7 +12,7 @@ public sealed class StatisticsPage : ContentPage
     public StatisticsPage(AppState state)
     {
         _state = state;
-        UI.Setup(this, "Statisztika");
+        UI.Setup(this, AppLocalization.Text("SettingsUi059"));
         Content = new ScrollView { Content = _content };
     }
 
@@ -21,7 +21,7 @@ public sealed class StatisticsPage : ContentPage
     private void Draw()
     {
         _content.Children.Clear();
-        _content.Children.Add(UI.Label("Mozgásnapló", 25, true));
+        _content.Children.Add(UI.Label(AppLocalization.Text("SettingsUi060"), 25, true));
         var first = _month;
         var last = new DateOnly(first.Year, first.Month,
             DateTime.DaysInMonth(first.Year,first.Month));
@@ -33,8 +33,8 @@ public sealed class StatisticsPage : ContentPage
         var back = UI.Button("‹",false);
         back.Clicked += (_,_) => { _month = _month.AddMonths(-1); Draw(); };
         Grid.SetColumn(back,0); header.Children.Add(back);
-        var monthName = UI.Label(first.ToDateTime(TimeOnly.MinValue).ToString("yyyy. MMMM",
-            System.Globalization.CultureInfo.GetCultureInfo("hu-HU")),19,true);
+        var monthName = UI.Label(first.ToDateTime(TimeOnly.MinValue).ToString(AppLocalization.IsEnglish ? "MMMM yyyy" : "yyyy. MMMM",
+            AppLocalization.Culture),19,true);
         monthName.HorizontalTextAlignment = TextAlignment.Center;
         monthName.VerticalTextAlignment = TextAlignment.Center;
         Grid.SetColumn(monthName,1); header.Children.Add(monthName);
@@ -52,29 +52,29 @@ public sealed class StatisticsPage : ContentPage
         var unknownTime = tracked.Any(x=>!x.TimeKnown);
         var weeklyAwards=WeeklyGoalTracker.AwardsInMonth(_state.Data,first.Year,first.Month);
         _content.Children.Add(UI.Card(
-            UI.Label($"{activeDays} aktív nap · {workouts} gyakorlatsor",19,true),
-            UI.Label($"{tasks} feladat · +{xp:N0} XP",15),
-            UI.Label($"Mozgásidő: {Duration(seconds)}{(unknownTime ? " + korábbi nem rögzített idő" : "")}",14,color:UI.Muted),
-            UI.Label($"{tracked.Count(x=>x.RecoveryCompleted)} regeneráló alkalom",13,color:UI.Teal),
-            UI.Label($"Heti cél elérve: {weeklyAwards} alkalommal",14,true,color:UI.Purple)));
-        _content.Children.Add(UI.Label("Napi részletek",19,true));
+            UI.Label(AppLocalization.Format("SettingsUi111", activeDays,workouts),19,true),
+            UI.Label(AppLocalization.Format("SettingsUi112", tasks,xp),15),
+            UI.Label(AppLocalization.Format("SettingsUi113", Duration(seconds), unknownTime ? AppLocalization.Text("SettingsUi102") : ""),14,color:UI.Muted),
+            UI.Label(AppLocalization.Format("SettingsUi114", tracked.Count(x=>x.RecoveryCompleted)),13,color:UI.Teal),
+            UI.Label(AppLocalization.Format("SettingsUi115", weeklyAwards),14,true,color:UI.Purple)));
+        _content.Children.Add(UI.Label(AppLocalization.Text("SettingsUi061"),19,true));
         foreach (var item in tracked.Reverse())
         {
             var dateLabel = item.Date.ToDateTime(TimeOnly.MinValue)
-                .ToString("MMMM d., dddd",System.Globalization.CultureInfo.GetCultureInfo("hu-HU"));
+                .ToString(AppLocalization.IsEnglish ? "dddd, d MMMM" : "MMMM d., dddd",AppLocalization.Culture);
             var time = item.TimeKnown ? Duration(item.ActiveSeconds) :
-                item.ActiveSeconds > 0 ? Duration(item.ActiveSeconds)+" + nem rögzített idő" : "nincs korábbi időadat";
+                item.ActiveSeconds > 0 ? Duration(item.ActiveSeconds)+AppLocalization.Text("SettingsUi062") : AppLocalization.Text("SettingsUi063");
             var sub = item.CompletedExercises == 0 && !item.RecoveryCompleted && item.CompletedWorkouts == 0 && item.ActiveSeconds == 0
-                ? "Nincs rögzített mozgás"
-                : $"{item.CompletedExercises} feladat  ·  {item.CompletedWorkouts} sor  ·  +{item.Xp} XP";
+                ? AppLocalization.Text("SettingsUi064")
+                : AppLocalization.Format("SettingsUi116", item.CompletedExercises,item.CompletedWorkouts,item.Xp);
             _content.Children.Add(UI.Card(
                 UI.Label(dateLabel,16,true),
                 UI.Label(sub,14),
-                UI.Label($"Időtartam: {time}" + (item.PartialWorkouts>0 ? $" · {item.PartialWorkouts} részben teljesített sor" : ""),13,color:UI.Muted),
-                item.RecoveryCompleted ? UI.Label("🌿 10 perc regeneráló relaxáció",13,color:UI.Teal)
+                UI.Label(AppLocalization.Format("SettingsUi117", time) + (item.PartialWorkouts>0 ? AppLocalization.Format("SettingsUi118", item.PartialWorkouts) : ""),13,color:UI.Muted),
+                item.RecoveryCompleted ? UI.Label(AppLocalization.Text("SettingsUi065"),13,color:UI.Teal)
                     : UI.Label("",1)));
         }
     }
     private static string Duration(int seconds) =>
-        seconds <= 0 ? "0 perc" : $"{seconds/60} perc {seconds%60:D2} mp";
+        seconds <= 0 ? AppLocalization.Text("SettingsUi066") : AppLocalization.Format("SettingsUi119", seconds/60,seconds%60);
 }

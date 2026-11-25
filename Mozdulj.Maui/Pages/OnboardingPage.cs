@@ -137,7 +137,7 @@ public sealed class OnboardingPage : ContentPage
         var group = new VerticalStackLayout { Spacing = 5 };
         group.Children.Add(UI.Label(title, 19, true));
         group.Children.Add(UI.Label(subtitle, 13, color:UI.Muted));
-        group.Children.Add(ChoiceChips.Create(options, chosen));
+        group.Children.Add(ChoiceChips.Create(options, chosen, label: PresentationText.Known));
         body.Children.Add(UI.Card(group));
     }
 
