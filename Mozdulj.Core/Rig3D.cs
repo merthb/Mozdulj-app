@@ -132,6 +132,8 @@ public sealed class Rig3DFrame
 public sealed class Rig3DBodyPointLink
 {
     public string Leader { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Mode { get; set; }
     public float[]? Offset { get; set; }
 }
 public sealed class Rig3DEquipmentPointLock
@@ -236,7 +238,7 @@ public static class Rig3DValidator
                 var used = new HashSet<string>(StringComparer.Ordinal);
                 foreach(var (key,binding) in f.BodyPointLinks)
                 {
-                    if(!LinkKeys.Contains(key)||binding is null||!LinkKeys.Contains(binding.Leader)||!used.Add(key)||!used.Add(binding.Leader)||
+                    if(!LinkKeys.Contains(key)||binding is null||!LinkKeys.Contains(binding.Leader)||(binding.Mode is not null && binding.Mode is not ("world" or "surface"))||!used.Add(key)||!used.Add(binding.Leader)||
                        f.PointLocks?.ContainsKey(key)==true||f.EquipmentPointLocks?.ContainsKey(key)==true||binding.Offset is null||binding.Offset.Length!=3||binding.Offset.Any(x=>!float.IsFinite(x)||Math.Abs(x)>6))
                         throw new InvalidDataException(AppLocalization.Text("RigInvalidPointLock"));
                     var side=key.StartsWith("left",StringComparison.Ordinal)?"left":"right";
