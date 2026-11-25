@@ -20,23 +20,23 @@
 <div class="line"><label for="contactAction">Illesztési művelet</label><select id="contactAction"><option value="feet">Lábfejek a talajra</option><option value="hands">Kezek a talajra</option><option value="wall">Kezek a falhoz</option><option value="seat">Medence az ülőfelületre</option></select></div>
 <div class="line" id="contactSideRow"><label for="contactSide">Érintett oldal</label><select id="contactSide"><option value="both">Mindkét oldal</option><option value="left">Bal oldal</option><option value="right">Jobb oldal</option></select></div>
 <div class="line" id="contactSurfaceRow" hidden><label for="contactSurface">Támaszfelület</label><select id="contactSurface"></select></div>
-<label class="target-toggle"><input type="checkbox" id="contactAlign"> Tenyér / talp irányának igazítása</label><label class="target-toggle"><input type="checkbox" id="contactLock"> Sikeres illesztés után rögzítés</label>
+<label class="target-toggle"><input type="checkbox" id="contactAlign"> Tenyér / talp irányának igazítása</label><div class="line"><label for="contactLockMode">Rögzítés sikeres illesztés után</label><select id="contactLockMode"><option value="free">Szabad</option><option value="world">Térben rögzített ●</option><option value="equipment" disabled>Eszközhöz rögzített ◆</option></select></div>
 <button type="button" id="fitContact">Illesztés végrehajtása</button>
 <div class="hint" id="contactStatus" role="status" aria-live="polite"></div><button type="button" id="inspectContacts">Természetes testkontaktusok keresése</button><div class="hint" id="naturalContactStatus" role="status"></div>
 <div class="hint">Az irányillesztés opcionális: a tenyér vagy talp normálisa legfeljebb 15°-kal térhet el a támasz irányától. Kéznél nyitott tenyérre vált. Ha nincs megfelelő megoldás, a póz változatlan.</div>
 </details>
 <details class="edit-group"><summary>Támaszpontok rögzítése</summary>
-<div class="hint">A kijelölt pontok maradnak a jelenlegi térbeli helyükön. A kék jelölés a rögzített pontokat mutatja. Ha a póz így nem megoldható, a mozgatás megáll.</div>
+<div class="hint">Válassz szabad, térbeli vagy eszközhöz viszonyított rögzítést. A térbeli pont helyben marad (●), az eszközhöz kötött pont követi az eszközt (◆). Ha a póz nem megoldható, a mozgatás megáll.</div>
 <label class="target-toggle"><input type="checkbox" id="adaptRootPath" checked> Medence mozgáspályájának igazítása a rögzítésekhez</label><div class="hint">A medence mozgatásakor a program kis mértékben korrigálhatja a kért irányt. Kikapcsolva pontosan a megadott pályát követi, ameddig a rögzítések engedik.</div><div class="lock-grid" role="group" aria-label="Rögzített testpontok">
-<label><input type="checkbox" data-lock-point="root"><span>Medence</span></label>
-<label><input type="checkbox" data-lock-point="leftHand"><span>Bal kéz</span></label>
-<label><input type="checkbox" data-lock-point="rightHand"><span>Jobb kéz</span></label>
-<label><input type="checkbox" data-lock-point="leftFoot"><span>Bal lábfej</span></label>
-<label><input type="checkbox" data-lock-point="rightFoot"><span>Jobb lábfej</span></label>
-<label><input type="checkbox" data-lock-point="leftKnee"><span>Bal térd</span></label>
-<label><input type="checkbox" data-lock-point="rightKnee"><span>Jobb térd</span></label>
-<label><input type="checkbox" data-lock-point="leftElbow"><span>Bal könyök</span></label>
-<label><input type="checkbox" data-lock-point="rightElbow"><span>Jobb könyök</span></label>
+<label><span>Medence</span><select data-lock-point="root" aria-label="Medence"><option value="free">Szabad</option></select></label>
+<label><span>Bal kéz</span><select data-lock-point="leftHand" aria-label="Bal kéz"><option value="free">Szabad</option></select></label>
+<label><span>Jobb kéz</span><select data-lock-point="rightHand" aria-label="Jobb kéz"><option value="free">Szabad</option></select></label>
+<label><span>Bal lábfej</span><select data-lock-point="leftFoot" aria-label="Bal lábfej"><option value="free">Szabad</option></select></label>
+<label><span>Jobb lábfej</span><select data-lock-point="rightFoot" aria-label="Jobb lábfej"><option value="free">Szabad</option></select></label>
+<label><span>Bal térd</span><select data-lock-point="leftKnee" aria-label="Bal térd"><option value="free">Szabad</option></select></label>
+<label><span>Jobb térd</span><select data-lock-point="rightKnee" aria-label="Jobb térd"><option value="free">Szabad</option></select></label>
+<label><span>Bal könyök</span><select data-lock-point="leftElbow" aria-label="Bal könyök"><option value="free">Szabad</option></select></label>
+<label><span>Jobb könyök</span><select data-lock-point="rightElbow" aria-label="Jobb könyök"><option value="free">Szabad</option></select></label>
 </div><button type="button" id="clearPointLocks">Minden rögzítés feloldása</button></details>
 </div>
 <label class="symmetry-toggle"><input id="symmetricEdit" type="checkbox"> Szimmetrikus szerkesztés</label><div class="hint">A karok és lábak módosításai tükrözött változásként a másik oldalon is érvényesülnek.</div>
