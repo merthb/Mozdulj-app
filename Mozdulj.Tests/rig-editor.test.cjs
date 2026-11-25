@@ -294,3 +294,13 @@ test('orthographic projection is depth-independent in screen x and y',()=>{
  const m=loadRig().ortho(2,1.5);
  assert.ok(Math.abs(m[0]-1/3)<1e-7);assert.equal(m[5],.5);assert.equal(m[11],0);assert.equal(m[15],1);
 });
+
+test('diagnostic geometry uses actual body, support and surface probe positions',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),j=rig.joints(f);
+ const parts=rig.issueGeometry(f,j,'body:forearm-left/torso');
+ assert.equal(parts.length,2);
+ assert.equal(rig.issueGeometry(f,j,'lock:leftKnee').length,1);
+ const probe=rig.Collision.bodyProbes(j)[0];
+ assert.equal(JSON.stringify(rig.issueGeometry(f,j,probe.id+'@padló')[0].a),JSON.stringify(probe.p));
+ assert.equal(rig.issueGeometry(f,j,'unknown').length,0);
+});
