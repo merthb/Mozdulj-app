@@ -44,8 +44,23 @@ public sealed class WorkoutReplacementPage : ContentPage
         foreach (var exercise in options)
         {
             var candidate = exercise;
-            var details = UI.Button("Részletek", false);
-            details.Clicked += async (_, _) => await Navigation.PushAsync(new ExerciseDetailPage(_state, candidate));
+            // Same navigation affordance as the workout preview: the heading opens
+            // read-only details, while the replacement button is a separate action.
+            var heading = new VerticalStackLayout { Spacing = 4 };
+            heading.Children.Add(UI.Label(candidate.Name, 17, true, UI.Purple));
+            heading.Children.Add(UI.Label($"{candidate.Category} · {candidate.RegionAreaLabel} · {candidate.TargetLabel}", 13, color:UI.Muted));
+            heading.Children.Add(UI.Label(candidate.EquipmentLabel, 12, color:UI.Muted));
+            var detailTap = new TapGestureRecognizer();
+            bool opening = false;
+            detailTap.Tapped += async (_, _) =>
+            {
+                if (opening) return;
+                opening = true;
+                try { await Navigation.PushAsync(new ExerciseDetailPage(_state, candidate)); }
+                finally { opening = false; }
+            };
+            heading.GestureRecognizers.Add(detailTap);
+            SemanticProperties.SetHint(heading, AppLocalization.IsEnglish ? "Opens exercise details" : "Megnyitja a gyakorlat részleteit");
             var choose = UI.Button("Erre cserélem");
             choose.Clicked += async (_, _) =>
             {
@@ -61,11 +76,9 @@ public sealed class WorkoutReplacementPage : ContentPage
                 catch (Exception ex) { await DisplayAlertAsync("Nem sikerült a csere", ex.Message, "Rendben"); }
             };
             _content.Children.Add(UI.Card(
-                UI.Label(candidate.Name, 17, true),
-                UI.Label($"{candidate.Category} · {candidate.RegionLabel} · {candidate.TargetLabel}", 13, color:UI.Muted),
-                UI.Label(candidate.EquipmentLabel, 12, color:UI.Muted),
+                heading,
                 UI.Label(_state.IsFavorite(candidate.Id) ? "♥ Kedvenc" : "", 12, color:UI.Purple),
-                details, choose));
+                choose));
         }
         // Last option under the replacement candidates: omit the exercise if possible.
         var remaining=WorkoutPlanEditing.RemainingRemovals(_workout);
