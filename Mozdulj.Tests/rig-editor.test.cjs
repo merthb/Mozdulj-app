@@ -536,3 +536,47 @@ test('hand pose copies, mirrors, validates and interpolates without changing leg
  const pose=rig.initialPose('stand');pose.frames[0]=f;
  f.leftHandCurl=1.1;assert.throws(()=>rig.checkPose(pose));f.leftHandCurl=0;assert.doesNotThrow(()=>rig.checkPose(pose));
 });
+
+test('middle-joint support spheres constrain the root without moving the recorded locks',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('tabletop');
+ for(const key of ['leftKnee','rightKnee','leftHand','rightHand'])rig.setPointLock(f,key,true);
+ const next=JSON.parse(JSON.stringify(f)),locks=JSON.stringify(f.pointLocks);
+ rig.moveRoot(next,[0,.02,.025]);const requested=[...next.root];
+ const residual=x=>rig.supportChainConstraints(x,x.pointLocks).reduce((sum,c)=>{
+   const d=m.len(m.sub(c.anchor,c.point));return sum+(d-Math.max(c.min,Math.min(c.max,d)))**2;
+ },0);
+ const before=residual(next);
+ rig.projectSupportRoot(next,next.pointLocks,f);
+ assert.ok(residual(next)<=before+1e-12);
+ assert.ok(m.len(m.sub(next.root,requested))<=m.len(m.sub(requested,f.root))+.001001);
+ assert.equal(JSON.stringify(next.pointLocks),locks);
+ const locked=JSON.parse(JSON.stringify(f));rig.setPointLock(locked,'root',true);
+ const candidate=JSON.parse(JSON.stringify(locked));rig.moveRoot(candidate,[0,.02,0]);
+ const raw=JSON.stringify(candidate.root);rig.projectSupportRoot(candidate,candidate.pointLocks,locked);
+ assert.equal(JSON.stringify(candidate.root),raw);
+});
+test('middle-only support fitting preserves rigid segment lengths and leaves unrelated limbs alone',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('stand'),before=rig.joints(f);
+ rig.setPointLock(f,'leftKnee',true);
+ const next=JSON.parse(JSON.stringify(f));rig.moveRoot(next,[.005,0,.006]);
+ rig.adaptSupportPoints(next,next.pointLocks,{reference:f,source:f,projectRoot:true});
+ const after=rig.joints(next),d=(a,b)=>m.len(m.sub(a,b));
+ assert.ok(d(after.knee.left,next.pointLocks.leftKnee)<=.005);
+ assert.ok(Math.abs(d(after.hip.left,after.knee.left)-.45)<1e-8);
+ assert.ok(Math.abs(d(after.knee.left,after.feet.left)-.43)<1e-8);
+ assert.equal(JSON.stringify(next.hands),JSON.stringify(f.hands));
+ assert.equal(JSON.stringify(next.feet.right),JSON.stringify(f.feet.right));
+});
+test('swept multi-support edits never accept newly violated locks and keep root correction bounded',()=>{
+ const rig=loadRig(),m=rig.math,f=rig.baseFrame('tabletop');
+ for(const key of ['leftKnee','rightKnee','leftHand','rightHand'])rig.setPointLock(f,key,true);
+ const next=JSON.parse(JSON.stringify(f));rig.moveRoot(next,[0,.012,.015]);
+ const result=rig.Collision.transition(f,next,28,'root'),j=rig.joints(result.frame);
+ for(const [,error] of rig.lockErrors(j,f.pointLocks))assert.ok(error<=.0050001);
+ assert.equal(JSON.stringify(result.frame.pointLocks),JSON.stringify(f.pointLocks));
+ assert.ok(m.len(m.sub(result.frame.root,f.root))<=2*m.len(m.sub(next.root,f.root))+.001001);
+ // An unpinned pose must not be silently adjusted.
+ const free=rig.baseFrame('stand'),raw=JSON.parse(JSON.stringify(free));rig.moveRoot(raw,[.01,0,0]);
+ const requested=JSON.stringify(raw.root);rig.adaptSupportPoints(raw,{}, {source:free,projectRoot:true});
+ assert.equal(JSON.stringify(raw.root),requested);
+});

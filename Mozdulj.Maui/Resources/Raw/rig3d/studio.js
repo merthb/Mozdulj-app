@@ -102,7 +102,7 @@ function guardedEdit(change,prepare=null,adapt=false){
    else if(issue.startsWith('body:'))msg(window.rigText('Testrészek ütközése: ')+issue.slice(5).split('/').map(bodyPartLabel).join(' – '));
    else msg(window.rigText('Ütközési korlát: a végtag nem haladhat át a padlón, falon vagy eszközön. (')+issue+')');
  }
- else {syncJointValues();show();}
+ else {syncJointValues();show();if(result.rootAdjusted)msg('A medence a rögzített támaszpontokhoz igazodott.');}
  return result;
 }
 
@@ -537,7 +537,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
  $('rootHeight').onchange=e=>{
    const value=e.target.valueAsNumber/100;
    if(!Number.isFinite(value)||value<0||value>3){sync();msg('Érvénytelen medencemagasság.');return;}
-   guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]),null,true);sync();
+   guardedEdit(f=>MozduljRig.moveRoot(f,[0,value-f.root[1],0]),null,$('adaptRootPath').checked?'root':true);sync();
  };
  $('playPreview').onclick=playPreview;
  $('stopPreview').onclick=stopPreview;
@@ -785,7 +785,7 @@ function connect(){try{studio=MozduljRig.shaded3D(canvas);setPreset('stand');}ca
    if(drag.sel){
      const sel=drag.sel,central=sel.kind==='root',middle=['elbow','knee'].includes(sel.kind),symmetric=$('symmetricEdit').checked&&!central;
      const kind=['hands','elbow'].includes(sel.kind)?'arm':'leg',other=sel.side==='left'?'right':'left';
-     guardedEdit(f=>{const before=clone(f);studio.dragTarget(f,sel,dx,dy,e.shiftKey,$('moveAxis').value);if(symmetric){if(middle)MozduljRig.mirrorBendDelta(f,before,sel.kind,sel.side);else MozduljRig.mirrorTargetDelta(f,before,sel.kind,sel.side);}},f=>central||(MozduljRig.prepareTargetMode(f,kind,sel.side)&&(!symmetric||MozduljRig.prepareTargetMode(f,kind,other))),central);
+     guardedEdit(f=>{const before=clone(f);studio.dragTarget(f,sel,dx,dy,e.shiftKey,$('moveAxis').value);if(symmetric){if(middle)MozduljRig.mirrorBendDelta(f,before,sel.kind,sel.side);else MozduljRig.mirrorTargetDelta(f,before,sel.kind,sel.side);}},f=>central||(MozduljRig.prepareTargetMode(f,kind,sel.side)&&(!symmetric||MozduljRig.prepareTargetMode(f,kind,other))),central?($('adaptRootPath').checked?'root':true):false);
    }
  }else if(mode==='editEquipment'&&drag.button!==2){
    const h=drag.sel;if(h){

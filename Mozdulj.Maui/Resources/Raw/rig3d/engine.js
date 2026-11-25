@@ -221,13 +221,14 @@ function joints(frame){
  const shoulder={left:upperPoint(shoulderLocal('left')),right:upperPoint(shoulderLocal('right'))};
  const neck=upperPoint(spineLocal(.70));
  const head=add(neck,axes.upper(rotate([0,.21,.015],[frame.headPitch||0,frame.headYaw||0,frame.headRoll||0])));
- const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},handDetails:{},clamped:[]};
+ const j={root,hip,shoulder,neck,head,spineMid:mid,spineUpper:upperPoint(spineLocal(.52)),articulatedSpine:axes.l.some(Boolean)||axes.t.some(Boolean),pelvicTilt:clamp(frame.pelvicTilt||0,-.35,.35),hands:{},feet:{},elbow:{},knee:{},toes:{},palms:{},thumbs:{},footAxes:{},handDetails:{},hingePoles:{arm:{},leg:{}},clamped:[]};
  for(const side of ['left','right']){
   let s=side==='left'?-1:1;
   // Anatomical hinge pole is anchored to the current body rotation, not a fixed
   // screen-plane vertex. This avoids reversed bends when the torso is rotated.
   const anatomicElbow=add(shoulder[side],(j.articulatedSpine?axes.upper(unrotate(rotate([s*.11,-.30,-.33],add(e,[0,twist*.5,0])),e)):rotate([s*.11,-.30,-.33],add(e,[0,twist*.5,0]))));
   const anatomicKnee=add(hip[side],axes.pelvis([s*.02,-.17,.58]));
+  j.hingePoles.arm[side]=anatomicElbow;j.hingePoles.leg[side]=anatomicKnee;
   function safePole(requested,anchor,anatomic){
     if(!requested)return anatomic;
     const q=norm(sub(requested,anchor)),reference=norm(sub(anatomic,anchor));
@@ -760,7 +761,7 @@ const Collision3D=(()=>{
    // A swept edit is never allowed to jump through solid surfaces even if its
    // final location is beyond them. Cumulative stepping is robust on mobile.
    for(let i=1;i<=steps;i++){
-     const f=interpolate(before,after,i/steps);if(adapt)adaptSupportPoints(f,locks);const j=joints(f);
+     const f=interpolate(before,after,i/steps);if(adapt)adaptSupportPoints(f,locks,{reference:accepted,source:before,projectRoot:adapt==='root'});const j=joints(f);
      let err=worse(overlaps(f,j),baseline);
      if(!err)for(const [key,depth] of lockErrors(j,locks)){
        if(depth>Math.max(.005,baseLockErrors.get(key)||0)+1e-7){err={id:'lock:'+key,depth};break;}
@@ -768,7 +769,7 @@ const Collision3D=(()=>{
      if(err){issue=err;break;}
      ratio=i/steps;accepted=f;
    }
-   return {frame:accepted,fraction:ratio,limited:ratio<1,issue:issue?.id||null};
+   return {frame:accepted,fraction:ratio,limited:ratio<1,issue:issue?.id||null,rootAdjusted:adapt==='root'&&ratio>0&&len(sub(accepted.root,interpolate(before.root,after.root,ratio)))>.001};
  }
  // Preview only interpolates matching rig representations. A change of IK/FK,
  // attachment topology or lock definition needs an explicit intermediate pose.
@@ -791,7 +792,9 @@ const Collision3D=(()=>{
    // Precompute the exact samples that will be displayed. Never render unchecked
    // intermediate poses. Fixed sampling is approximate, not continuous proof.
    for(let i=0;i<=48;i++){
-     const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(a,b,i/48),j=joints(frame);
+     const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(a,b,i/48);
+     if(i>0&&i<48&&Object.keys(locks).length)adaptSupportPoints(frame,locks,{reference:samples.at(-1)});
+     const j=joints(frame);
      const err=worse(overlaps(frame,j),baseline);
      if(err)return {ok:false,issue:err.id};
      for(const [key,d] of lockErrors(j,locks))if(d>Math.max(.005,start.get(key)||0,end.get(key)||0)+1e-7)return {ok:false,issue:'lock:'+key};
@@ -875,21 +878,110 @@ function mirrorBendDelta(frame,before,kind,side){
  frame.poles[dest]=add(before.poles[dest],rotate(reflectX(unrotate(delta,before.euler)),before.euler));
 }
 // Prepare equivalent IK representations only for locked support endpoints.
+// Support constraints use the existing rigid two-bone chains. A locked
+// middle joint is a sphere constraint on its proximal joint; an endpoint
+// lock is a reach-shell constraint. No stored lock is moved by this solver.
+const SUPPORT_TOLERANCE=.005;
+const SUPPORT_CHAINS=[
+ {kind:'arm',target:'hands',middle:'elbow',anchor:'shoulder',endKey:'Hand',midKey:'Elbow',upper:bones.armUpper,lower:bones.armLower,maxBend:2.60},
+ {kind:'leg',target:'feet',middle:'knee',anchor:'hip',endKey:'Foot',midKey:'Knee',upper:bones.thigh,lower:bones.shin,maxBend:2.43}
+];
+function supportChainConstraints(frame,locks){
+ const j=joints(frame),constraints=[];
+ for(const side of ['left','right'])for(const chain of SUPPORT_CHAINS){
+   const anchor=j[chain.anchor][side],mid=locks?.[side+chain.midKey],end=locks?.[side+chain.endKey];
+   if(mid)constraints.push({anchor,point:mid,min:chain.upper,max:chain.upper,key:side+chain.midKey});
+   if(end){
+     const min=Math.max(Math.abs(chain.upper-chain.lower)+.015,Math.sqrt(Math.max(0,chain.upper**2+chain.lower**2+2*chain.upper*chain.lower*Math.cos(chain.maxBend))));
+     // The target-mode solver has a small straight-limb margin; preserve
+     // the full length for an existing FK limb, where straight is valid.
+     const max=chain.upper+chain.lower-(frame[modeKeys[chain.kind]]?.[side]?0:.004);
+     constraints.push({anchor,point:end,min,max,key:side+chain.endKey});
+   }
+ }
+ return constraints;
+}
+function projectSupportRoot(frame,locks,source,maxCorrection=.08){
+ if(locks?.root||!source||!Object.keys(locks||{}).length)return frame;
+ const desired=[...frame.root],travel=len(sub(desired,source.root));
+ if(travel<1e-8)return frame;
+ const limit=Math.min(maxCorrection,travel+.001),constraints=supportChainConstraints(frame,locks);
+ let correction=[0,0,0];
+ const residual=delta=>constraints.reduce((sum,c)=>{
+   const d=len(sub(add(c.anchor,delta),c.point)),error=d-clamp(d,c.min,c.max);
+   return sum+error*error;
+ },0);
+ let best=[...correction],score=residual(best);
+ // Alternating projections find a nearby point satisfying the intersection
+ // of the support spheres/shells. Bound the correction to the requested drag.
+ for(let pass=0;pass<16&&score>1e-8;pass++){
+   for(const c of constraints){
+     const v=sub(add(c.anchor,correction),c.point),d=len(v);
+     if(d<1e-8)continue;
+     const error=clamp(d,c.min,c.max)-d;
+     if(Math.abs(error)<.0001)continue;
+     correction=add(correction,mul(v,error/d));
+     if(len(correction)>limit)correction=mul(norm(correction),limit);
+     correction=sub(add(desired,correction).map((v,i)=>clamp(v,i===1?0:-3,3)),desired);
+   }
+   const next=residual(correction);
+   if(next<score){score=next;best=[...correction];}
+ }
+ frame.root=add(desired,best);return frame;
+}
 function prepareSupportEdit(frame){
- for(const side of ['left','right'])for(const [kind,key] of [['arm','Hand'],['leg','Foot']]){
-   const point=frame.pointLocks?.[side+key];if(!point)continue;
-   if(!prepareTargetMode(frame,kind,side))continue;
-   const target=kind==='arm'?'hands':'feet',original=cloneFrame(frame),j=joints(frame);
-   frame[target][side]=[...point];
-   if(limbError(j,joints(frame),kind,side)>1e-5)frame[target]=original[target];
+ for(const side of ['left','right'])for(const chain of SUPPORT_CHAINS){
+   const point=frame.pointLocks?.[side+chain.endKey],mid=frame.pointLocks?.[side+chain.midKey];
+   if(!point&&!mid)continue;
+   // Keep FK if conversion cannot preserve the original rendered geometry.
+   if(!prepareTargetMode(frame,chain.kind,side))continue;
+   if(!point)continue;
+   const original=cloneFrame(frame),j=joints(frame);
+   frame[chain.target][side]=[...point];
+   if(limbError(j,joints(frame),chain.kind,side)>1e-5)frame[chain.target]=original[chain.target];
  }
 }
-function adaptSupportPoints(frame,locks){
- for(const side of ['left','right'])for(const [kind,target,middle,cap] of [['arm','hands','elbow','Hand'],['leg','feet','knee','Foot']]){
-   if(frame[modeKeys[kind]]?.[side])continue;
-   const endpoint=locks?.[side+cap],mid=locks?.[side+(kind==='arm'?'Elbow':'Knee')];
-   if(endpoint)frame[target][side]=[...endpoint];
-   if(mid&&len(sub(joints(frame)[middle][side],mid))>.005)frame.poles[middle+(side==='left'?'Left':'Right')]=[...mid];
+// Find a pole in the requested bend plane that still satisfies the existing
+// anatomical cone. If no such pole exists, the swept guard rejects the move.
+function constrainedPole(anchor,end,mid,anatomic){
+ const axis=norm(sub(end,anchor)),v=sub(mid,anchor);
+ const plane=sub(v,mul(axis,dot(v,axis)));
+ if(len(plane)<1e-7)return anatomic;
+ const direction=norm(plane),ref=norm(sub(anatomic,anchor));
+ const axial=dot(ref,axis),lateral=Math.max(0,dot(ref,direction));
+ const q=add(mul(axis,axial),mul(direction,Math.max(1e-4,lateral)));
+ if(len(q)<1e-7||dot(norm(q),ref)<.87)return mid;
+ return add(anchor,mul(norm(q),.5));
+}
+function adaptSupportPoints(frame,locks,options={}){
+ if(!Object.keys(locks||{}).length)return frame;
+ if(options.projectRoot)projectSupportRoot(frame,locks,options.source);
+ const reference=joints(options.reference||frame);
+ for(const side of ['left','right'])for(const c of SUPPORT_CHAINS){
+   const endpoint=locks?.[side+c.endKey],mid=locks?.[side+c.midKey];
+   if(!endpoint&&!mid)continue;
+   if(frame[modeKeys[c.kind]]?.[side])continue; // incompatible FK remains protected
+   const pole=c.middle+(side==='left'?'Left':'Right');
+   if(endpoint)frame[c.target][side]=[...endpoint];
+   if(!mid)continue;
+   const j=joints(frame);
+   if(len(sub(j[c.middle][side],mid))<=.001)continue;
+   const anchor=j[c.anchor][side],upper=sub(mid,anchor);
+   // The proximal joint must lie on the fixed-length sphere. Don't invent
+   // an unreachable bend or stretch a segment to satisfy a lock.
+   if(Math.abs(len(upper)-c.upper)>SUPPORT_TOLERANCE)continue;
+   if(!endpoint){
+     // Preserve the previous accepted lower-bone direction as closely as
+     // possible; keep the bend within the same limits used by solve2.
+     const u=norm(upper),old=norm(sub(reference[c.target][side],reference[c.middle][side]));
+     let perpendicular=sub(old,mul(u,dot(old,u)));
+     if(len(perpendicular)<1e-7)perpendicular=cross(u,Math.abs(u[1])<.9?[0,1,0]:[1,0,0]);
+     const minBend=Math.acos(clamp(((c.upper+c.lower-.004)**2-c.upper**2-c.lower**2)/(2*c.upper*c.lower),-1,1));
+     const bend=clamp(Math.acos(clamp(dot(u,old),-1,1)),minBend+.0001,c.maxBend-.0001);
+     frame[c.target][side]=add(mid,mul(add(mul(u,Math.cos(bend)),mul(norm(perpendicular),Math.sin(bend))),c.lower));
+   }
+   frame.poles??={};
+   frame.poles[pole]=constrainedPole(anchor,frame[c.target][side],mid,j.hingePoles[c.kind][side]);
  }
  return frame;
 }
@@ -1305,5 +1397,5 @@ for(const prop of f.equipment||[]){
    if(prop.route&&!['auto','direct','front','back','left','right'].includes(prop.route))throw Error('Hibás szalagvezetés.');
  }
 }for(let kind of ['hands','feet'])for(let side of ['left','right'])if(!Array.isArray(f[kind]?.[side])||f[kind][side].length!==3||f[kind][side].some(x=>!Number.isFinite(x)))throw Error('Hiányzó vagy hibás végpont: '+kind+'/'+side);}}
-global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
+global.MozduljRig={initialPose,baseFrame,joints,solve2,shaded3D,moveRoot,checkPose,HAND_PRESETS,handCurl,setHandCurl,validHandCurl,gripPoint,articulationAxes,validArticulation,ARTICULATION_LIMITS,SIDE_ARTICULATION,sideAngle,editSideArticulation,phaseTiming,validPhaseTiming,previewPlan,previewAt,phaseThumbnailData,PHASE_TYPES,contactEnvelope,contactDistance,contactSurface,contactInside,fitSupport,gestureMetrics,pinchCamera,panCamera,cameraBasis,pixelScale,ortho,issueGeometry,BODY_TARGETS,bodyTarget,bodyPoint,moveBendPoint,mirrorBendDelta,prepareSupportEdit,adaptSupportPoints,projectSupportRoot,supportChainConstraints,mirrorFrame,mirrorIssue,copyLimb,copyIssue,mirrorTargetDelta,editLimbAngle,movePhase,PROP_POSITIONS,propPosition,propYaw,matchingProp,editProps,newEquipmentId,validEquipmentIds,bandSegments,equipmentHandles,detachBandPoint,moveBandPoint,equipmentDragDelta,MAX_PHASES,PHASE_DIRECTIONS,inferAngles,prepareAngleMode,prepareTargetMode,limbError,LOCK_KEYS,lockPoint,setPointLock,lockErrors,BAND_ANCHORS,Collision:Collision3D,math:{V,add,sub,mul,dot,cross,len,norm,rotate}};
 })(window);

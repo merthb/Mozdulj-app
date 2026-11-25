@@ -1,6 +1,9 @@
 /* Presentation-only localization. No geometry or pose payload changes. */
 (()=>{'use strict';
 const dictionary={
+  "A medence a rögzített támaszpontokhoz igazodott.":"The pelvis adjusted to the locked support points.",
+  "Medence mozgáspályájának igazítása a rögzítésekhez":"Adapt pelvis path to locked supports",
+  "A medence mozgatásakor a program kis mértékben korrigálhatja a kért irányt. Kikapcsolva pontosan a megadott pályát követi, ameddig a rögzítések engedik.":"When moving the pelvis, the editor may slightly adjust the requested direction. Turn this off to follow the exact requested path as far as the locks permit.",
   "Kéztartás":"Hand pose",
   "Régi egyszerűsített kéz":"Legacy simplified hand",
   "Nyitott tenyér":"Open palm",
