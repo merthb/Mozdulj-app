@@ -1110,3 +1110,32 @@ test('coordinated girdle editing gently recruits scapula and thoracic spine with
  assert.equal(symmetric.rightScapulaRotation,.2);assert.ok(symmetric.thoracicBend<0);
  assert.ok(rig.validArticulation(symmetric));
 });
+
+test('toe articulation preserves ankle, forefoot and toe segment lengths and mirror symmetry',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),j=rig.joints(f),m=rig.math,d=(a,b)=>m.len(m.sub(a,b));
+ const next={...f,leftToeBend:.4},q=rig.joints(next);
+ assert.deepEqual(q.feet,j.feet);assert.deepEqual(q.knee,j.knee);
+ assert.deepEqual(q.toeJoints,j.toeJoints);assert.deepEqual(q.toes.right,j.toes.right);
+ assert.ok(q.toeArticulated.left);assert.ok(d(q.toes.left,j.toes.left)>.01);
+ assert.ok(Math.abs(d(q.feet.left,q.toeJoints.left)-.12)<1e-8);
+ assert.ok(Math.abs(d(q.toeJoints.left,q.toes.left)-.06)<1e-8);
+ assert.ok(m.dot(m.sub(q.toes.left,j.toes.left),q.footAxes.left.up)>0);
+ const mirrored=rig.mirrorFrame(next),r=rig.joints(mirrored);
+ assert.equal(mirrored.rightToeBend,.4);assert.ok(d(r.toes.right,[-q.toes.left[0],q.toes.left[1],q.toes.left[2]])<1e-8);
+ assert.equal(rig.Collision.interpolate(next,f,.5).leftToeBend,.2);
+ assert.equal(rig.resetBodyPart(next,f,'leftLeg').leftToeBend,undefined);
+ assert.equal(rig.validArticulation({...f,leftToeBend:1}),false);
+ assert.ok(rig.Collision.bodyProbes(q).some(p=>p.id.startsWith('toeleft')));
+ assert.equal(rig.contactEnvelope(q,'leftFoot').length,3);
+ assert.equal(rig.contactEnvelope(j,'leftFoot').length,2);
+ assert.ok(rig.skeletonSegments(q).some(([a,b])=>a===q.toeJoints.left&&b===q.toes.left));
+});
+test('toe edits participate in swept collision checks and can be symmetric',()=>{
+ const rig=loadRig(),f=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(f));
+ assert.ok(rig.editSideArticulation(b,'left','ToeBend',.3,true));
+ assert.equal(b.rightToeBend,.3);
+ const r=rig.Collision.transition(f,b);
+ assert.equal(r.limited,false);
+ assert.ok(rig.Collision.previewTransition(f,r.frame).ok);
+ const m=rig.math;assert.ok(m.len(m.sub(rig.joints(r.frame).toes.left,rig.joints(f).toes.left))>.01);
+});
