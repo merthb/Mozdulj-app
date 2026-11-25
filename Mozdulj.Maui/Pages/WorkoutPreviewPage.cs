@@ -159,7 +159,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             }
 
             var heading = new VerticalStackLayout { Spacing = 4, VerticalOptions = LayoutOptions.Center };
-            heading.Children.Add(UI.Label(it.Name + (it.IsRequired ? " ★ Kötelező" : ""), 16, true));
+            heading.Children.Add(UI.Label((_state.FindExercise(it.ExerciseId)?.DisplayName ?? it.Name) + (it.IsRequired ? " ★ Kötelező" : ""), 16, true));
             var phaseLabel = phase switch
             {
                 "warmup" => "Bemelegítés", "main" => "Fő rész", "cooldown" => "Levezetés", "recovery" => "Relaxáció", _ => "Ismeretlen fázis"

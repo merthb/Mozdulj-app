@@ -20,6 +20,10 @@ public sealed class Exercise
     public string Id { get; set; } = "";
     public int Revision { get; set; } = 1;
     public string Name { get; set; } = "";
+    // Optional translation; null is omitted to preserve old signed backup payloads.
+    public ExerciseTranslation? EnglishText { get; set; }
+    [JsonIgnore] public string DisplayName => ExerciseLanguage.Name(this);
+    [JsonIgnore] public ExerciseTranslation DisplayText => ExerciseLanguage.Content(this);
     /// <summary>Movement TYPE, e.g. mobilizálás / erősítés. Never a body region or "jóga".</summary>
     public string Category { get; set; } = "";
     /// <summary>Affected anatomical areas; not to be conflated with exercise category.</summary>

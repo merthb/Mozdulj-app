@@ -23,7 +23,7 @@ public sealed class WorkoutReplacementPage : ContentPage
     private void Draw()
     {
         _content.Children.Clear();
-        _content.Children.Add(UI.Label($"Eredeti: {_item.Name}", 21, true));
+        _content.Children.Add(UI.Label($"Eredeti: {(_state.FindExercise(_item.ExerciseId)?.DisplayName ?? _item.Name)}", 21, true));
         string phase = WorkoutCustomization.ResolvePhase(_state.Catalog, _item);
         string phaseLabel = phase switch
         {
@@ -47,7 +47,7 @@ public sealed class WorkoutReplacementPage : ContentPage
             // Same navigation affordance as the workout preview: the heading opens
             // read-only details, while the replacement button is a separate action.
             var heading = new VerticalStackLayout { Spacing = 4 };
-            heading.Children.Add(UI.Label(candidate.Name, 17, true, UI.Purple));
+            heading.Children.Add(UI.Label(candidate.DisplayName, 17, true, UI.Purple));
             heading.Children.Add(UI.Label($"{candidate.Category} · {candidate.RegionAreaLabel} · {candidate.TargetLabel}", 13, color:UI.Muted));
             heading.Children.Add(UI.Label(candidate.EquipmentLabel, 12, color:UI.Muted));
             var detailTap = new TapGestureRecognizer();
@@ -65,7 +65,7 @@ public sealed class WorkoutReplacementPage : ContentPage
             choose.Clicked += async (_, _) =>
             {
                 var confirm = await DisplayAlertAsync("Gyakorlatcsere",
-                    $"A(z) {_item.Name} helyett a(z) {candidate.Name} gyakorlat kerül a programba. Folytatod?",
+                    $"A(z) {(_state.FindExercise(_item.ExerciseId)?.DisplayName ?? _item.Name)} helyett a(z) {candidate.DisplayName} gyakorlat kerül a programba. Folytatod?",
                     "Csere", "Mégse");
                 if (!confirm) return;
                 try

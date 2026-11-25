@@ -49,7 +49,7 @@ public static class ExerciseLibraryRules
     {
         var errors = new List<string>();
         if (e is null) return new(["A gyakorlat nem létezik."]);
-        if (string.IsNullOrWhiteSpace(e.Name)) errors.Add("Név megadása kötelező.");
+        if (!ExerciseLanguage.HasName(e)) errors.Add("Név megadása kötelező.");
         if (!Categories.Contains(e.Category)) errors.Add("Válassz érvényes mozgástípust.");
         if (e.Regions is null || e.Regions.Count == 0 || e.Regions.Any(string.IsNullOrWhiteSpace))
             errors.Add("Legalább egy érintett testtáj szükséges.");
@@ -58,7 +58,7 @@ public static class ExerciseLibraryRules
         if (e.EstimatedSeconds is < 5 or > 3600) errors.Add("A becsült idő 5–3600 másodperc lehet.");
         if (e.Equipment is null || e.Equipment.Any(string.IsNullOrWhiteSpace))
             errors.Add("Az eszközlista hibás. Eszköz nélkül üres lista használható.");
-        if (string.IsNullOrWhiteSpace(e.Summary) && (e.Steps is null || !e.Steps.Any(s => !string.IsNullOrWhiteSpace(s))))
+        if (!ExerciseLanguage.HasInstructions(e))
             errors.Add("Legalább egy végrehajtási leírás vagy lépés szükséges.");
         if (e.Measure == "time")
         {

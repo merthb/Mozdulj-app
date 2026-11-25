@@ -19,7 +19,8 @@ public sealed class ExerciseDetailPage : ContentPage
     {
         _content.Children.Clear();
         var e=_state.FindExercise(_exercise.Id) ?? _exercise;
-        _content.Children.Add(UI.Label(e.Name,26,true));
+        var localized = e.DisplayText;
+        _content.Children.Add(UI.Label(e.DisplayName,26,true));
         _content.Children.Add(UI.Label($"{e.Category} · {e.TargetLabel}",14,color:UI.Muted));
         _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Body areas: " : "Testtájak: ") + e.RegionAreaLabel, 14, true));
         _content.Children.Add(UI.Label((AppLocalization.IsEnglish ? "Detailed body parts: " : "Részletes testrészek: ") + e.RegionLabel, 13, color:UI.Muted));
@@ -71,17 +72,17 @@ public sealed class ExerciseDetailPage : ContentPage
             ? "✓ Eszköz nem szükséges" : "🎒 Szükséges eszköz: " + e.EquipmentLabel,
             15,true,color:e.Equipment.Count==0 ? UI.Muted : UI.Purple)));
         _content.Children.Add(UI.Label($"Nehézség: {e.Difficulty}/3",13,color:UI.Muted));
-        _content.Children.Add(UI.Label(e.Summary,16));
+        _content.Children.Add(UI.Label(localized.Summary,16));
         _content.Children.Add(UI.Label("Kiinduló helyzet",18,true));
-        _content.Children.Add(UI.Label(e.StartingPosition,15));
+        _content.Children.Add(UI.Label(localized.StartingPosition,15));
         _content.Children.Add(UI.Label("Végrehajtás",19,true));
-        var distinctSteps = ExerciseText.DeduplicateStartingPosition(e.StartingPosition, e.Steps);
+        var distinctSteps = ExerciseText.DeduplicateStartingPosition(localized.StartingPosition, localized.Steps);
         foreach(var (step,i) in distinctSteps.Select((x,i)=>(x,i)))
             _content.Children.Add(UI.Card(UI.Label($"{i+1}. {step}",14)));
         _content.Children.Add(UI.Label("Gyakori hibák",18,true));
-        foreach(var mistake in e.CommonMistakes) _content.Children.Add(UI.Label("• "+mistake,14));
+        foreach(var mistake in localized.CommonMistakes) _content.Children.Add(UI.Label("• "+mistake,14));
         _content.Children.Add(UI.Label("Fontos tudnivaló",17,true));
-        _content.Children.Add(UI.Label(e.SafetyNote,13,color:UI.Muted));
+        _content.Children.Add(UI.Label(localized.SafetyNote,13,color:UI.Muted));
         _content.Children.Add(UI.Label("A 3D ábra tájékoztató jellegű. Kövesd a szöveges útmutatást, és ne erőltesd a mozdulatot.",12,color:UI.Muted));
         var favorite=UI.Button(_state.IsFavorite(e.Id)?"♥ Kedvenc eltávolítása":"♡ Kedvencekhez",false);
         favorite.Clicked+=async (_,_)=>{await _state.ToggleFavoriteAsync(e.Id);Draw();};

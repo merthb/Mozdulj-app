@@ -358,8 +358,8 @@ public sealed class WorkoutPlayerPage : ContentPage
             : transition ? $"Átvezetés · {_index+2}/{_workout.Items.Count}"
             : $"{_index+1}/{_workout.Items.Count} · {item.Category}";
         _headline.Text = _workout.Kind == "recovery" ? "Most csak pihenj"
-            : preparing ? "Hamarosan: "+item.Name
-            : transition ? "Következő: "+_workout.Items[_index+1].Name : item.Name;
+            : preparing ? "Hamarosan: "+(_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name)
+            : transition ? "Következő: "+(_state.FindExercise(_workout.Items[_index+1].ExerciseId)?.DisplayName ?? _workout.Items[_index+1].Name) : (_state.FindExercise(item.ExerciseId)?.DisplayName ?? item.Name);
         _value.Text=preparing ? _workout.RemainingSeconds.ToString() :
             transition || item.Measure=="time" ? UI.FormatSeconds(_workout.RemainingSeconds) : item.TargetLabel;
         _value.FontSize=preparing||transition||item.Measure=="time"?48:28;
@@ -380,9 +380,9 @@ public sealed class WorkoutPlayerPage : ContentPage
             if(definition is null) _nextGuideText.Text=next.Instruction;
             else
             {
-                var steps=ExerciseText.DeduplicateStartingPosition(definition.StartingPosition,definition.Steps);
-                _nextGuideText.Text=(string.IsNullOrWhiteSpace(definition.StartingPosition)?"":
-                    "Kiinduló helyzet: "+definition.StartingPosition+"\n\n") +
+                var steps=ExerciseText.DeduplicateStartingPosition(definition.DisplayText.StartingPosition,definition.DisplayText.Steps);
+                _nextGuideText.Text=(string.IsNullOrWhiteSpace(definition.DisplayText.StartingPosition)?"":
+                    "Kiinduló helyzet: "+definition.DisplayText.StartingPosition+"\n\n") +
                     string.Join("\n",steps.Select((step,i)=>$"{i+1}. {step}"));
             }
         }

@@ -10,6 +10,7 @@ public static class CatalogSearch
         var text = query?.Trim() ?? "";
         return text.Length == 0 ||
             exercise.Name.Contains(text, StringComparison.CurrentCultureIgnoreCase) ||
+            (exercise.EnglishText?.Name?.Contains(text, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
             exercise.Regions.Any(region => region.Contains(text, StringComparison.CurrentCultureIgnoreCase) ||
                 RegionTaxonomy.DetailLabel(region).Contains(text, StringComparison.CurrentCultureIgnoreCase)) ||
             exercise.RegionAreaIds.Any(id => RegionTaxonomy.AreaLabel(id).Contains(text, StringComparison.CurrentCultureIgnoreCase));

@@ -28,6 +28,12 @@ public sealed class ExerciseEditorPage : ContentPage
     private readonly Editor _steps = new() { Placeholder = "Végrehajtási lépések (soronként)", AutoSize = EditorAutoSizeOption.TextChanges };
     private readonly Editor _mistakes = new() { Placeholder = "Gyakori hibák (soronként)", AutoSize = EditorAutoSizeOption.TextChanges };
     private readonly Editor _safety = new() { Placeholder = "Óvintézkedések, abbahagyás feltételei", AutoSize = EditorAutoSizeOption.TextChanges };
+    private readonly Entry _englishName = new() { Placeholder = "Exercise name" };
+    private readonly Editor _englishSummary = new() { AutoSize = EditorAutoSizeOption.TextChanges };
+    private readonly Editor _englishPosition = new() { AutoSize = EditorAutoSizeOption.TextChanges };
+    private readonly Editor _englishSteps = new() { AutoSize = EditorAutoSizeOption.TextChanges };
+    private readonly Editor _englishMistakes = new() { AutoSize = EditorAutoSizeOption.TextChanges };
+    private readonly Editor _englishSafety = new() { AutoSize = EditorAutoSizeOption.TextChanges };
     private readonly VerticalStackLayout _content = UI.Stack();
     private readonly Label _figureInfo = UI.Label("",13,color:UI.Muted);
     private readonly bool _open3dImmediately;
@@ -65,6 +71,15 @@ public sealed class ExerciseEditorPage : ContentPage
         _summary.Text = _draft.Summary; _position.Text = _draft.StartingPosition;
         _steps.Text = string.Join("\n",_draft.Steps); _mistakes.Text=string.Join("\n",_draft.CommonMistakes);
         _safety.Text = _draft.SafetyNote;
+        if (_draft.EnglishText is { } en)
+        {
+            _englishName.Text = en.Name;
+            _englishSummary.Text = en.Summary;
+            _englishPosition.Text = en.StartingPosition;
+            _englishSteps.Text = string.Join("\n", en.Steps ?? []);
+            _englishMistakes.Text = string.Join("\n", en.CommonMistakes ?? []);
+            _englishSafety.Text = en.SafetyNote;
+        }
         Fill();
     }
     protected override void OnAppearing()
@@ -88,7 +103,8 @@ public sealed class ExerciseEditorPage : ContentPage
         _content.Children.Add(UI.Label("Saját gyakorlat",26,true));
         _content.Children.Add(UI.Label("Piszkozatot hiányos adatokkal is menthetsz. A gyakorlatsor-generátor csak teljes, aktív gyakorlatot használ.",13,color:UI.Muted));
         _content.Children.Add(UI.Label("Alapadatok",20,true));
-        _content.Children.Add(Field("Gyakorlat neve *",_name));
+        _content.Children.Add(Field("Gyakorlat neve / Name (HU)",_name));
+        _content.Children.Add(Field("Exercise name / Név (EN)",_englishName));
         _content.Children.Add(Field("Mozgástípus *",_category));
         _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Affected body areas *" : "Érintett testtájak *", 13, true));
         foreach (var group in new[] { "upper", "lower", "full" })
@@ -111,12 +127,25 @@ public sealed class ExerciseEditorPage : ContentPage
         _content.Children.Add(Field("Ismétléscélok (pl. 4 előre; 4 hátra) *",_reps));
         _content.Children.Add(Field("Becsült idő másodpercben *",_estimate));
         _content.Children.Add(Field("Szükséges eszközök (eszközmentesnél üres)",_equipment));
-        _content.Children.Add(UI.Label("Leírás és biztonság",20,true));
-        _content.Children.Add(Field("Rövid leírás vagy végrehajtási lépések *",_summary));
-        _content.Children.Add(Field("Kiinduló helyzet",_position));
-        _content.Children.Add(Field("Végrehajtási lépések (soronként)",_steps));
-        _content.Children.Add(Field("Gyakori hibák",_mistakes));
-        _content.Children.Add(Field("Biztonsági megjegyzés",_safety));
+        _content.Children.Add(UI.Label(AppLocalization.IsEnglish ? "Description and safety" : "Leírás és biztonság",20,true));
+        _content.Children.Add(UI.Label(AppLocalization.IsEnglish ?
+            "Provide a name and instructions in at least one language. Missing text uses the other language." :
+            "Legalább egy nyelven adj meg nevet és végrehajtási leírást. A hiányzó szöveg helyén a másik nyelv jelenik meg.",13,color:UI.Muted));
+        var language = new Picker { Title = "Nyelv / Language" };
+        language.Items.Add("Magyar"); language.Items.Add("English");
+        var huFields = new VerticalStackLayout { Spacing=8, Children = {
+            Field("Rövid leírás",_summary), Field("Kiinduló helyzet",_position),
+            Field("Végrehajtási lépések (soronként)",_steps), Field("Gyakori hibák",_mistakes), Field("Biztonsági megjegyzés",_safety) }};
+        var enFields = new VerticalStackLayout { Spacing=8, Children = {
+            Field("Summary",_englishSummary), Field("Starting position",_englishPosition),
+            Field("Steps (one per line)",_englishSteps), Field("Common mistakes",_englishMistakes), Field("Safety note",_englishSafety) }};
+        void ShowLanguage() { huFields.IsVisible=language.SelectedIndex!=1; enFields.IsVisible=language.SelectedIndex==1; }
+        language.SelectedIndex = AppLocalization.IsEnglish ? 1 : 0;
+        language.SelectedIndexChanged += (_,_)=>ShowLanguage();
+        ShowLanguage();
+        _content.Children.Add(language);
+        _content.Children.Add(huFields);
+        _content.Children.Add(enFields);
         _content.Children.Add(UI.Label("Ábra (opcionális)",20,true));
         _content.Children.Add(_figureInfo);
         var draw=UI.Button("✎ 3D csontváz és eszközök szerkesztése",false);
@@ -193,6 +222,10 @@ public sealed class ExerciseEditorPage : ContentPage
         _draft.Steps=Lines(_steps.Text);
         _draft.CommonMistakes=Lines(_mistakes.Text);
         _draft.SafetyNote=_safety.Text?.Trim()??"";
+        var english = new ExerciseTranslation { Name=_englishName.Text?.Trim()??"", Summary=_englishSummary.Text?.Trim()??"",
+            StartingPosition=_englishPosition.Text?.Trim()??"", Steps=Lines(_englishSteps.Text),
+            CommonMistakes=Lines(_englishMistakes.Text), SafetyNote=_englishSafety.Text?.Trim()??"" };
+        _draft.EnglishText = english.HasAny ? english : null;
     }
     private async Task Save(string status)
     {

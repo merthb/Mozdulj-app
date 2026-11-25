@@ -362,7 +362,7 @@ public sealed class CatalogPage : ContentPage
         var layout = new VerticalStackLayout { Spacing=7 };
         var description = new VerticalStackLayout { Spacing=3, Children=
         {
-            UI.Label(string.IsNullOrWhiteSpace(exercise.Name)?"Névtelen piszkozat":exercise.Name,15,true),
+            UI.Label(string.IsNullOrWhiteSpace(exercise.DisplayName)?"Névtelen piszkozat":exercise.DisplayName,15,true),
             UI.Label($"{exercise.Category} · {exercise.RegionAreaLabel}",12,color:UI.Muted),
             UI.Label($"{(row.BuiltIn?"Alap":"Saját")} · {StatusText(row.Status)} · {exercise.TargetLabel}",11,color:UI.Teal)
         }};

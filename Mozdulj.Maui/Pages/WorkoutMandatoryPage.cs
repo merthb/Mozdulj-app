@@ -98,7 +98,7 @@ public sealed class WorkoutMandatoryPage : ContentPage
                 else _selected.Remove(exercise.Id);
                 _count.Text=$"Kijelölve: {_selected.Count} / {_state.MaximumMandatoryExercisesFor(_workout)}";
             };
-            var label=UI.Label($"{ex.Name}  ·  {ex.RegionLabel}",14,true);
+            var label=UI.Label($"{ex.DisplayName}  ·  {ex.RegionLabel}",14,true);
             var sub=UI.Label($"{LabelPhase(ex.Phase)} · {ex.TargetLabel} · {ex.EstimatedSeconds} mp becsült",12,color:UI.Muted);
             var text=new VerticalStackLayout {Spacing=3,Children={label,sub}};
             var row=new HorizontalStackLayout {Spacing=9,Children={box,text}};
