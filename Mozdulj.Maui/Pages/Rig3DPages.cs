@@ -73,7 +73,7 @@ public sealed class Rig3DEditorPage : ContentPage
                 _note.Text=_loaded
                     ? (AppLocalization.IsEnglish ? "The 3D pose is stored separately. Saving does not change the description or past results." : "A 3D póz külön tárolódik. Mentéskor a leírás és az eddigi eredmények nem változnak.")
                     : (AppLocalization.IsEnglish ? "WebGL is unavailable. The model cannot be saved without checking the rendering." : "A WebGL nem érhető el. A modell nem menthető a megjelenítés ellenőrzése nélkül.");
-                if(_loaded){_initialCapture=await CaptureAsync();if(_deferCommit&&_draftKey is not null&&Drafts.Read(_draftKey) is { } prior){try{var c=JsonSerializer.Deserialize<DraftCapture>(prior.Payload);if(c?.Payload==_initialCapture.Payload)_initialCapture=_initialCapture with {Dirty=true};}catch(JsonException){}}await RecoverDraftAsync();StartDraftTimer();}
+                if(_loaded){_initialCapture=await CaptureAsync();await RecoverDraftAsync();StartDraftTimer();}
                 _save.IsEnabled=_loaded;
             }
             catch(Exception ex){_note.Text=(AppLocalization.IsEnglish ? "3D loading error: " : "3D betöltési hiba: ")+ex.Message;_save.IsEnabled=false;}
@@ -107,9 +107,17 @@ public sealed class Rig3DEditorPage : ContentPage
         var capture=await CaptureAsync();
         if(!capture.Dirty && !force)
         {
-            // A full exercise form may already hold a saved-in-memory pose.
-            // Retain its recovery file until the enclosing exercise is committed.
-            if(!_deferCommit&&_lastDraftPayload is not null){Drafts.Delete(_draftKey);_lastDraftPayload=null;}
+            // A clean state after Undo must not recover discarded edits later.
+            // Preserve a pose already accepted in the enclosing form.
+            if(_lastDraftPayload is null)return;
+            if(_deferCommit&&_initialCapture?.Dirty==true)
+            {
+                var baseline=_initialCapture;
+                if(_lastDraftPayload!=baseline.Payload||_lastDraftFrame!=baseline.FrameIndex)
+                    Drafts.Write(_draftKey,new RigDraft(_sourceHash,JsonSerializer.Serialize(baseline),DateTimeOffset.UtcNow));
+                _lastDraftPayload=baseline.Payload;_lastDraftFrame=baseline.FrameIndex;
+            }
+            else {Drafts.Delete(_draftKey);_lastDraftPayload=null;_lastDraftFrame=-1;}
             return;
         }
         if(capture.Payload==_lastDraftPayload&&capture.FrameIndex==_lastDraftFrame)return;
@@ -128,14 +136,18 @@ public sealed class Rig3DEditorPage : ContentPage
             var capture=JsonSerializer.Deserialize<DraftCapture>(draft.Payload)
                 ?? throw new InvalidDataException(T("Érvénytelen piszkozat.","Invalid draft."));
             var current=await CaptureAsync();
-            if(current.Payload==capture.Payload){_lastDraftPayload=capture.Payload;_lastDraftFrame=capture.FrameIndex;return;}
+            if(current.Payload==capture.Payload)
+            {
+                if(_deferCommit&&_initialCapture is not null)_initialCapture=_initialCapture with {Dirty=true};
+                _lastDraftPayload=capture.Payload;_lastDraftFrame=capture.FrameIndex;return;
+            }
             var changed=draft.SourceHash!=_sourceHash;
             var choice=await DisplayActionSheetAsync(
                 changed?T("A mentett gyakorlat azóta megváltozott. Korábbi 3D piszkozat található.","The saved exercise has changed. An older 3D draft was found."):
                         T("Megszakított 3D szerkesztés található.","An interrupted 3D edit was found."),
                 T("Később","Later"),null,T("Visszaállítás","Restore"),T("Piszkozat elvetése","Discard draft"));
             if(choice==T("Piszkozat elvetése","Discard draft")){Drafts.Delete(_draftKey);return;}
-            if(choice!=T("Visszaállítás","Restore"))return;
+            if(choice!=T("Visszaállítás","Restore")){_note.Text=T("A korábbi piszkozat megmaradt; az új szerkesztés felülírhatja.","The older draft is retained; new edits may replace it.");return;}
             // Validate before sending the local draft through the WebView bridge.
             var rig=JsonSerializer.Deserialize<Rig3DPose>(Convert.FromBase64String(capture.Payload),CatalogCodec.JsonOptions)
                 ?? throw new InvalidDataException(T("Hiányzó 3D modell.","Missing 3D model."));
@@ -143,6 +155,7 @@ public sealed class Rig3DEditorPage : ContentPage
             var safePayload=Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(rig,CatalogCodec.JsonOptions)));
             var restored=await _browser.EvaluateJavaScriptAsync($"window.restoreRigDraftBase64('{safePayload}',{Math.Clamp(capture.FrameIndex,0,rig.Frames.Count-1)})");
             if(restored?.Trim().Trim('"')!="true")throw new InvalidDataException(T("A piszkozat nem állítható vissza.","Could not restore draft."));
+            _lastDraftPayload=capture.Payload;_lastDraftFrame=capture.FrameIndex;
             _note.Text=T("A 3D piszkozat visszaállítva. A gyakorlat még nincs mentve.","3D draft restored. The exercise is not saved yet.");
         }
         catch(Exception ex){_note.Text=T("Piszkozat visszaállítási hiba: ","Draft recovery error: ")+ex.Message;}
@@ -238,7 +251,7 @@ public sealed class Rig3DEditorPage : ContentPage
             if(!_deferCommit&&_draftKey is not null)ClearDraft(_draftKey);
             _allowExit=true;await Navigation.PopAsync();
         }
-        catch(Exception e){await DisplayAlertAsync((AppLocalization.IsEnglish ? "Save failed" : "Mentés sikertelen"),e.Message,(AppLocalization.IsEnglish ? "OK" : "Rendben"));}
+        catch(Exception e){_allowExit=false;await DisplayAlertAsync((AppLocalization.IsEnglish ? "Save failed" : "Mentés sikertelen"),e.Message,(AppLocalization.IsEnglish ? "OK" : "Rendben"));}
         finally{_saving=false;_save.IsEnabled=_loaded;if(!_allowExit&&!_leaving)StartDraftTimer();}
     }
 }
