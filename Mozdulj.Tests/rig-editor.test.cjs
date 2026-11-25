@@ -626,3 +626,15 @@ test('second preset pass has no flagged geometry or unreachable targets in eithe
    assert.equal(audit.transition,true,name);
  }
 });
+
+test('ball seat, hip hinge and single-leg balance presets pass both frame and transition audits',()=>{
+ const rig=loadRig();
+ for(const name of ['ballseat','hinge','balance']){
+   const a=rig.auditPreset(name);
+   assert.ok(a.frames.every(f=>f.overlaps.count===0&&f.clamped.length===0),name);
+   assert.equal(a.transition,true,name);
+ }
+ const balance=rig.initialPose('balance'),a=rig.joints(balance.frames[0]),b=rig.joints(balance.frames[1]);
+ assert.ok(b.feet.right[1]>a.feet.right[1]+.1);
+ assert.equal(JSON.stringify(a.feet.left),JSON.stringify(b.feet.left));
+});

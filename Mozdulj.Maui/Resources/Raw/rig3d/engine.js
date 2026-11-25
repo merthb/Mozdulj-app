@@ -167,6 +167,22 @@ function baseFrame(preset){
      f.legAngles[side].flexion=1.47;f.legAngles[side].abduction=.30;
    }
  }
+ if(preset==='ballseat'){
+   f.root=[0,.82,.15];
+   for(const side of ['left','right']){
+     f.feet[side]=[side==='left'?-.22:.22,.08,.40];
+     f.hands[side]=[side==='left'?-.35:.35,.85,.20];
+   }
+ }
+ if(preset==='balance')f.legAngles.right={flexion:1.2,abduction:.35,kneeFlexion:.6};
+ if(preset==='hinge'){
+   f.root=[0,.90,0];f.euler=[.45,0,0];
+   for(const side of ['left','right']){
+     f.feet[side]=[side==='left'?-.16:.16,.085,0];
+     f.hands[side]=[side==='left'?-.34:.34,.95,.40];
+     f.footPitch[side]=-.22;
+   }
+ }
  return f;
 }
 const PRESET_NAMES=['stand','crosslegged','chair','tabletop','catcow','child','supine','bridge','side','rowband','lunge','balance','boat','reclinedbutterfly','legs-wall','prone','sideplank','kneel','hinge','ballseat','plank'];
@@ -176,7 +192,7 @@ function initialPose(preset='stand'){
  if(preset==='bridge'){b.root[1]=.49;b.euler[0]=-1.94;}
  if(preset==='rowband'){b.hands.left=[-.33,.61,.02];b.hands.right=[.33,.61,.02];}
  if(preset==='side'){b.hands.right=[.02,.83,-.28];}
- if(preset==='balance'){b.feet.right=[.18,.77,.26];}
+ if(preset==='balance'){b.legAngles.right.flexion=1.45;b.legAngles.right.kneeFlexion=.7;}
  if(preset==='lunge'){b.root[1]=.84;}
  if(preset==='child'){b.root[1]=.30;b.hands.left=[-.28,.055,.55];b.hands.right=[.28,.055,.55];}
  return {version:1,preset,reviewStatus:'illustrative',frames:[a,b],camera:{azimuth:.58,elevation:.35,distance:3.55,target:[0,.72,0]}};
