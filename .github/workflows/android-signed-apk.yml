@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - test/rig-editor-apk-38
   workflow_dispatch:
 
 permissions:
