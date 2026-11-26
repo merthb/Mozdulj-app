@@ -71,20 +71,21 @@ public sealed class Rig3DEditorPage : ContentPage
                 _loaded=health?.Contains("\\\"webgl\\\":true",StringComparison.OrdinalIgnoreCase)==true
                       || health?.Contains("\"webgl\":true",StringComparison.OrdinalIgnoreCase)==true;
                 _note.Text=_loaded
-                    ? (AppLocalization.IsEnglish ? "The 3D pose is stored separately. Saving does not change the description or past results." : "A 3D póz külön tárolódik. Mentéskor a leírás és az eddigi eredmények nem változnak.")
+                    ? string.Empty
                     : (AppLocalization.IsEnglish ? "WebGL is unavailable. The model cannot be saved without checking the rendering." : "A WebGL nem érhető el. A modell nem menthető a megjelenítés ellenőrzése nélkül.");
                 if(_loaded){_initialCapture=await CaptureAsync();await RecoverDraftAsync();StartDraftTimer();}
                 _save.IsEnabled=_loaded;
             }
             catch(Exception ex){_note.Text=(AppLocalization.IsEnglish ? "3D loading error: " : "3D betöltési hiba: ")+ex.Message;_save.IsEnabled=false;}
         };
+        _note.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Label.Text)) _note.IsVisible = !string.IsNullOrWhiteSpace(_note.Text); };
         _save.IsEnabled=false;
         _save.Clicked+=async (_,_)=>await SaveAsync();
         var cancel=UI.Button((AppLocalization.IsEnglish ? "Cancel" : "Mégse"),false);
         cancel.Clicked+=async(_,_)=>await RequestExitAsync();
         var actions=new Grid{ColumnSpacing=8,ColumnDefinitions={new ColumnDefinition{Width=GridLength.Star},new ColumnDefinition{Width=GridLength.Auto}}};
         actions.Add(_save,0,0);actions.Add(cancel,1,0);
-        var footer=new VerticalStackLayout{Spacing=4,Padding=new Thickness(10,4,10,6),BackgroundColor=UI.CardColor,
+        var footer=new VerticalStackLayout{Spacing=2,Padding=new Thickness(6,2,6,3),BackgroundColor=UI.CardColor,
             Children={_note,actions}};
         var layout=new Grid{RowDefinitions={new RowDefinition{Height=GridLength.Star},
             new RowDefinition{Height=GridLength.Auto}}};
