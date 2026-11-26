@@ -528,7 +528,10 @@ function playPreview(){
    const detail=plan.issue?.startsWith('bend:')?window.rigText('Hirtelen hajlításirány-váltás: ')+window.rigText(targetLabels[plan.issue.slice(5)]||plan.issue.slice(5)):plan.issue==='representation'?window.rigText('Eltérő vezérlés vagy rögzítés'):plan.issue==='empty'?window.rigText('Nincs lejátszható időtartam.'):plan.issue;
    const message=window.rigText('Nem lejátszható átmenet: ')+(plan.from!=null?(plan.from+1)+' → '+(plan.to+1)+' · ':'')+detail;
    $('previewStatus').textContent=message;msg(message);
-   if(!document.body.classList.contains('view-only'))selectTab('phases');
+   if(!document.body.classList.contains('view-only')){
+     if(compactEditor()&&document.body.classList.contains('inspector-closed'))$('toggleInspector').click();
+     selectTab('phases');
+   }
    return;
  }
  animation={plan,elapsed:0,last:null,paused:false,speed:Number($('previewSpeed').value||1),display:plan.segments[0].samples[0],request:0,label:null};
@@ -671,7 +674,7 @@ const simpleAngleIds={
  Hip:['hipRotation'],Knee:['kneeFlex'],Foot:['footPitch','sideAnkleYaw','sideAnkleRoll'],Toe:['sideToeBend']
 };
 function compactEditor(){return document.body.classList.contains('compact-editor')&&!document.body.classList.contains('view-only');}
-function simpleEditing(){return compactEditor()&&!$('advancedBody')?.open;}
+function simpleEditing(){return compactEditor()&&(document.body.classList.contains('inspector-closed')||!$('advancedBody')?.open);}
 function syncCompactBody(){
  if(!compactReady||!compactEditor())return;
  const key=selectedTarget||'auto',target=$('compactTarget'),angles=$('compactAngles');
@@ -715,7 +718,8 @@ function setupCompactEditor(){
  toggle.onclick=()=>{
    closeGesture();const closed=document.body.classList.toggle('inspector-closed');
    toggle.setAttribute('aria-expanded',String(!closed));toggle.textContent=closed?'Beállítások':'Elrejtés';
-   if(!closed&&mode==='move')selectTab('body');requestAnimationFrame(show);
+   if(closed){advanced.open=false;if(mode==='orbit'||mode==='pan')setMode('move');}
+   else if(mode==='move')selectTab('body');requestAnimationFrame(show);
  };
  compactReady=true;syncCompactBody();setMode('move');
 }
