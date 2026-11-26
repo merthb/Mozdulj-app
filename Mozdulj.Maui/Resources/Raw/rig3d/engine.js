@@ -1251,9 +1251,34 @@ const Collision3D=(()=>{
    return JSON.stringify(a.pointLocks??{})===JSON.stringify(b.pointLocks??{})&&JSON.stringify(a.equipmentPointLocks??{})===JSON.stringify(b.equipmentPointLocks??{})&&JSON.stringify(a.bodyPointLinks??{})===JSON.stringify(b.bodyPointLinks??{});
  }
  function previewTransition(a,b){
+   const direct=checkedPreview(a,b,false);
+   if(direct.ok||direct.issue==='representation')return direct;
+   const curved=checkedPreview(a,b,true);
+   return curved.ok?{...curved,path:'arc'}:direct;
+ }
+ // Preserve radial reach while moving IK endpoints around their parent joints.
+ // A long Cartesian chord can cut through the torso during an otherwise valid lift.
+ function curvedEndpoints(frame,from,to,t,ja,jb){
+   const j=joints(frame);
+   for(const kind of ['arm','leg'])for(const side of ['left','right']){
+     if(from[modeKeys[kind]]?.[side]||to[modeKeys[kind]]?.[side])continue;
+     const key=kind==='arm'?'hands':'feet',anchor=kind==='arm'?'shoulder':'hip',lock=side+(kind==='arm'?'Hand':'Foot');
+     if(from.pointLocks?.[lock]||from.equipmentPointLocks?.[lock]||from.bodyPointLinks?.[lock])continue;
+     const a=sub(ja[key][side],ja[anchor][side]),b=sub(jb[key][side],jb[anchor][side]);
+     const la=len(a),lb=len(b);if(la<1e-6||lb<1e-6)continue;
+     const u=norm(a),v=norm(b),angle=Math.acos(clamp(dot(u,v),-1,1));
+     if(angle<.2)continue;
+     let tangent=sub(v,mul(u,dot(u,v)));
+     if(len(tangent)<1e-6){const outward=articulationAxes(frame).upper([side==='left'?-1:1,0,0]);tangent=sub(outward,mul(u,dot(outward,u)));}
+     if(len(tangent)<1e-6)continue;
+     const direction=add(mul(u,Math.cos(angle*t)),mul(norm(tangent),Math.sin(angle*t)));
+     frame[key][side]=add(j[anchor][side],mul(direction,la*(1-t)+lb*t));
+   }
+ }
+ function checkedPreview(a,b,curved){
    const normalized=previewCompatible(a,b)?[a,b]:normalizePreview(a,b);
    if(!normalized)return {ok:false,issue:'representation'};
-   const [from,to]=normalized;
+   const [from,to]=normalized,ja=joints(a),jb=joints(b);
    const baseline=overlaps(a);
    for(const [id,depth] of overlaps(b))baseline.set(id,Math.max(depth,baseline.get(id)||0));
    if(!validEquipmentPointLocks(a)||!validEquipmentPointLocks(b))return {ok:false,issue:'lock:equipment'};
@@ -1265,6 +1290,7 @@ const Collision3D=(()=>{
    // intermediate poses. Fixed sampling is approximate, not continuous proof.
    for(let i=0;i<=48;i++){
      const frame=i===0?cloneFrame(a):i===48?cloneFrame(b):interpolate(from,to,i/48);
+     if(curved&&i>0&&i<48)curvedEndpoints(frame,from,to,i/48,ja,jb);
      const locks=effectiveLocks(frame,a);
       if(i>0&&i<48&&Object.keys(locks).length){if(a.equipmentPointLocks?.root&&locks.root)moveRoot(frame,sub(locks.root,frame.root));adaptSupportPoints(frame,locks,{reference:samples.at(-1)});}
      if(i>0&&i<48)adaptBodyLinks(frame);
