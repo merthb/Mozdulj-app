@@ -303,3 +303,25 @@ html.dark .quick-camera button{background:var(--surface);color:var(--purple-dark
 #rotationOverlay path.ring-visible{fill:none;stroke-width:3;pointer-events:none}
 #rotationOverlay path.ring-hit{fill:none;stroke:transparent;stroke-width:24;pointer-events:stroke;cursor:grab;touch-action:none}
 #rotationOverlay path.ring-hit:active{cursor:grabbing}
+
+/* Model-first editor: the inspector is closed until explicitly requested. */
+body.compact-editor:not(.view-only).inspector-closed main{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important}
+body.compact-editor:not(.view-only).inspector-closed .workspace-shell,
+body.compact-editor:not(.view-only).inspector-closed #workspaceDivider{display:none!important}
+body.compact-editor:not(.view-only) .viewport-shell>.header,
+body.compact-editor:not(.view-only) .history-bar{display:none}
+body.compact-editor:not(.view-only) .phase-controls{grid-template-columns:40px 40px minmax(0,1fr) 40px 40px;padding:3px 5px;gap:3px}
+body.compact-editor:not(.view-only) .phase-controls button{width:40px;height:44px;font-size:1.4rem;min-width:0}
+body.compact-editor:not(.view-only) .phase-controls #undoPose:disabled,
+body.compact-editor:not(.view-only) .phase-controls #redoPose:disabled{opacity:.4}
+body.compact-editor:not(.view-only) .edit-tools{grid-template-columns:repeat(4,minmax(0,1fr)) 44px minmax(70px,1.25fr);gap:3px;padding:3px}
+body.compact-editor:not(.view-only) .edit-tools button{min-height:44px;font-size:.76rem;padding:2px}
+body.compact-editor:not(.view-only) #canvasStatus:not(.has-warning){display:none}
+body.compact-editor:not(.view-only) .workspace-content{padding:7px;gap:7px}
+body.compact-editor:not(.view-only) #advancedBody[open]{display:grid;gap:9px}
+body.compact-editor:not(.view-only) #advancedBody[open] #targetControls{padding:5px}
+.compact-angle{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:center}
+.compact-angle input{grid-column:1/-1;min-height:36px}
+.compact-angle output{font-size:.78rem;font-variant-numeric:tabular-nums}
+#compactAngles:empty{display:none}
+.view-only #toggleInspector,.view-only #undoPose,.view-only #redoPose{display:none!important}
