@@ -1,8 +1,8 @@
 {
   "schemaVersion": 3,
-  "catalogVersion": 21,
+  "catalogVersion": 22,
   "locale": "hu-HU",
-  "editorialNote": "A kétfázisú 3D mozdulatok visszatérési fázissal bővítve. Az anatómiai felülvizsgálat folyamatos; a modellek szemléltető jellegűek. A négykézláb modellek törzstájolása és több hanyatt fekvő alapkéztartás javítva; további szakmai ellenőrzés szükséges. Négy további dinamikus gyakorlathoz egyedi köztes mozgásfázis készült. 15 további mozgáshoz kiinduló–mozdulat–visszatérési fázis készült; a finom mozgások csak szemléltetők. v21: core és törzsstabilizáló szövegek, irányonkénti és tartásos 3D fázisok; eszköztámaszok vizuális ellenőrzése folyamatban.",
+  "editorialNote": "A kétfázisú 3D mozdulatok visszatérési fázissal bővítve. Az anatómiai felülvizsgálat folyamatos; a modellek szemléltető jellegűek. A négykézláb modellek törzstájolása és több hanyatt fekvő alapkéztartás javítva; további szakmai ellenőrzés szükséges. Négy további dinamikus gyakorlathoz egyedi köztes mozgásfázis készült. 15 további mozgáshoz kiinduló–mozdulat–visszatérési fázis készült; a finom mozgások csak szemléltetők. v21: core és törzsstabilizáló szövegek, irányonkénti és tartásos 3D fázisok; eszköztámaszok vizuális ellenőrzése folyamatban. v22: csípő- és farizomgyakorlatok kétnyelvű korrektúrája, körkörös, váltott oldali és tartásos fázisok.",
   "categories": [
     "mobilizálás",
     "erősítés",
@@ -21059,7 +21059,7 @@
     },
     {
       "id": "csipokorzes-allva",
-      "revision": 1,
+      "revision": 2,
       "name": "Csípőkörzés állva",
       "category": "mobilizálás",
       "regions": [
@@ -21083,16 +21083,17 @@
         }
       ],
       "estimatedSeconds": 60,
-      "startingPosition": "Állj stabilan, a talpak kényelmes távolságban, a törzs hosszan megnyújtva.",
-      "summary": "Kis köröket írj le a medencével mindkét irányba.",
+      "startingPosition": "Állj vállszéles terpeszben, enyhén hajlított térdekkel.",
+      "summary": "Kis köröket írj le a medencével stabil talptámasz mellett.",
       "steps": [
-        "Kis köröket írj le a medencével mindkét irányba.",
-        "Ne billentsd hátra túlzottan a törzset.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Mozgasd a medencét jobbra, előre, balra és hátra kis körben.",
+        "A talpak maradjanak lent, a vállakat ne lendítsd.",
+        "Végezd el fordított sorrendben is."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Túl nagy körök",
+        "térd merev zárása",
+        "derék túlhomorítása."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást.",
       "reviewStatus": "draft",
@@ -21111,7 +21112,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -21124,6 +21125,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -21138,13 +21146,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -21170,25 +21178,35 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6
             },
             {
               "name": "Mozdulat",
               "root": [
-                0.06,
-                0.94,
+                0.035,
+                0.9,
                 0
               ],
               "euler": [
                 0,
                 0,
-                0.17
+                0
               ],
               "headYaw": 0,
               "headPitch": 0,
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -21203,13 +21221,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -21235,13 +21253,321 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0.035
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                -0.035,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                -0.035
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0.035,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -21254,6 +21580,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -21268,13 +21601,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -21300,7 +21633,465 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0.035,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                -0.035
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                -0.035,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0.035
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0.035,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6
             }
           ],
           "camera": {
@@ -21314,13 +22105,29 @@
             ]
           },
           "movementId": "hip_circle",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Standing hip circles",
+        "summary": "Make small circles with your pelvis while keeping your feet grounded.",
+        "startingPosition": "Stand with feet shoulder-width apart and knees slightly bent.",
+        "steps": [
+          "Move the pelvis to the right, forwards, left and backwards in a small circle.",
+          "Keep both feet down and avoid swinging the shoulders.",
+          "Repeat in the opposite order."
+        ],
+        "commonMistakes": [
+          "Oversized circles",
+          "locking the knees",
+          "excessive lower-back arching."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice."
       }
     },
     {
       "id": "csipohajlito-nyujtas-terdelve",
-      "revision": 1,
+      "revision": 2,
       "name": "Csípőhajlító nyújtás térdelve",
       "category": "nyújtás",
       "regions": [
@@ -21347,16 +22154,17 @@
         }
       ],
       "estimatedSeconds": 44,
-      "startingPosition": "Térdelj puha alátámasztáson, és helyezkedj el stabilan.",
-      "summary": "Féltérdelésben finoman vidd előre a medencét, majd válts lábat.",
+      "startingPosition": "Térdelj puha alátétre az egyik térdeddel, a másik talp legyen előtted.",
+      "summary": "Féltérdelésben nyújtsd finoman a hátul lévő láb csípőhajlítóit.",
       "steps": [
-        "Féltérdelésben finoman vidd előre a medencét, majd válts lábat.",
-        "Az elöl lévő térd maradjon a boka közelében.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Finoman billentsd hátra a medencét és feszítsd meg a hátul lévő farizmot.",
+        "Vidd kissé előre a medencét anélkül, hogy homorítanál.",
+        "Térj vissza, majd válts lábat; az oldal a nyújtott csípőre vonatkozik."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Derékból homorítás",
+        "bizonytalan térdtámasz",
+        "túl nagy előredőlés."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -21595,11 +22403,27 @@
           "movementId": "hip_flexor_stretch",
           "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
         }
+      },
+      "englishText": {
+        "name": "Half-kneeling hip flexor stretch",
+        "summary": "Gently stretch the hip flexors of the rear leg in half-kneeling.",
+        "startingPosition": "Kneel on a padded surface with one knee down and the other foot in front.",
+        "steps": [
+          "Gently tuck your pelvis and engage the glute of the rear leg.",
+          "Shift the pelvis slightly forwards without arching your back.",
+          "Return and switch legs; the side refers to the hip being stretched."
+        ],
+        "commonMistakes": [
+          "Arching the lower back",
+          "unstable knee support",
+          "excessive forward lean."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "farizomnyujtas-hanyatt",
-      "revision": 1,
+      "revision": 2,
       "name": "Farizomnyújtás hanyatt",
       "category": "nyújtás",
       "regions": [
@@ -21626,16 +22450,17 @@
         }
       ],
       "estimatedSeconds": 44,
-      "startingPosition": "Feküdj hanyatt, a fejet és a derekat kényelmesen megtámasztva.",
-      "summary": "Hanyatt fekve helyezd egyik bokád az ellenoldali térdre, és közelítsd a lábakat.",
+      "startingPosition": "Feküdj hanyatt hajlított térdekkel, talpak a talajon.",
+      "summary": "Négyes alakú lábtartásban nyújtsd finoman a farizmokat.",
       "steps": [
-        "Hanyatt fekve helyezd egyik bokád az ellenoldali térdre, és közelítsd a lábakat.",
-        "A nyújtás ne okozzon zsibbadást.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Tedd az egyik bokát az ellenoldali combra, közvetlenül a térd fölé.",
+        "Ha kényelmes, fogd át az alsó combot hátulról, és közelítsd magadhoz.",
+        "Engedd vissza a lábakat, majd válts; az oldal a keresztezett lábra vonatkozik."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "A térd lefelé nyomása",
+        "a nyak erőltetése",
+        "zsibbadásig nyújtás."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -21874,11 +22699,27 @@
           "movementId": "glute_stretch",
           "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
         }
+      },
+      "englishText": {
+        "name": "Supine figure-four glute stretch",
+        "summary": "Gently stretch the glutes in a figure-four position.",
+        "startingPosition": "Lie on your back with knees bent and feet on the floor.",
+        "steps": [
+          "Place one ankle on the opposite thigh just above the knee.",
+          "If comfortable, hold behind the lower thigh and draw it towards you.",
+          "Lower the legs and switch; the side refers to the crossed leg."
+        ],
+        "commonMistakes": [
+          "Pressing down on the knee",
+          "straining the neck",
+          "stretching into numbness."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "kagylonyitas-oldalfekvesben",
-      "revision": 1,
+      "revision": 2,
       "name": "Kagylónyitás oldalfekvésben",
       "category": "erősítés",
       "regions": [
@@ -21905,16 +22746,17 @@
         }
       ],
       "estimatedSeconds": 92,
-      "startingPosition": "Feküdj valóban az oldaladra: a vállak és a csípők egymás fölött maradjanak, a fejedet támaszd alá.",
-      "summary": "Hajlított térdekkel emeld a felső térdet úgy, hogy a sarkak együtt maradnak.",
+      "startingPosition": "Feküdj az oldaladra, csípők egymás fölött, térdek hajlítva, fej megtámasztva.",
+      "summary": "A sarkakat együtt tartva emeld a felső térdet.",
       "steps": [
-        "Hajlított térdekkel emeld a felső térdet úgy, hogy a sarkak együtt maradnak.",
-        "A medence ne gördüljön hátra.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Emeld a felső térdet, miközben a sarkak együtt maradnak.",
+        "Csak addig nyiss, amíg a medence nem gördül hátra.",
+        "Lassan zárd vissza a térdet, majd válts oldalt."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Medence hátragördülése",
+        "sarkak szétválása",
+        "lendületből nyitás."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -22153,11 +22995,27 @@
           "movementId": "clam",
           "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
         }
+      },
+      "englishText": {
+        "name": "Side-lying clamshell",
+        "summary": "Lift the upper knee while keeping your heels together.",
+        "startingPosition": "Lie on your side with hips stacked, knees bent and head supported.",
+        "steps": [
+          "Raise the upper knee while keeping the heels together.",
+          "Open only as far as you can without rolling the pelvis backwards.",
+          "Lower the knee slowly and switch sides."
+        ],
+        "commonMistakes": [
+          "Rolling the pelvis backwards",
+          "separating the heels",
+          "using momentum."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "oldalfekvo-labemeles",
-      "revision": 1,
+      "revision": 2,
       "name": "Oldalfekvő lábemelés",
       "category": "erősítés",
       "regions": [
@@ -22185,16 +23043,17 @@
         }
       ],
       "estimatedSeconds": 76,
-      "startingPosition": "Feküdj valóban az oldaladra: a vállak és a csípők egymás fölött maradjanak, a fejedet támaszd alá.",
-      "summary": "Nyújtott felső lábad emeld néhány centire, majd engedd vissza.",
+      "startingPosition": "Feküdj oldalra megtámasztott fejjel, felső láb nyújtva, alsó láb kényelmesen hajlítva.",
+      "summary": "Emeld oldalra a felső lábat a medence elfordítása nélkül.",
       "steps": [
-        "Nyújtott felső lábad emeld néhány centire, majd engedd vissza.",
-        "A lábfej maradjon előre néző.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Emeld a felső lábat kis tartományban, a lábujjak előre nézzenek.",
+        "Tartsd a medencét egymás fölött, ne gördülj hátra.",
+        "Engedd vissza lassan, majd válts oldalt."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Lábujjak felfelé fordítása",
+        "medence billentése",
+        "túl magas emelés."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -22433,11 +23292,27 @@
           "movementId": "side_leg_raise",
           "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
         }
+      },
+      "englishText": {
+        "name": "Side-lying hip abduction",
+        "summary": "Raise the upper leg without rotating the pelvis.",
+        "startingPosition": "Lie on your side with head supported, upper leg straight and lower leg comfortably bent.",
+        "steps": [
+          "Lift the upper leg a short distance with toes facing forwards.",
+          "Keep the hips stacked and avoid rolling backwards.",
+          "Lower slowly and switch sides."
+        ],
+        "commonMistakes": [
+          "Turning toes upwards",
+          "tilting the pelvis",
+          "lifting too high."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "csiponyitas-negykezlab",
-      "revision": 1,
+      "revision": 2,
       "name": "Csípőnyitás négykézláb",
       "category": "mobilizálás",
       "regions": [
@@ -22464,16 +23339,17 @@
         }
       ],
       "estimatedSeconds": 76,
-      "startingPosition": "Helyezkedj négykézlábra, a tenyerek nagyjából a vállak alatt, a térdek a csípő alatt.",
-      "summary": "Négykézláb emeld oldalra a hajlított térdedet, majd válts.",
+      "startingPosition": "Helyezkedj négykézlábra, tenyerek a vállak, térdek a csípő alatt.",
+      "summary": "Emeld oldalra a hajlított térdet stabil törzzsel.",
       "steps": [
-        "Négykézláb emeld oldalra a hajlított térdedet, majd válts.",
-        "A törzsed ne forduljon el.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Emeld az egyik térdet oldalra, a térdet végig hajlítva tartva.",
+        "A vállak és a medence maradjanak a talaj felé néző helyzetben.",
+        "Lassan engedd vissza a térdet, majd válts oldalt."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Medence elfordítása",
+        "derék túlhomorítása",
+        "támaszkodó kar beesése."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -22492,7 +23368,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.61,
+                0.55,
                 0.15
               ],
               "euler": [
@@ -22505,16 +23381,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.24,
-                  0.07,
-                  0.59
+                  0.057,
+                  0.69
                 ],
                 "right": [
                   0.24,
-                  0.07,
-                  0.59
+                  0.057,
+                  0.69
                 ]
               },
               "feet": {
@@ -22553,20 +23447,24 @@
               },
               "equipment": [
                 {
-                  "type": "mat",
-                  "anchor": "world"
+                  "type": "mat"
                 }
               ],
-              "footPitch": {
-                "left": -0.65,
-                "right": -0.65
-              }
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "start",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.61,
+                0.55,
                 0.15
               ],
               "euler": [
@@ -22579,89 +23477,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
-              "hands": {
-                "left": [
-                  -0.24,
-                  0.07,
-                  0.59
-                ],
-                "right": [
-                  0.24,
-                  0.07,
-                  0.59
-                ]
-              },
-              "feet": {
-                "left": [
-                  -0.14,
-                  0.12,
-                  -0.57
-                ],
-                "right": [
-                  0.34,
-                  0.47,
-                  -0.3
-                ]
-              },
-              "poles": {
-                "elbowLeft": [
-                  -0.3,
-                  0.53,
-                  0.78
-                ],
-                "elbowRight": [
-                  0.3,
-                  0.53,
-                  0.78
-                ],
-                "kneeLeft": [
-                  -0.15,
-                  0.34,
-                  -0.34
-                ],
-                "kneeRight": [
-                  0.15,
-                  0.34,
-                  -0.34
-                ]
-              },
-              "equipment": [
-                {
-                  "type": "mat",
-                  "anchor": "world"
-                }
-              ],
+              "pelvicTilt": 0,
               "footPitch": {
-                "left": -0.65
-              }
-            },
-            {
-              "name": "Visszatérés",
-              "root": [
-                0,
-                0.61,
-                0.15
-              ],
-              "euler": [
-                1.5707963267948966,
-                0,
-                0
-              ],
-              "headYaw": 0,
-              "headPitch": -0.24,
-              "headRoll": 0,
-              "upperYaw": 0,
-              "spineBend": 0,
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.65,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.24,
-                  0.07,
-                  0.59
+                  0.057,
+                  0.69
                 ],
                 "right": [
                   0.24,
-                  0.07,
-                  0.59
+                  0.057,
+                  0.69
                 ]
               },
               "feet": {
@@ -22700,14 +23543,308 @@
               },
               "equipment": [
                 {
-                  "type": "mat",
-                  "anchor": "world"
+                  "type": "mat"
                 }
               ],
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0,
+              "direction": "left"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.55,
+                0.15
+              ],
+              "euler": [
+                1.5707963267948966,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": -0.24,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
               "footPitch": {
-                "left": -0.65,
-                "right": -0.65
-              }
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.24,
+                  0.057,
+                  0.69
+                ],
+                "right": [
+                  0.24,
+                  0.057,
+                  0.69
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.12,
+                  -0.57
+                ],
+                "right": [
+                  0.14,
+                  0.12,
+                  -0.57
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.3,
+                  0.53,
+                  0.78
+                ],
+                "elbowRight": [
+                  0.3,
+                  0.53,
+                  0.78
+                ],
+                "kneeLeft": [
+                  -0.15,
+                  0.34,
+                  -0.34
+                ],
+                "kneeRight": [
+                  0.15,
+                  0.34,
+                  -0.34
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "mat"
+                }
+              ],
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.55,
+                0.15
+              ],
+              "euler": [
+                1.5707963267948966,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": -0.24,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": 0.95,
+                "left": 0.95
+              },
+              "legAngles": {
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.65,
+                  "kneeFlexion": 1.69
+                },
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.24,
+                  0.057,
+                  0.69
+                ],
+                "left": [
+                  -0.24,
+                  0.057,
+                  0.69
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.14,
+                  0.12,
+                  -0.57
+                ],
+                "left": [
+                  -0.14,
+                  0.12,
+                  -0.57
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.3,
+                  0.53,
+                  0.78
+                ],
+                "elbowLeft": [
+                  -0.3,
+                  0.53,
+                  0.78
+                ],
+                "kneeRight": [
+                  0.15,
+                  0.34,
+                  -0.34
+                ],
+                "kneeLeft": [
+                  -0.15,
+                  0.34,
+                  -0.34
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "mat"
+                }
+              ],
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0,
+              "direction": "right"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.55,
+                0.15
+              ],
+              "euler": [
+                1.5707963267948966,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": -0.24,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.24,
+                  0.057,
+                  0.69
+                ],
+                "right": [
+                  0.24,
+                  0.057,
+                  0.69
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.12,
+                  -0.57
+                ],
+                "right": [
+                  0.14,
+                  0.12,
+                  -0.57
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.3,
+                  0.53,
+                  0.78
+                ],
+                "elbowRight": [
+                  0.3,
+                  0.53,
+                  0.78
+                ],
+                "kneeLeft": [
+                  -0.15,
+                  0.34,
+                  -0.34
+                ],
+                "kneeRight": [
+                  0.15,
+                  0.34,
+                  -0.34
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "mat"
+                }
+              ],
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             }
           ],
           "camera": {
@@ -22721,13 +23858,29 @@
             ]
           },
           "movementId": "quadruped_hip",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Quadruped bent-knee hip abduction",
+        "summary": "Lift a bent knee sideways while keeping your trunk stable.",
+        "startingPosition": "Start on all fours with hands under shoulders and knees under hips.",
+        "steps": [
+          "Lift one knee sideways, keeping it bent throughout.",
+          "Keep your shoulders and pelvis facing the floor.",
+          "Lower the knee slowly and switch sides."
+        ],
+        "commonMistakes": [
+          "Rotating the pelvis",
+          "overarching the back",
+          "collapsing into the supporting arm."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "farizomfeszites-allva",
-      "revision": 1,
+      "revision": 2,
       "name": "Farizomfeszítés állva",
       "category": "erősítés",
       "regions": [
@@ -22747,16 +23900,17 @@
         }
       ],
       "estimatedSeconds": 52,
-      "startingPosition": "Állj stabilan, a talpak kényelmes távolságban, a törzs hosszan megnyújtva.",
-      "summary": "Finoman feszítsd meg a farizmokat pár másodpercre, majd lazíts.",
+      "startingPosition": "Állj stabilan, enyhén hajlított térdekkel, egyenletes talptámasszal.",
+      "summary": "Finoman feszítsd meg, majd lazítsd el a farizmokat.",
       "steps": [
-        "Finoman feszítsd meg a farizmokat pár másodpercre, majd lazíts.",
-        "Ne tartsd vissza a levegőt.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Feszítsd meg a farizmokat kis erővel.",
+        "Tartsd röviden, miközben nyugodtan lélegzel.",
+        "Lazíts teljesen, majd ismételd a testhelyzet megváltoztatása nélkül."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Medence erőltetett előretolása",
+        "légzés visszatartása",
+        "térdek zárása."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást.",
       "reviewStatus": "draft",
@@ -22775,7 +23929,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -22788,6 +23942,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -22802,13 +23963,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -22834,14 +23995,17 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.954,
-                0.014
+                0.9,
+                0
               ],
               "euler": [
                 0,
@@ -22853,6 +24017,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -22867,13 +24038,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -22899,13 +24070,16 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 2,
+              "transitionSeconds": 1.2
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -22918,6 +24092,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -22932,13 +24113,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -22964,7 +24145,10 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             }
           ],
           "camera": {
@@ -22978,14 +24162,30 @@
             ]
           },
           "movementId": "glute_standing",
-          "editorialNote": "A három fázis szemléltető; a finom ízületi/izommozgás részletes 3D-modellezése és anatómiai ellenőrzése még szükséges.",
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges. Az izomfeszítés nem ábrázolható közvetlenül.",
           "requiresFineJoints": true
         }
+      },
+      "englishText": {
+        "name": "Standing glute squeeze",
+        "summary": "Gently contract and relax the gluteal muscles.",
+        "startingPosition": "Stand steadily with slightly bent knees and even weight through both feet.",
+        "steps": [
+          "Gently tighten the gluteal muscles.",
+          "Hold briefly while breathing normally.",
+          "Relax fully and repeat without changing your posture."
+        ],
+        "commonMistakes": [
+          "Forcing the pelvis forwards",
+          "holding your breath",
+          "locking the knees."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice."
       }
     },
     {
       "id": "oldalazo-lepesek-minibanddel",
-      "revision": 1,
+      "revision": 2,
       "name": "Oldalazó lépések minibanddel",
       "category": "erősítés",
       "regions": [
@@ -23012,16 +24212,17 @@
         }
       ],
       "estimatedSeconds": 76,
-      "startingPosition": "Állj stabilan, a talpak kényelmes távolságban, a törzs hosszan megnyújtva.",
-      "summary": "A térd feletti miniband mellett lépj lassan oldalra, majd vissza.",
+      "startingPosition": "Állj csípőszéles terpeszben, enyhén hajlított térdekkel; a miniband a térdek fölött legyen.",
+      "summary": "Lépj oldalra és vissza a miniband ellenállásával szemben.",
       "steps": [
-        "A térd feletti miniband mellett lépj lassan oldalra, majd vissza.",
-        "Térded kövesse a lábfej irányát.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Emeld az egyik talpad és lépj rövidet oldalra.",
+        "A térd kövesse a lábfej irányát, a törzs ne billegjen.",
+        "Lépj vissza kontrolláltan, majd ismételd a másik irányba."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Térdek befelé esése",
+        "túl nagy lépés",
+        "szalag visszacsapódása."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -23040,7 +24241,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -23053,6 +24254,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23067,13 +24275,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -23101,16 +24309,19 @@
               },
               "equipment": [
                 {
-                  "type": "band",
+                  "type": "miniband",
                   "anchor": "knees"
                 }
-              ]
+              ],
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -23123,6 +24334,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23137,14 +24355,14 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.32,
+                  0.15,
                   0
                 ],
                 "right": [
-                  0.51,
-                  0.08,
-                  0.04
+                  0.22,
+                  0.06915497015242196,
+                  0
                 ]
               },
               "poles": {
@@ -23171,16 +24389,182 @@
               },
               "equipment": [
                 {
-                  "type": "band",
+                  "type": "miniband",
                   "anchor": "knees"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "left"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.43,
+                  0.075,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "left"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.32,
+                  0.15,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "left"
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -23193,6 +24577,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23207,13 +24598,13 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.22,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
-                  0.14,
-                  0.075,
+                  0.22,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -23241,10 +24632,336 @@
               },
               "equipment": [
                 {
-                  "type": "band",
+                  "type": "miniband",
                   "anchor": "knees"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ],
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.32,
+                  0.15,
+                  0
+                ],
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "right"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ],
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.43,
+                  0.075,
+                  0
+                ],
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "right"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ],
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.32,
+                  0.15,
+                  0
+                ],
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "right"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.22,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             }
           ],
           "camera": {
@@ -23258,13 +24975,29 @@
             ]
           },
           "movementId": "step_side",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Mini-band lateral step-outs",
+        "summary": "Step sideways and back against the resistance of a mini-band.",
+        "startingPosition": "Stand with feet hip-width apart and knees slightly bent; place the band above your knees.",
+        "steps": [
+          "Lift one foot and take a short sideways step.",
+          "Keep knees aligned with toes and avoid swaying your trunk.",
+          "Step back under control and repeat in the other direction."
+        ],
+        "commonMistakes": [
+          "Knees collapsing inwards",
+          "stepping too far",
+          "letting the band snap back."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "hatralepes-minibanddel",
-      "revision": 1,
+      "revision": 2,
       "name": "Hátralépés minibanddel",
       "category": "erősítés",
       "regions": [
@@ -23291,16 +25024,17 @@
         }
       ],
       "estimatedSeconds": 76,
-      "startingPosition": "Állj stabilan, a talpak kényelmes távolságban, a törzs hosszan megnyújtva.",
-      "summary": "Egyenes törzzsel lépj rövidet hátrafelé a szalag enyhe ellenállásával.",
+      "startingPosition": "Állj stabilan, enyhén hajlított térdekkel, miniband a térdek fölött.",
+      "summary": "Lépj rövidet hátra és vissza a miniband ellenállásával szemben.",
       "steps": [
-        "Egyenes törzzsel lépj rövidet hátrafelé a szalag enyhe ellenállásával.",
-        "Ne homoríts a derekaddal.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Emeld az egyik lábad, lépj rövidet hátra, és finoman érintsd le a lábujjakat.",
+        "Tartsd a medencét előre néző helyzetben, a testsúlyt főként az elülső lábon.",
+        "Hozd vissza a lábad és válts oldalt."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Túl nagy hátralépés",
+        "derék homorítása",
+        "egyensúly elvesztése."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -23319,7 +25053,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -23332,6 +25066,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23347,12 +25088,12 @@
               "feet": {
                 "left": [
                   -0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
                   0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -23380,16 +25121,19 @@
               },
               "equipment": [
                 {
-                  "type": "band",
+                  "type": "miniband",
                   "anchor": "knees"
                 }
-              ]
+              ],
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -23402,6 +25146,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23416,14 +25167,14 @@
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
-                  0
+                  -0.15,
+                  0.18,
+                  -0.12
                 ],
                 "right": [
-                  0.2,
-                  0.07,
-                  -0.5
+                  0.14,
+                  0.06915497015242196,
+                  0
                 ]
               },
               "poles": {
@@ -23450,16 +25201,182 @@
               },
               "equipment": [
                 {
-                  "type": "band",
+                  "type": "miniband",
                   "anchor": "knees"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "left"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.15,
+                  0.12,
+                  -0.25
+                ],
+                "right": [
+                  0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "left"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.15,
+                  0.18,
+                  -0.12
+                ],
+                "right": [
+                  0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "left"
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.94,
+                0.9,
                 0
               ],
               "euler": [
@@ -23472,6 +25389,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23487,12 +25411,12 @@
               "feet": {
                 "left": [
                   -0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
                   0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -23520,10 +25444,336 @@
               },
               "equipment": [
                 {
-                  "type": "band",
+                  "type": "miniband",
                   "anchor": "knees"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ],
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.15,
+                  0.18,
+                  -0.12
+                ],
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "right"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ],
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.15,
+                  0.12,
+                  -0.25
+                ],
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "right"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ],
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.15,
+                  0.18,
+                  -0.12
+                ],
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.7,
+              "direction": "right"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.9,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "miniband",
+                  "anchor": "knees"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             }
           ],
           "camera": {
@@ -23537,13 +25787,29 @@
             ]
           },
           "movementId": "step_back",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Mini-band backward step-outs",
+        "summary": "Step backwards and return against the resistance of a mini-band.",
+        "startingPosition": "Stand steadily with slightly bent knees and the band above your knees.",
+        "steps": [
+          "Lift one foot, take a short backward step and gently tap the toes down.",
+          "Keep the pelvis facing forwards and most of your weight on the front foot.",
+          "Return your foot and switch sides."
+        ],
+        "commonMistakes": [
+          "Stepping too far back",
+          "arching the back",
+          "losing balance."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "allo-csipohatrafeszites",
-      "revision": 1,
+      "revision": 2,
       "name": "Álló csípőhátrafeszítés",
       "category": "erősítés",
       "regions": [
@@ -23568,16 +25834,17 @@
         }
       ],
       "estimatedSeconds": 92,
-      "startingPosition": "Állj stabilan, a talpak kényelmes távolságban, a törzs hosszan megnyújtva.",
-      "summary": "Kapaszkodva vidd az egyik lábat hátra kis tartományban, majd válts.",
+      "startingPosition": "Állj egyenesen, szükség esetén kapaszkodj stabil támaszba.",
+      "summary": "Vidd hátra az egyik lábat kis tartományban, stabil törzzsel.",
       "steps": [
-        "Kapaszkodva vidd az egyik lábat hátra kis tartományban, majd válts.",
-        "Ne dőlj előre.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Helyezd a testsúlyt az egyik lábra, a másikat nyújtsd kissé hátra.",
+        "A medence maradjon előre néző, a derék ne homorítson.",
+        "Engedd vissza a lábad és válts oldalt."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Előredőlés",
+        "derék túlhomorítása",
+        "lendületből lábemelés."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást.",
       "reviewStatus": "draft",
@@ -23596,7 +25863,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.94,
+                0.91,
                 0
               ],
               "euler": [
@@ -23609,6 +25876,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23624,12 +25898,12 @@
               "feet": {
                 "left": [
                   -0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
                   0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -23655,13 +25929,16 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.94,
+                0.91,
                 0
               ],
               "euler": [
@@ -23674,6 +25951,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23689,13 +25973,13 @@
               "feet": {
                 "left": [
                   -0.14,
-                  0.075,
-                  0
+                  0.17,
+                  -0.25
                 ],
                 "right": [
-                  0.2,
-                  0.24,
-                  -0.48
+                  0.14,
+                  0.06915497015242196,
+                  0
                 ]
               },
               "poles": {
@@ -23720,13 +26004,17 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2,
+              "direction": "left"
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.94,
+                0.91,
                 0
               ],
               "euler": [
@@ -23739,6 +26027,13 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.34,
@@ -23754,12 +26049,12 @@
               "feet": {
                 "left": [
                   -0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
                   0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -23785,7 +26080,161 @@
                   0.3
                 ]
               },
-              "equipment": []
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.91,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ],
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.14,
+                  0.17,
+                  -0.25
+                ],
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2,
+              "direction": "right"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.91,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.34,
+                  0.96,
+                  0.02
+                ],
+                "right": [
+                  0.34,
+                  0.96,
+                  0.02
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             }
           ],
           "camera": {
@@ -23799,13 +26248,29 @@
             ]
           },
           "movementId": "hip_extend",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Standing hip extension",
+        "summary": "Move one leg backwards a short distance while keeping your trunk steady.",
+        "startingPosition": "Stand upright, using a stable support if needed.",
+        "steps": [
+          "Shift weight onto one leg and extend the other slightly backwards.",
+          "Keep the pelvis facing forwards and avoid arching your back.",
+          "Lower your leg and switch sides."
+        ],
+        "commonMistakes": [
+          "Leaning forwards",
+          "overarching the back",
+          "swinging the leg."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice."
       }
     },
     {
       "id": "allo-csipooldalemeles",
-      "revision": 1,
+      "revision": 2,
       "name": "Álló csípőoldalemelés",
       "category": "erősítés",
       "regions": [
@@ -23832,16 +26297,17 @@
         }
       ],
       "estimatedSeconds": 92,
-      "startingPosition": "Állj stabilan, a talpak kényelmes távolságban, a törzs hosszan megnyújtva.",
-      "summary": "Székbe kapaszkodva emeld a nyújtott lábat oldalra, majd lassan engedd le.",
+      "startingPosition": "Állj egy nem guruló, biztosan álló szék háttámlája mögé.",
+      "summary": "Emeld oldalra az egyik lábat, stabil székbe kapaszkodva.",
       "steps": [
-        "Székbe kapaszkodva emeld a nyújtott lábat oldalra, majd lassan engedd le.",
-        "A medence maradjon vízszintes.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Helyezd a testsúlyt az egyik lábra, a másikat emeld oldalra kis tartományban.",
+        "A medence maradjon vízszintes, a lábujjak előre nézzenek.",
+        "Lassan engedd le a lábad és válts oldalt."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Törzs oldalra dőlése",
+        "lábfej kifordítása",
+        "instabil szék használata."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -23860,7 +26326,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.94,
+                0.88,
                 0
               ],
               "euler": [
@@ -23873,27 +26339,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.34,
-                  0.96,
-                  0.02
+                  -0.2,
+                  1,
+                  0.39
                 ],
                 "right": [
-                  0.34,
-                  0.96,
-                  0.02
+                  0.2,
+                  1,
+                  0.39
                 ]
               },
               "feet": {
                 "left": [
                   -0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
                   0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -23922,15 +26395,23 @@
               "equipment": [
                 {
                   "type": "chair",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.3,
+                    0.77
+                  ],
+                  "yaw": 0
                 }
-              ]
+              ],
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.94,
+                0.88,
                 0
               ],
               "euler": [
@@ -23943,28 +26424,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.34,
-                  0.96,
-                  0.02
+                  -0.2,
+                  1,
+                  0.39
                 ],
                 "right": [
-                  0.34,
-                  0.96,
-                  0.02
+                  0.2,
+                  1,
+                  0.39
                 ]
               },
               "feet": {
                 "left": [
-                  -0.14,
-                  0.075,
+                  -0.46,
+                  0.18,
                   0
                 ],
                 "right": [
-                  0.65,
-                  0.24,
-                  0.08
+                  0.14,
+                  0.06915497015242196,
+                  0
                 ]
               },
               "poles": {
@@ -23992,15 +26480,24 @@
               "equipment": [
                 {
                   "type": "chair",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.3,
+                    0.77
+                  ],
+                  "yaw": 0
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2,
+              "direction": "left"
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.94,
+                0.88,
                 0
               ],
               "euler": [
@@ -24013,27 +26510,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.34,
-                  0.96,
-                  0.02
+                  -0.2,
+                  1,
+                  0.39
                 ],
                 "right": [
-                  0.34,
-                  0.96,
-                  0.02
+                  0.2,
+                  1,
+                  0.39
                 ]
               },
               "feet": {
                 "left": [
                   -0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ],
                 "right": [
                   0.14,
-                  0.075,
+                  0.06915497015242196,
                   0
                 ]
               },
@@ -24062,9 +26566,188 @@
               "equipment": [
                 {
                   "type": "chair",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.3,
+                    0.77
+                  ],
+                  "yaw": 0
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.88,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.165,
+                "left": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.2,
+                  1,
+                  0.39
+                ],
+                "left": [
+                  -0.2,
+                  1,
+                  0.39
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.46,
+                  0.18,
+                  0
+                ],
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "chair",
+                  "position": [
+                    0,
+                    0.3,
+                    0.77
+                  ],
+                  "yaw": 0
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2,
+              "direction": "right"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.88,
+                0
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.165,
+                "right": -0.165
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.2,
+                  1,
+                  0.39
+                ],
+                "right": [
+                  0.2,
+                  1,
+                  0.39
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.06915497015242196,
+                  0
+                ],
+                "right": [
+                  0.14,
+                  0.06915497015242196,
+                  0
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.5,
+                  0.3
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.5,
+                  0.3
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "chair",
+                  "position": [
+                    0,
+                    0.3,
+                    0.77
+                  ],
+                  "yaw": 0
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             }
           ],
           "camera": {
@@ -24078,13 +26761,29 @@
             ]
           },
           "movementId": "side_leg_raise",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Supported standing hip abduction",
+        "summary": "Lift one leg sideways while holding a stable chair.",
+        "startingPosition": "Stand behind the backrest of a stable, non-wheeled chair.",
+        "steps": [
+          "Shift weight onto one leg and raise the other slightly out to the side.",
+          "Keep the pelvis level and toes facing forwards.",
+          "Lower your leg slowly and switch sides."
+        ],
+        "commonMistakes": [
+          "Leaning sideways",
+          "turning the foot out",
+          "using an unstable chair."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "gumiszalagos-csipooldalemeles",
-      "revision": 1,
+      "revision": 2,
       "name": "Gumiszalagos csípőoldalemelés",
       "category": "erősítés",
       "regions": [
@@ -24111,16 +26810,17 @@
         }
       ],
       "estimatedSeconds": 76,
-      "startingPosition": "Állj stabilan, a talpak kényelmes távolságban, a törzs hosszan megnyújtva.",
-      "summary": "Biztonságosan rögzített szalaggal finoman emeld oldalra az egyik lábad.",
+      "startingPosition": "Rögzítsd a megfelelő szalagot biztonságos alacsony ponthoz, és az erre alkalmas rögzítővel a mozgatott láb bokájához.",
+      "summary": "Emeld oldalra a lábad egy alacsonyan rögzített gumiszalag ellenállásával szemben.",
       "steps": [
-        "Biztonságosan rögzített szalaggal finoman emeld oldalra az egyik lábad.",
-        "A törzs ne dőljön ellenirányba.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Állj stabilan, majd a rögzítési ponttól távolodva emeld oldalra a lábad.",
+        "Tartsd a törzset függőlegesen, a medencét vízszintesen.",
+        "Engedd vissza lassan, majd biztonságosan állítsd át a rögzítést a másik oldalhoz."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Bizonytalan rögzítés",
+        "túl nagy ellenállás",
+        "a törzs oldalra döntése."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -24359,11 +27059,27 @@
           "movementId": "side_leg_raise",
           "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
         }
+      },
+      "englishText": {
+        "name": "Anchored band standing hip abduction",
+        "summary": "Lift your leg sideways against a low-anchored resistance band.",
+        "startingPosition": "Secure a suitable band to a low fixed point and attach it to the moving ankle using an appropriate cuff.",
+        "steps": [
+          "Stand steadily and lift the leg sideways away from the anchor.",
+          "Keep your trunk upright and pelvis level.",
+          "Return slowly, then safely reposition the attachment for the other side."
+        ],
+        "commonMistakes": [
+          "Insecure anchoring",
+          "excessive resistance",
+          "leaning the trunk sideways."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "labdas-medencekorzes",
-      "revision": 1,
+      "revision": 2,
       "name": "Labdás medencekörzés",
       "category": "mobilizálás",
       "regions": [
@@ -24390,16 +27106,17 @@
         }
       ],
       "estimatedSeconds": 60,
-      "startingPosition": "Ülj stabilan, a talpak lehetőleg érjék a talajt, és nyújtózz meg a fejtetővel.",
-      "summary": "A fitballon ülve rajzolj kicsi köröket a medencével mindkét irányban.",
+      "startingPosition": "Ülj megfelelő méretű fitballra, talpak széles és stabil támaszban.",
+      "summary": "Rajzolj kis köröket a medencével fitballon ülve.",
       "steps": [
-        "A fitballon ülve rajzolj kicsi köröket a medencével mindkét irányban.",
-        "A lábakat tartsd stabilan.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Mozgasd a medencét jobbra, előre, balra és hátra kis körben.",
+        "Tartsd mindkét talpat lent; a törzs maradjon kontrollált.",
+        "Ismételd fordított sorrendben is."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Nagy labdakilengés",
+        "talpak elemelése",
+        "bizonytalan egyensúly esetén támasz hiánya."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -24415,11 +27132,11 @@
           "reviewStatus": "illustrative",
           "frames": [
             {
-              "name": "Tartás",
+              "name": "Kiindulás",
               "root": [
                 0,
-                0.67,
-                0
+                0.82,
+                0.15
               ],
               "euler": [
                 0,
@@ -24431,28 +27148,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.32,
-                  0.68,
-                  0.16
+                  -0.35,
+                  0.85,
+                  0.2
                 ],
                 "right": [
-                  0.32,
-                  0.68,
-                  0.16
+                  0.35,
+                  0.85,
+                  0.2
                 ]
               },
               "feet": {
                 "left": [
-                  -0.17,
-                  0.07,
-                  0.44
+                  -0.22,
+                  0.069,
+                  0.4
                 ],
                 "right": [
-                  0.17,
-                  0.07,
-                  0.44
+                  0.22,
+                  0.069,
+                  0.4
                 ]
               },
               "poles": {
@@ -24480,16 +27204,27 @@
               "equipment": [
                 {
                   "type": "ball",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
                 }
-              ]
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6
             },
             {
               "name": "Mozdulat",
               "root": [
-                0.07,
-                0.67,
-                0
+                0.035,
+                0.82,
+                0.15
               ],
               "euler": [
                 0,
@@ -24501,28 +27236,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.32,
-                  0.68,
-                  0.16
+                  -0.35,
+                  0.85,
+                  0.2
                 ],
                 "right": [
-                  0.32,
-                  0.68,
-                  0.16
+                  0.35,
+                  0.85,
+                  0.2
                 ]
               },
               "feet": {
                 "left": [
-                  -0.17,
-                  0.07,
-                  0.44
+                  -0.22,
+                  0.069,
+                  0.4
                 ],
                 "right": [
-                  0.17,
-                  0.07,
-                  0.44
+                  0.22,
+                  0.069,
+                  0.4
                 ]
               },
               "poles": {
@@ -24550,16 +27292,384 @@
               "equipment": [
                 {
                   "type": "ball",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
                 }
-              ]
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.82,
+                0.185
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                -0.035,
+                0.82,
+                0.15
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.82,
+                0.11499999999999999
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0.035,
+                0.82,
+                0.15
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "forward"
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.67,
-                0
+                0.82,
+                0.15
               ],
               "euler": [
                 0,
@@ -24571,28 +27681,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.32,
-                  0.68,
-                  0.16
+                  -0.35,
+                  0.85,
+                  0.2
                 ],
                 "right": [
-                  0.32,
-                  0.68,
-                  0.16
+                  0.35,
+                  0.85,
+                  0.2
                 ]
               },
               "feet": {
                 "left": [
-                  -0.17,
-                  0.07,
-                  0.44
+                  -0.22,
+                  0.069,
+                  0.4
                 ],
                 "right": [
-                  0.17,
-                  0.07,
-                  0.44
+                  0.22,
+                  0.069,
+                  0.4
                 ]
               },
               "poles": {
@@ -24620,9 +27737,553 @@
               "equipment": [
                 {
                   "type": "ball",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
                 }
-              ]
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0.035,
+                0.82,
+                0.15
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.82,
+                0.11499999999999999
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                -0.035,
+                0.82,
+                0.15
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.82,
+                0.185
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0.035,
+                0.82,
+                0.15
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6,
+              "direction": "backward"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.82,
+                0.15
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.125,
+                "right": -0.125
+              },
+              "legAngles": {},
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.85,
+                  0.2
+                ],
+                "right": [
+                  0.35,
+                  0.85,
+                  0.2
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.22,
+                  0.069,
+                  0.4
+                ],
+                "right": [
+                  0.22,
+                  0.069,
+                  0.4
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.18,
+                  0.43,
+                  0.41
+                ],
+                "kneeRight": [
+                  0.18,
+                  0.43,
+                  0.41
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "ball",
+                  "position": [
+                    0,
+                    0.34,
+                    0
+                  ]
+                }
+              ],
+              "leftAnkleYaw": 0.12859877559829883,
+              "leftAnkleRoll": -0.025,
+              "rightAnkleYaw": 0.12859877559829883,
+              "rightAnkleRoll": -0.025,
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 0.6
             }
           ],
           "camera": {
@@ -24636,13 +28297,29 @@
             ]
           },
           "movementId": "stability_ball",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Seated pelvic circles on a stability ball",
+        "summary": "Make small pelvic circles while sitting on a stability ball.",
+        "startingPosition": "Sit on a suitably sized stability ball with feet firmly planted apart.",
+        "steps": [
+          "Move your pelvis right, forwards, left and backwards in a small circle.",
+          "Keep both feet down and your trunk controlled.",
+          "Repeat in the opposite order."
+        ],
+        "commonMistakes": [
+          "Large ball movements",
+          "lifting the feet",
+          "lack of support when balance is uncertain."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "hid-tartasa",
-      "revision": 1,
+      "revision": 2,
       "name": "Híd tartása",
       "category": "erősítés",
       "regions": [
@@ -24659,16 +28336,17 @@
       "targetSeconds": 30,
       "repTargets": [],
       "estimatedSeconds": 30,
-      "startingPosition": "Feküdj hanyatt, a fejet és a derekat kényelmesen megtámasztva.",
-      "summary": "Emeld a medencét híd helyzetbe, és tartsd stabilan rövid ideig.",
+      "startingPosition": "Feküdj hanyatt, térdek hajlítva, talpak csípőszélességben.",
+      "summary": "Tartsd meg a megemelt medencét stabil hídhelyzetben.",
       "steps": [
-        "Emeld a medencét híd helyzetbe, és tartsd stabilan rövid ideig.",
-        "A terhelést a farizomban érezd, ne a derékban.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Nyomd a talpakat a talajba és emeld meg a medencét.",
+        "Tartsd a vállakat és a fejet lent, lélegezz nyugodtan a tartás alatt.",
+        "Az idő végén lassan engedd le a medencét."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Derék túlhomorítása",
+        "légzés visszatartása",
+        "nyakra terhelés."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -24687,7 +28365,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.29,
+                0.2,
                 0.2
               ],
               "euler": [
@@ -24700,28 +28378,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0,
+                "right": 0
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.23,
+                  -0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ],
                 "right": [
-                  0.23,
+                  0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ]
               },
               "feet": {
                 "left": [
-                  -0.16,
-                  0.055,
-                  0.83
+                  -0.17,
+                  0.075,
+                  0.67
                 ],
                 "right": [
-                  0.16,
-                  0.055,
-                  0.83
+                  0.17,
+                  0.075,
+                  0.67
                 ]
               },
               "poles": {
@@ -24748,20 +28433,22 @@
               },
               "equipment": [
                 {
-                  "type": "mat",
-                  "anchor": "world"
+                  "type": "mat"
                 }
-              ]
+              ],
+              "phaseType": "start",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             },
             {
-              "name": "Mozdulat",
+              "name": "Tartás",
               "root": [
                 0,
-                0.5,
+                0.39,
                 0.2
               ],
               "euler": [
-                -1.5707963267948966,
+                -2.05,
                 0,
                 0
               ],
@@ -24770,28 +28457,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0,
+                "right": 0
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.23,
+                  -0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ],
                 "right": [
-                  0.23,
+                  0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ]
               },
               "feet": {
                 "left": [
-                  -0.16,
-                  0.055,
-                  0.87
+                  -0.17,
+                  0.075,
+                  0.67
                 ],
                 "right": [
-                  0.16,
-                  0.055,
-                  0.87
+                  0.17,
+                  0.075,
+                  0.67
                 ]
               },
               "poles": {
@@ -24818,80 +28512,14 @@
               },
               "equipment": [
                 {
-                  "type": "mat",
-                  "anchor": "world"
+                  "type": "mat"
                 }
-              ]
-            },
-            {
-              "name": "Visszatérés",
-              "root": [
-                0,
-                0.29,
-                0.2
               ],
-              "euler": [
-                -1.5707963267948966,
-                0,
-                0
-              ],
-              "headYaw": 0,
-              "headPitch": 0,
-              "headRoll": 0,
-              "upperYaw": 0,
-              "spineBend": 0,
-              "hands": {
-                "left": [
-                  -0.23,
-                  0.09,
-                  -0.55
-                ],
-                "right": [
-                  0.23,
-                  0.09,
-                  -0.55
-                ]
-              },
-              "feet": {
-                "left": [
-                  -0.16,
-                  0.055,
-                  0.83
-                ],
-                "right": [
-                  0.16,
-                  0.055,
-                  0.83
-                ]
-              },
-              "poles": {
-                "elbowLeft": [
-                  -0.7,
-                  0.6,
-                  0.14
-                ],
-                "elbowRight": [
-                  0.7,
-                  0.6,
-                  0.14
-                ],
-                "kneeLeft": [
-                  -0.16,
-                  0.65,
-                  0.62
-                ],
-                "kneeRight": [
-                  0.16,
-                  0.65,
-                  0.62
-                ]
-              },
-              "equipment": [
-                {
-                  "type": "mat",
-                  "anchor": "world"
-                }
-              ]
+              "phaseType": "hold",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 4,
+              "thoracicBend": 0.3,
+              "cervicalPitch": 0.2
             }
           ],
           "camera": {
@@ -24905,13 +28533,29 @@
             ]
           },
           "movementId": "bridge",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Glute bridge hold",
+        "summary": "Maintain a stable bridge with your pelvis raised.",
+        "startingPosition": "Lie on your back with knees bent and feet hip-width apart.",
+        "steps": [
+          "Press your feet into the floor and lift your pelvis.",
+          "Keep shoulders and head supported and breathe normally throughout the hold.",
+          "At the end of the interval, lower your pelvis slowly."
+        ],
+        "commonMistakes": [
+          "Overarching the lower back",
+          "holding your breath",
+          "loading the neck."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "csipoemeles-labbal-szeken",
-      "revision": 1,
+      "revision": 2,
       "name": "Csípőemelés lábbal széken",
       "category": "erősítés",
       "regions": [
@@ -24934,16 +28578,17 @@
         }
       ],
       "estimatedSeconds": 44,
-      "startingPosition": "Feküdj hanyatt, a fejet és a derekat kényelmesen megtámasztva.",
-      "summary": "Tedd a lábszárakat stabil székre, majd finoman emeld meg a medencéd.",
+      "startingPosition": "Feküdj hanyatt, helyezd mindkét sarkad egy elcsúszás ellen biztosított, nem guruló szék ülőlapjára.",
+      "summary": "Emeld a medencét, miközben a sarkad stabil széken támaszkodik.",
       "steps": [
-        "Tedd a lábszárakat stabil székre, majd finoman emeld meg a medencéd.",
-        "Ellenőrizd, hogy a szék nem csúszik.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Nyomd a sarkakat a támaszba, és emeld meg kis mértékben a medencét.",
+        "A váll és a fej maradjon lent, ne homoríts túl.",
+        "Lassan engedd vissza a medencét."
       ],
       "commonMistakes": [
-        "Medence oldalra billenése kontroll nélkül.",
-        "Túl nagy mozgástartomány keresése."
+        "Csúszó vagy billegő szék",
+        "derék túlhomorítása",
+        "nyak terhelése."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -24962,7 +28607,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.29,
+                0.2,
                 0.2
               ],
               "euler": [
@@ -24975,28 +28620,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0,
+                "right": 0
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.23,
+                  -0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ],
                 "right": [
-                  0.23,
+                  0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ]
               },
               "feet": {
                 "left": [
-                  -0.16,
-                  0.055,
-                  0.83
+                  -0.17,
+                  0.46,
+                  0.95
                 ],
                 "right": [
-                  0.16,
-                  0.055,
-                  0.83
+                  0.17,
+                  0.46,
+                  0.95
                 ]
               },
               "poles": {
@@ -25024,23 +28676,30 @@
               "equipment": [
                 {
                   "type": "chair",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.3,
+                    1.05
+                  ],
+                  "yaw": 3.141592653589793
                 },
                 {
-                  "type": "mat",
-                  "anchor": "world"
+                  "type": "mat"
                 }
-              ]
+              ],
+              "phaseType": "start",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.5,
+                0.39,
                 0.2
               ],
               "euler": [
-                -1.5707963267948966,
+                -2.05,
                 0,
                 0
               ],
@@ -25049,28 +28708,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0,
+                "right": 0
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.23,
+                  -0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ],
                 "right": [
-                  0.23,
+                  0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ]
               },
               "feet": {
                 "left": [
-                  -0.16,
-                  0.055,
-                  0.87
+                  -0.17,
+                  0.46,
+                  0.95
                 ],
                 "right": [
-                  0.16,
-                  0.055,
-                  0.87
+                  0.17,
+                  0.46,
+                  0.95
                 ]
               },
               "poles": {
@@ -25098,19 +28764,28 @@
               "equipment": [
                 {
                   "type": "chair",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.3,
+                    1.05
+                  ],
+                  "yaw": 3.141592653589793
                 },
                 {
-                  "type": "mat",
-                  "anchor": "world"
+                  "type": "mat"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0,
+              "thoracicBend": 0.3,
+              "cervicalPitch": 0.2
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.29,
+                0.2,
                 0.2
               ],
               "euler": [
@@ -25123,28 +28798,35 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0,
+                "right": 0
+              },
+              "legAngles": {},
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.23,
+                  -0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ],
                 "right": [
-                  0.23,
+                  0.32,
                   0.09,
-                  -0.55
+                  0.18
                 ]
               },
               "feet": {
                 "left": [
-                  -0.16,
-                  0.055,
-                  0.83
+                  -0.17,
+                  0.46,
+                  0.95
                 ],
                 "right": [
-                  0.16,
-                  0.055,
-                  0.83
+                  0.17,
+                  0.46,
+                  0.95
                 ]
               },
               "poles": {
@@ -25172,13 +28854,20 @@
               "equipment": [
                 {
                   "type": "chair",
-                  "anchor": "world"
+                  "position": [
+                    0,
+                    0.3,
+                    1.05
+                  ],
+                  "yaw": 3.141592653589793
                 },
                 {
-                  "type": "mat",
-                  "anchor": "world"
+                  "type": "mat"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             }
           ],
           "camera": {
@@ -25192,13 +28881,29 @@
             ]
           },
           "movementId": "bridge",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Feet-elevated glute bridge",
+        "summary": "Lift your pelvis with your heels supported by a stable chair.",
+        "startingPosition": "Lie on your back and place both heels on the seat of a stable, non-wheeled chair secured against slipping.",
+        "steps": [
+          "Press the heels into the support and lift your pelvis slightly.",
+          "Keep your shoulders and head supported and avoid excessive arching.",
+          "Lower the pelvis slowly."
+        ],
+        "commonMistakes": [
+          "A slipping or unstable chair",
+          "overarching the back",
+          "loading the neck."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {
       "id": "terdnyujtas-ulve",
-      "revision": 1,
+      "revision": 2,
       "name": "Térdnyújtás ülve",
       "category": "mobilizálás",
       "regions": [
@@ -25225,16 +28930,17 @@
         }
       ],
       "estimatedSeconds": 92,
-      "startingPosition": "Ülj stabil, nem guruló székre, mindkét talpad támaszkodjon a talajon.",
-      "summary": "Ülve lassan nyújtsd ki egyik térded, majd engedd vissza.",
+      "startingPosition": "Ülj stabil, nem guruló székre, talpak a talajon.",
+      "summary": "Nyújtsd ki váltva a térdeket stabil széken ülve.",
       "steps": [
-        "Ülve lassan nyújtsd ki egyik térded, majd engedd vissza.",
-        "A comb maradjon a széken.",
-        "Térj vissza lassan a kiinduló helyzetbe; állj meg, ha a mozgás kellemetlen."
+        "Lassan nyújtsd ki az egyik térded a kényelmes mozgástartományban.",
+        "A comb maradjon az ülőlapon, ne dőlj hátra.",
+        "Lassan engedd le a lábszárad, majd válts oldalt."
       ],
       "commonMistakes": [
-        "Térd befelé dőlése.",
-        "A feladat gyors, kontrollálatlan végzése."
+        "Comb elemelése",
+        "lendületes rúgás",
+        "térd erőltetett zárása."
       ],
       "safetyNote": "Fájdalom, szédülés, zsibbadás vagy rosszullét esetén hagyd abba; a feladat nem helyettesíti a személyes szakmai tanácsadást. Az eszköz állapotát és stabilitását indulás előtt ellenőrizd.",
       "reviewStatus": "draft",
@@ -25253,8 +28959,8 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.57,
-                0
+                0.512,
+                -0.03
               ],
               "euler": [
                 0,
@@ -25266,16 +28972,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.03,
+                "right": -0.03
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                },
+                "right": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.29,
-                  0.53,
-                  0.15
+                  -0.35,
+                  0.67,
+                  0.17
                 ],
                 "right": [
-                  0.29,
-                  0.53,
-                  0.15
+                  0.35,
+                  0.67,
+                  0.17
                 ]
               },
               "feet": {
@@ -25314,17 +29038,19 @@
               },
               "equipment": [
                 {
-                  "type": "chair",
-                  "anchor": "world"
+                  "type": "chair"
                 }
-              ]
+              ],
+              "phaseType": "start",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.57,
-                0
+                0.512,
+                -0.03
               ],
               "euler": [
                 0,
@@ -25336,16 +29062,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.03,
+                "right": -0.03
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 0.18
+                },
+                "right": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.29,
-                  0.53,
-                  0.15
+                  -0.35,
+                  0.67,
+                  0.17
                 ],
                 "right": [
-                  0.29,
-                  0.53,
-                  0.15
+                  0.35,
+                  0.67,
+                  0.17
                 ]
               },
               "feet": {
@@ -25355,9 +29099,9 @@
                   0.45
                 ],
                 "right": [
-                  0.16,
-                  0.4,
-                  0.85
+                  0.14,
+                  0.07,
+                  0.45
                 ]
               },
               "poles": {
@@ -25384,17 +29128,20 @@
               },
               "equipment": [
                 {
-                  "type": "chair",
-                  "anchor": "world"
+                  "type": "chair"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2,
+              "direction": "left"
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.57,
-                0
+                0.512,
+                -0.03
               ],
               "euler": [
                 0,
@@ -25406,16 +29153,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.03,
+                "right": -0.03
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                },
+                "right": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
-                  -0.29,
-                  0.53,
-                  0.15
+                  -0.35,
+                  0.67,
+                  0.17
                 ],
                 "right": [
-                  0.29,
-                  0.53,
-                  0.15
+                  0.35,
+                  0.67,
+                  0.17
                 ]
               },
               "feet": {
@@ -25454,10 +29219,193 @@
               },
               "equipment": [
                 {
-                  "type": "chair",
-                  "anchor": "world"
+                  "type": "chair"
                 }
-              ]
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.512,
+                -0.03
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "right": -0.03,
+                "left": -0.03
+              },
+              "legAngles": {
+                "right": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 0.18
+                },
+                "left": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                }
+              },
+              "armAngles": {},
+              "hands": {
+                "right": [
+                  0.35,
+                  0.67,
+                  0.17
+                ],
+                "left": [
+                  -0.35,
+                  0.67,
+                  0.17
+                ]
+              },
+              "feet": {
+                "right": [
+                  0.14,
+                  0.07,
+                  0.45
+                ],
+                "left": [
+                  -0.14,
+                  0.07,
+                  0.45
+                ]
+              },
+              "poles": {
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeRight": [
+                  0.14,
+                  0.56,
+                  0.5
+                ],
+                "kneeLeft": [
+                  -0.14,
+                  0.56,
+                  0.5
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "chair"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2,
+              "direction": "right"
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.512,
+                -0.03
+              ],
+              "euler": [
+                0,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": 0,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": -0.03,
+                "right": -0.03
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                },
+                "right": {
+                  "flexion": 1.51,
+                  "abduction": 0.29,
+                  "kneeFlexion": 1.57
+                }
+              },
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.35,
+                  0.67,
+                  0.17
+                ],
+                "right": [
+                  0.35,
+                  0.67,
+                  0.17
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.07,
+                  0.45
+                ],
+                "right": [
+                  0.14,
+                  0.07,
+                  0.45
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.7,
+                  0.6,
+                  0.14
+                ],
+                "elbowRight": [
+                  0.7,
+                  0.6,
+                  0.14
+                ],
+                "kneeLeft": [
+                  -0.14,
+                  0.56,
+                  0.5
+                ],
+                "kneeRight": [
+                  0.14,
+                  0.56,
+                  0.5
+                ]
+              },
+              "equipment": [
+                {
+                  "type": "chair"
+                }
+              ],
+              "phaseType": "movement",
+              "holdSeconds": 0,
+              "transitionSeconds": 1.2
             }
           ],
           "camera": {
@@ -25471,8 +29419,24 @@
             ]
           },
           "movementId": "seated_knee_extend",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Egyedileg ellenőrzött fázissorrend; szemléltető geometria, vizuális és szakmai ellenőrzés szükséges."
         }
+      },
+      "englishText": {
+        "name": "Seated alternating knee extension",
+        "summary": "Straighten each knee in turn while seated on a stable chair.",
+        "startingPosition": "Sit on a stable, non-wheeled chair with feet on the floor.",
+        "steps": [
+          "Slowly straighten one knee within a comfortable range.",
+          "Keep your thigh supported by the seat and avoid leaning backwards.",
+          "Lower your lower leg slowly and switch sides."
+        ],
+        "commonMistakes": [
+          "Lifting the thigh",
+          "kicking with momentum",
+          "forcing the knee straight."
+        ],
+        "safetyNote": "Stop if you experience pain, dizziness, numbness or feel unwell. This exercise is not a substitute for individual professional advice. Check that any equipment is stable and in good condition before starting."
       }
     },
     {

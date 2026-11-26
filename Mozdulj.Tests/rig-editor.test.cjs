@@ -1203,3 +1203,12 @@ test('model-first editor keeps advanced controls and has a collapsible inspector
  assert.match(js,/function setupCompactEditor/);
  assert.match(js,/function simpleEditing/);
 });
+
+
+test('v22 editorial hip batch retains valid preview and every workout direction',()=>{
+ const rig=loadRig();
+ const catalog=JSON.parse(fs.readFileSync(path.join(root,'../exercises.catalog.json'),'utf8'));
+ const ids=["csipokorzes-allva","csiponyitas-negykezlab","farizomfeszites-allva","oldalazo-lepesek-minibanddel","hatralepes-minibanddel","allo-csipohatrafeszites","allo-csipooldalemeles","labdas-medencekorzes","hid-tartasa","csipoemeles-labbal-szeken","terdnyujtas-ulve"];
+ for(const id of ids){const x=catalog.exercises.find(e=>e.id===id);assert.ok(x?.englishText?.steps?.length,id);const p=x.pose.rig3D;rig.checkPose(p);assert.ok(rig.previewPlan(p.frames,true).ok,id);for(const d of x.measure==='reps'?x.repTargets.map(t=>t.code):['all'])assert.ok(['loop','hold','static'].includes(rig.workoutGuidePlan(p.frames,d,x.measure==='reps').kind),id+' '+d);}
+ for(const id of ['csipokorzes-allva','labdas-medencekorzes']){if(!ids.includes(id))continue;const frames=catalog.exercises.find(e=>e.id===id).pose.rig3D.frames;const f=frames.filter(x=>x.direction==='forward').map(x=>x.root);const b=frames.filter(x=>x.direction==='backward').map(x=>x.root);assert.equal(new Set(f.map(JSON.stringify)).size,4);assert.deepEqual(f,b.reverse());}
+});
