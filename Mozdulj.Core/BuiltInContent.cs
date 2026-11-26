@@ -37,26 +37,26 @@ public static class BuiltInContentRules
 
     public static MotionPose ClonePose(MotionPose pose) =>
         JsonSerializer.Deserialize<MotionPose>(JsonSerializer.Serialize(pose, CatalogCodec.JsonOptions), CatalogCodec.JsonOptions)
-        ?? throw new InvalidDataException("A póz nem másolható.");
+        ?? throw new InvalidDataException(AppLocalization.Text("Validation084"));
 
     public static void Validate(BuiltInContentOverride patch, ExerciseCatalog baseCatalog)
     {
-        if (patch is null) throw new InvalidDataException("Hiányzó leírás-felülírás.");
+        if (patch is null) throw new InvalidDataException(AppLocalization.Text("Validation085"));
         var baseExercise = baseCatalog.Exercises.FirstOrDefault(x => x.Id == patch.ExerciseId)
             ?? throw new InvalidDataException("Ismeretlen alapgyakorlat: " + patch.ExerciseId);
         if (patch.BaseRevision < 1 || patch.BaseRevision > baseExercise.Revision)
-            throw new InvalidDataException("Érvénytelen alapverzió: " + patch.ExerciseId);
+            throw new InvalidDataException(AppLocalization.Text("Validation086") + patch.ExerciseId);
         if (string.IsNullOrWhiteSpace(patch.Summary) ||
             string.IsNullOrWhiteSpace(patch.StartingPosition) ||
             patch.Steps is null || patch.Steps.Count < 1 || patch.Steps.Any(string.IsNullOrWhiteSpace) ||
             string.IsNullOrWhiteSpace(patch.SafetyNote) || patch.CommonMistakes is null)
-            throw new InvalidDataException("Leírás, kiinduló helyzet, legalább egy lépés és biztonsági tudnivaló kötelező.");
-        if (patch.Pose is null) throw new InvalidDataException("Az ábra helyére üres pózobjektum szükséges.");
+            throw new InvalidDataException(AppLocalization.Text("Validation087"));
+        if (patch.Pose is null) throw new InvalidDataException(AppLocalization.Text("Validation088"));
         if(patch.Pose.Rig3D is not null) Rig3DValidator.Validate(patch.Pose.Rig3D);
         if (patch.Pose.Frames.Count > 0)
             PoseValidator.Validate(patch.Pose, patch.ExerciseId);
         else if (patch.Pose.Arrows.Count > 0)
-            throw new InvalidDataException("Kép nélküli ábrában nem lehet nyíl.");
+            throw new InvalidDataException(AppLocalization.Text("Validation089"));
     }
 
     public static Exercise Apply(Exercise builtIn, BuiltInContentOverride? patch)

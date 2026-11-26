@@ -72,8 +72,8 @@ public static class StreakReminderScheduler
         Notification.Builder builder;
         if(OperatingSystem.IsAndroidVersionAtLeast(26))
         {
-            manager.CreateNotificationChannel(new NotificationChannel(ChannelId,"Mozdulj! emlékeztető",
-                NotificationImportance.Default){Description="Emlékeztető az elmaradt napi mozgásról"});
+            manager.CreateNotificationChannel(new NotificationChannel(ChannelId,AppLocalization.TextFor(data.ApplicationLanguage,"SettingsUi098"),
+                NotificationImportance.Default){Description=AppLocalization.TextFor(data.ApplicationLanguage,"SettingsUi099")});
             builder=new Notification.Builder(ctx,ChannelId);
         }
         else
@@ -85,8 +85,8 @@ public static class StreakReminderScheduler
             PendingIntentFlags.Immutable|PendingIntentFlags.UpdateCurrent);
         var notification=builder
             .SetSmallIcon(global::Android.Resource.Drawable.IcDialogInfo)
-            .SetContentTitle("Egy kis mozgás ma is beleférhet 🌿")
-            .SetContentText("Ma még nem volt gyakorlás vagy regeneráló relaxáció.")
+            .SetContentTitle(AppLocalization.TextFor(data.ApplicationLanguage,"SettingsUi100"))
+            .SetContentText(AppLocalization.TextFor(data.ApplicationLanguage,"SettingsUi101"))
             .SetAutoCancel(true)
             .SetContentIntent(opening)
             .Build();

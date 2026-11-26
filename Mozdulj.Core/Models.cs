@@ -20,6 +20,10 @@ public sealed class Exercise
     public string Id { get; set; } = "";
     public int Revision { get; set; } = 1;
     public string Name { get; set; } = "";
+    // Optional translation; null is omitted to preserve old signed backup payloads.
+    public ExerciseTranslation? EnglishText { get; set; }
+    [JsonIgnore] public string DisplayName => ExerciseLanguage.Name(this);
+    [JsonIgnore] public ExerciseTranslation DisplayText => ExerciseLanguage.Content(this);
     /// <summary>Movement TYPE, e.g. mobilizálás / erősítés. Never a body region or "jóga".</summary>
     public string Category { get; set; } = "";
     /// <summary>Affected anatomical areas; not to be conflated with exercise category.</summary>
@@ -32,6 +36,8 @@ public sealed class Exercise
     public string Phase { get; set; } = "main"; // warmup/main/cooldown
     public string Measure { get; set; } = "reps"; // reps/time
     public int? TargetSeconds { get; set; }
+    // Optional for compatibility with single-timer exercises and legacy signed backups.
+    public List<TimeTarget>? TimeTargets { get; set; }
     public List<RepTarget> RepTargets { get; set; } = [];
     public int EstimatedSeconds { get; set; } = 45;
     public string StartingPosition { get; set; } = "";
@@ -42,9 +48,11 @@ public sealed class Exercise
     public string ReviewStatus { get; set; } = "draft"; // draft/reviewed/withdrawn
     public MotionPose Pose { get; set; } = new();
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} mp" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {x.Label}"));
-    [JsonIgnore] public string EquipmentLabel => Equipment.Count == 0 ? "Eszköz nélkül" : string.Join(", ", Equipment);
-    [JsonIgnore] public string RegionLabel => string.Join(", ", Regions);
+        ? TimedTargets.Format(TargetSeconds, TimeTargets) : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
+    [JsonIgnore] public string EquipmentLabel => Equipment.Count == 0 ? AppLocalization.Text("WorkoutUi200") : string.Join(", ", Equipment.Select(PresentationText.Known));
+    [JsonIgnore] public IReadOnlyList<string> RegionAreaIds => RegionTaxonomy.AreaIds(Regions);
+    [JsonIgnore] public string RegionAreaLabel => RegionTaxonomy.AreaLabels(Regions);
+    [JsonIgnore] public string RegionLabel => RegionTaxonomy.DetailLabels(Regions);
 }
 
 /// <summary>Two or more locally rendered anatomical landmark frames. No remote images.</summary>
@@ -121,7 +129,7 @@ public sealed class UserPreferences
     /// <summary>Self-confirmed Premium access, not verifiable through YouTube Music.</summary>
     public bool RelaxationYouTubeMusicPremiumConfirmed { get; set; }
     public string RelaxationYouTubeMusicPlaylistUrl { get; set; } = "";
-    public List<string> FocusRegions { get; set; } = ["hát", "csípő", "törzs"];
+    public List<string> FocusRegions { get; set; } = ["back", "pelvis_hip", "lower_back", "abdomen"];
     public List<string> PreferredCategories { get; set; } = ["mobilizálás", "nyújtás", "erősítés"];
     public List<string> AvailableEquipment { get; set; } = [];
     public List<string> ExcludedExercises { get; set; } = [];
@@ -136,6 +144,8 @@ public sealed class RelaxationTrack
 public sealed class LocalData
 {
     public int SchemaVersion { get; set; } = 8;
+    // Null is omitted from JSON, preserving legacy signed backup payloads.
+    public string? ApplicationLanguage { get; set; }
     /// <summary>True after the user explicitly saved the initial preferences. Never reset on ordinary updates.</summary>
     public bool OnboardingCompleted { get; set; }
     /// <summary>Personal corrections to built-in instructions and illustration, never core classification.</summary>
@@ -224,14 +234,18 @@ public sealed class WorkoutItem
     public bool IsRequired { get; set; } = false; // user-selected non-negotiable exercise
     public string Measure { get; set; } = "";
     public int? TargetSeconds { get; set; }
+    // Optional for compatibility with single-timer exercises and legacy signed backups.
+    public List<TimeTarget>? TimeTargets { get; set; }
     public List<RepTarget> RepTargets { get; set; } = [];
     public int EstimatedSeconds { get; set; }
+    // Current timed segment is saved with the workout item; null is the legacy state.
+    public int? CurrentTimeTargetIndex { get; set; }
     public int TransitionAfterSeconds { get; set; }
     public string Status { get; set; } = "pending";
     /// <summary>Unpaused seconds in this exercise, excluding transitions.</summary>
     public int ActiveSeconds { get; set; }
     [JsonIgnore] public string TargetLabel => Measure == "time"
-        ? $"{TargetSeconds} mp" : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {x.Label}"));
+        ? TimedTargets.Format(TargetSeconds, TimeTargets) : string.Join(" + ", RepTargets.Select(x => $"{x.Count} {RepetitionDirections.Label(x)}"));
 }
 public sealed class CompletionRecord
 {

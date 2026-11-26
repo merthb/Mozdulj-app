@@ -1,3 +1,4 @@
+using Mozdulj.Core;
 using Android.Content;
 
 namespace Mozdulj.Maui.Services;
@@ -27,11 +28,11 @@ public static class YouTubeMusicSupport
     public static Task OpenPlaylistAsync(Uri playlistUrl)
     {
         if (!IsInstalled())
-            throw new InvalidOperationException("A YouTube Music nincs telepítve ezen a készüléken.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation100"));
         if (playlistUrl.Scheme != Uri.UriSchemeHttps ||
             playlistUrl.Host is not ("music.youtube.com" or "youtube.com" or "www.youtube.com") ||
             !playlistUrl.AbsolutePath.Equals("/playlist", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidDataException("Érvénytelen YouTube Music-lejátszási lista.");
+            throw new InvalidDataException(AppLocalization.Text("Validation101"));
 
         // Send the URL specifically to YouTube Music. Do not silently launch
         // a browser: background playback depends on the signed-in Music app.

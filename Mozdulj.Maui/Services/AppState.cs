@@ -70,9 +70,9 @@ public sealed class AppState
         {
             try
             {
-                if (!File.Exists(UserPath)) throw new FileNotFoundException("Hiányzik a fő mentés.");
+                if (!File.Exists(UserPath)) throw new FileNotFoundException(AppLocalization.Text("Validation001"));
                 Data = JsonSerializer.Deserialize<LocalData>(await File.ReadAllTextAsync(UserPath), CatalogCodec.JsonOptions)
-                    ?? throw new InvalidDataException("Üres felhasználói fájl.");
+                    ?? throw new InvalidDataException(AppLocalization.Text("Validation002"));
             }
             catch (Exception)
             {
@@ -80,13 +80,13 @@ public sealed class AppState
                 try
                 {
                     Data = JsonSerializer.Deserialize<LocalData>(await File.ReadAllTextAsync(UserPath+".bak"),CatalogCodec.JsonOptions)
-                        ?? throw new InvalidDataException("Üres tartalék mentés.");
+                        ?? throw new InvalidDataException(AppLocalization.Text("Validation003"));
                     readFromBackup = true;
                 }
                 catch(Exception recoveryException)
                 {
                     // NEVER overwrite a damaged history with an empty new profile.
-                    throw new InvalidDataException("A felhasználói adatok és a tartalék fájl sem olvasható. " +
+                    throw new InvalidDataException(AppLocalization.Text("Validation004") +
                         "Ne távolítsd el az alkalmazást! Próbálj teljes JSON mentést visszaállítani.",recoveryException);
                 }
             }
@@ -98,7 +98,14 @@ public sealed class AppState
             if(!File.Exists(migrationBackup)) File.Copy(UserPath,migrationBackup);
         }
         var needsInitialSave = readFromBackup || !File.Exists(UserPath) || Data.SchemaVersion < LocalDataMigrations.CurrentVersion;
+        var previousLanguage = Data.ApplicationLanguage;
+        var oldFocus = Data.Preferences?.FocusRegions?.ToArray() ?? [];
+        var oldDeferredFocus = Data.DeferredTodayPreferences?.FocusRegions?.ToArray() ?? [];
         Data = LocalDataMigrations.Upgrade(Data);
+        if (!oldFocus.SequenceEqual(Data.Preferences.FocusRegions) ||
+            !oldDeferredFocus.SequenceEqual(Data.DeferredTodayPreferences?.FocusRegions ?? [])) needsInitialSave = true;
+        if (previousLanguage != Data.ApplicationLanguage) needsInitialSave = true;
+        AppLocalization.Apply(Data.ApplicationLanguage);
         if (_baseCatalog.CatalogVersion == bundledVersion &&
             Data.AppliedBuiltInCatalogVersion < bundledVersion)
         {
@@ -136,31 +143,42 @@ public sealed class AppState
 #endif
     }
 
+    public async Task SetApplicationLanguageAsync(string language)
+    {
+        if (!AppLanguage.IsSupported(language)) throw new ArgumentOutOfRangeException(nameof(language));
+        if (Data.ApplicationLanguage == language) { AppLocalization.Apply(language); return; }
+        var previous = Data.ApplicationLanguage;
+        Data.ApplicationLanguage = language;
+        try { await SaveAsync(); }
+        catch { Data.ApplicationLanguage = previous; throw; }
+        AppLocalization.Apply(language);
+    }
+
     private void RequireSetup()
     {
         if (!Data.OnboardingCompleted)
-            throw new InvalidOperationException("Először add meg és mentsd a személyes beállításaidat.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation005"));
     }
 
     /// <summary>Only an explicit first-run Save unlocks the daily plan and monthly goals.</summary>
     public async Task CompleteInitialSetupAsync(UserPreferences chosen)
     {
         if (Data.OnboardingCompleted)
-            throw new InvalidOperationException("A kezdeti beállítások már elkészültek.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation006"));
         if (chosen is null || !new[]{5,10,15,20,30}.Contains(chosen.WorkoutMinutes) ||
             chosen.MaximumDifficulty is < 1 or > 3 || chosen.TransitionSeconds is < 5 or > 10 ||
             chosen.WeeklyTargetDays is < 1 or > 7)
-            throw new ArgumentException("Érvénytelen beállítások.",nameof(chosen));
+            throw new ArgumentException(AppLocalization.Text("Validation007"),nameof(chosen));
         if (chosen.FocusRegions is null || chosen.PreferredCategories is null ||
             chosen.AvailableEquipment is null || chosen.ExcludedExercises is null)
-            throw new ArgumentException("Hiányzó beállítások.",nameof(chosen));
-        var validRegions = Catalog.Exercises.SelectMany(x=>x.Regions).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            throw new ArgumentException(AppLocalization.Text("Validation008"),nameof(chosen));
+        var validRegions = RegionTaxonomy.Areas.Select(a=>a.Id).ToHashSet(StringComparer.Ordinal);
         var validCategories = Catalog.Categories.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var validEquipment = Catalog.Exercises.SelectMany(x=>x.Equipment).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (chosen.FocusRegions.Any(x=>!validRegions.Contains(x)) ||
             chosen.PreferredCategories.Any(x=>!validCategories.Contains(x)) ||
             chosen.AvailableEquipment.Any(x=>!validEquipment.Contains(x)))
-            throw new ArgumentException("Ismeretlen testtáj, mozgástípus vagy eszköz.",nameof(chosen));
+            throw new ArgumentException(AppLocalization.Text("Validation009"),nameof(chosen));
         // Preserve the generated user ID and never share mutable UI list references.
         var previousPreferences = Data.Preferences;
         Data.Preferences = new UserPreferences
@@ -287,7 +305,7 @@ public sealed class AppState
             chosen.MaximumDifficulty is < 1 or > 3 || chosen.TransitionSeconds is < 5 or > 10 ||
             chosen.WeeklyTargetDays is < 1 or > 7 ||
             chosen.DailyReminderHour is < 0 or > 23 || chosen.DailyReminderMinute is < 0 or > 59)
-            throw new ArgumentException("Érvénytelen beállításérték.",nameof(chosen));
+            throw new ArgumentException(AppLocalization.Text("Validation010"),nameof(chosen));
         var oldJson=JsonSerializer.Serialize(Data,CatalogCodec.JsonOptions);
         var day=WorkoutDay.Today;
         var date=day.ToString("yyyy-MM-dd");
@@ -383,7 +401,7 @@ public sealed class AppState
         var today=WorkoutDay.Today;
         var plan=Data.Plans.FirstOrDefault(p=>p.Date==today.ToString("yyyy-MM-dd"));
         if(plan is null || !plan.Workouts.Contains(workout))
-            throw new InvalidOperationException("A kijelölt gyakorlatsor nem szerepel a mai tervben.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation011"));
         var revised=_generator.RecomposeWithRequired(Catalog, PreferencesForWorkout(workout), workout, ids,
             Data.FavoriteIds, Data.Completions,today);
         // Keep reference identity, because the preview currently holds this Workout.
@@ -407,7 +425,7 @@ public sealed class AppState
     public async Task ReplaceWorkoutItemAsync(Workout workout, WorkoutItem item, string newExerciseId)
     {
         var replacement = FindExercise(newExerciseId)
-            ?? throw new InvalidOperationException("A választott gyakorlat nem található az aktuális katalógusban.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation012"));
         _customization.Replace(Catalog, PreferencesForWorkout(workout), workout, item, replacement, Data.FavoriteIds);
         await SaveAsync();
     }
@@ -435,6 +453,8 @@ public sealed class AppState
 
     public async Task<int> CompleteItemAsync(Workout workout, WorkoutItem item)
     {
+        if (!TimedTargets.CanComplete(workout,item))
+            throw new InvalidOperationException(AppLocalization.Text("TimeCompleteAll"));
         if (item.Status == "completed" || Data.Completions.Any(x => x.ItemId == item.Id)) return 0;
         // Guided relaxation earns no XP and no monthly active-day completion.
         // Only FinishWorkoutAsync awards the recovery-day streak protection.
@@ -442,7 +462,7 @@ public sealed class AppState
         {
             if (!RecoveryRoutine.IsValid(workout) || !workout.Items.Contains(item) ||
                 workout.Status != "in_progress" || workout.RemainingSeconds != 0)
-                throw new InvalidOperationException("A relaxáció csak a teljes tíz perc letelte után írható jóvá.");
+                throw new InvalidOperationException(AppLocalization.Text("Validation013"));
             item.Status = "completed";
             await SaveAsync();
             return 0;
@@ -480,7 +500,7 @@ public sealed class AppState
             var saved = Data.Plans.FirstOrDefault(x => x.Date == today)?.RecoveryWorkout;
             if (saved is null || saved.Id != workout.Id || !RecoveryRoutine.IsValid(workout) ||
                 workout.RemainingSeconds != 0 || workout.Items[0].Status != "completed")
-                throw new InvalidOperationException("A regeneráló program nem teljesült, vagy nem a mai naphoz tartozik.");
+                throw new InvalidOperationException(AppLocalization.Text("Validation014"));
         }
         workout.FinishedLocalDate = WorkoutDay.Today.ToString("yyyy-MM-dd");
         workout.Status = workout.Items.All(x => x.Status == "completed") ? "completed"
@@ -518,7 +538,7 @@ public sealed class AppState
             // A rövid életű v0.8 hatrészes formátumú mentések átvezetése.
             var migrated = RecoveryRoutine.MigrateLegacy(plan.RecoveryWorkout, day);
             if (migrated is null)
-                throw new InvalidDataException("A korábbi regenerációs munkamenet nem állítható helyre.");
+                throw new InvalidDataException(AppLocalization.Text("Validation015"));
             plan.RecoveryWorkout = migrated;
             await SaveAsync();
         }
@@ -616,7 +636,7 @@ public sealed class AppState
 
         var existing = Data.UserExercises.FirstOrDefault(x =>
             x.Exercise.Id == exerciseId && x.Status != LibraryStatuses.Archived)
-            ?? throw new InvalidOperationException("A szerkesztendő gyakorlat nem található.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation016"));
         var draft = ExerciseLibraryRules.Clone(existing.Exercise);
         draft.Pose = BuiltInContentRules.ClonePose(pose);
         await SaveCustomExerciseAsync(draft, existing.Status);
@@ -639,7 +659,7 @@ public sealed class AppState
         if (!string.IsNullOrEmpty(saved))
         {
             var key=Convert.FromBase64String(saved);
-            if(key.Length!=32) throw new InvalidDataException("Hibás helyi mentési kulcs.");
+            if(key.Length!=32) throw new InvalidDataException(AppLocalization.Text("Validation017"));
             return key;
         }
         var fresh=RandomNumberGenerator.GetBytes(32);
@@ -660,7 +680,7 @@ public sealed class AppState
         while((n=await stream.ReadAsync(bytes.AsMemory()))>0)
         {
             if(mem.Length+n>LocalBackupCodec.MaxBackupBytes)
-                throw new InvalidDataException("A mentés túllépi a méretkorlátot.");
+                throw new InvalidDataException(AppLocalization.Text("SettingsUi071"));
             await mem.WriteAsync(bytes.AsMemory(0,n));
         }
         var json = System.Text.Encoding.UTF8.GetString(mem.ToArray());
@@ -670,7 +690,7 @@ public sealed class AppState
             ? LocalBackupCodec.RecoverAfterReinstall(json, _baseCatalog)
             : LocalBackupCodec.Import(json, _baseCatalog, await GetBackupKeyAsync());
         if (!recoveryAfterReinstall && restored.Preferences.UserId != Data.Preferences.UserId)
-            throw new InvalidDataException("Más profilhoz tartozó mentés nem írhatja felül a haladást.");
+            throw new InvalidDataException(AppLocalization.Text("Validation018"));
         // A signed older backup cannot undo progress or re-award milestones.
         // Keep all existing completion IDs and dates when merging the backup.
         foreach(var completion in Data.Completions)
@@ -709,6 +729,7 @@ public sealed class AppState
             Catalog=ExerciseLibraryRules.BuildEffectiveCatalog(_baseCatalog,Data);
             // A restore does not award again for thresholds already processed in the backup.
             await SaveAsync();
+            AppLocalization.Apply(Data.ApplicationLanguage);
 #if ANDROID
             Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(Preferences);
 #endif
@@ -717,6 +738,7 @@ public sealed class AppState
         catch
         {
             Data=previous;
+            AppLocalization.Apply(Data.ApplicationLanguage);
             Catalog=ExerciseLibraryRules.BuildEffectiveCatalog(_baseCatalog,Data);
             throw;
         }
@@ -725,7 +747,7 @@ public sealed class AppState
     public async Task SetBuiltInEnabledAsync(string id, bool enabled)
     {
         if (!_baseCatalog.Exercises.Any(e=>e.Id==id))
-            throw new InvalidOperationException("Csak létező alapgyakorlat kapcsolható ki vagy be.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation019"));
         await ChangeLibraryAsync(() =>
         {
             Data.DisabledBuiltInIds.Remove(id);
@@ -735,22 +757,29 @@ public sealed class AppState
 
     public async Task SaveCustomExerciseAsync(Exercise draft, string status)
     {
+        if (!RepetitionDirections.TryCanonicalize(draft.RepTargets ?? [],out var canonicalTargets))
+            throw new InvalidOperationException(AppLocalization.Text("RepInvalid"));
+        draft.RepTargets=canonicalTargets;
+        if (draft.TimeTargets is not null && (draft.Measure!="time" || !TimedTargets.IsValid(draft.TargetSeconds,draft.TimeTargets) || draft.EstimatedSeconds<draft.TargetSeconds))
+            throw new InvalidOperationException(AppLocalization.Text("TimeTargetsInvalid"));
+        if (draft.Regions.Any(r=>!RegionTaxonomy.IsDetail(r)))
+            throw new InvalidOperationException(AppLocalization.IsEnglish ? "Choose body parts from the fixed list." : "A testrészeket a fix listából válaszd ki.");
         if (status is not (LibraryStatuses.Draft or LibraryStatuses.Active or LibraryStatuses.Disabled))
-            throw new InvalidOperationException("Érvénytelen szerkesztői állapot.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation020"));
         if (status == LibraryStatuses.Active)
         {
             var result=ExerciseLibraryRules.ValidateForActivation(draft);
             if(!result.IsValid) throw new InvalidOperationException(string.Join("\n",result.Errors));
         }
         if (!draft.Id.StartsWith("user-",StringComparison.Ordinal))
-            throw new InvalidOperationException("A saját gyakorlat azonosítója érvénytelen.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation021"));
         if (_baseCatalog.Exercises.Any(e=>e.Id==draft.Id))
-            throw new InvalidOperationException("Az alapgyakorlatok nem írhatók felül.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation022"));
         await ChangeLibraryAsync(() =>
         {
             var existing=Data.UserExercises.FirstOrDefault(x=>x.Exercise.Id==draft.Id);
             if (existing?.Status == LibraryStatuses.Archived)
-                throw new InvalidOperationException("Az archivált azonosító nem használható újra.");
+                throw new InvalidOperationException(AppLocalization.Text("Validation023"));
             var value=ExerciseLibraryRules.Clone(draft);
             value.Revision=(existing?.Exercise.Revision ?? 0)+1;
             if(existing == null) Data.UserExercises.Add(new UserExerciseEntry
@@ -762,7 +791,7 @@ public sealed class AppState
     public Task ArchiveCustomExerciseAsync(string id)
     {
         var record=Data.UserExercises.FirstOrDefault(x=>x.Exercise.Id==id && x.Status!=LibraryStatuses.Archived)
-            ?? throw new InvalidOperationException("A saját gyakorlat nem található.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation024"));
         return ChangeLibraryAsync(() =>
         {
             record.Status=LibraryStatuses.Archived;
@@ -775,7 +804,7 @@ public sealed class AppState
     {
         var record=Data.UserExercises.FirstOrDefault(x=>x.Exercise.Id==id && x.Status is
             (LibraryStatuses.Active or LibraryStatuses.Disabled))
-            ?? throw new InvalidOperationException("Csak kész saját gyakorlat aktiválható vagy kapcsolható ki.");
+            ?? throw new InvalidOperationException(AppLocalization.Text("Validation025"));
         if(enabled)
         {
             var check=ExerciseLibraryRules.ValidateForActivation(record.Exercise);
@@ -793,13 +822,13 @@ public sealed class AppState
     public async Task<(int previous,int current)> ImportCatalogAsync(Stream input,string mode="merge")
     {
         if(mode is not ("append" or "merge" or "replace"))
-            throw new InvalidOperationException("Ismeretlen importmód.");
+            throw new InvalidOperationException(AppLocalization.Text("Validation026"));
         using var memory=new MemoryStream();
         var buffer=new byte[81920];int length;
         while((length=await input.ReadAsync(buffer.AsMemory()))!=0)
         {
             if(memory.Length+length>CatalogCodec.MaximumCatalogBytes)
-                throw new InvalidDataException("A fájl túllépi a 8 MB-os korlátot.");
+                throw new InvalidDataException(AppLocalization.Text("Validation027"));
             await memory.WriteAsync(buffer.AsMemory(0,length));
         }
         var json=System.Text.Encoding.UTF8.GetString(memory.ToArray());
@@ -808,7 +837,7 @@ public sealed class AppState
         {
             if(root.RootElement.TryGetProperty("format",out _))
                 package=JsonSerializer.Deserialize<ExerciseLibraryPackage>(json,CatalogCodec.JsonOptions)
-                    ?? throw new InvalidDataException("Üres gyakorlattár.");
+                    ?? throw new InvalidDataException(AppLocalization.Text("Validation028"));
             else
             {
                 // Legacy v3 catalog: existing built-in IDs are ignored, imported new IDs
@@ -830,6 +859,17 @@ public sealed class AppState
             }
         }
         ExerciseLibraryRules.ValidateLibraryPackage(package,_baseCatalog);
+        foreach(var entry in package.UserExercises)
+        {
+            if (!RepetitionDirections.TryCanonicalize(entry.Exercise.RepTargets,out var canonicalTargets))
+                throw new InvalidDataException(AppLocalization.Format("RepImportInvalid",entry.Exercise.DisplayName));
+            entry.Exercise.RepTargets=canonicalTargets;
+            var e=entry.Exercise;
+            if(e.TimeTargets is not null && (e.Measure!="time" || !TimedTargets.IsValid(e.TargetSeconds,e.TimeTargets) || e.EstimatedSeconds<e.TargetSeconds))
+                throw new InvalidDataException(AppLocalization.Text("TimeTargetsInvalid"));
+        }
+        if (package.UserExercises.Any(x=>x.Exercise.Regions.Any(r=>!RegionTaxonomy.IsDetail(r))))
+            throw new InvalidDataException(AppLocalization.IsEnglish ? "The imported library contains unsupported body parts." : "Az importált gyakorlattár nem támogatott testrészeket tartalmaz.");
         var previous=Catalog.Exercises.Count;
         var affected=Data.UserExercises.Select(e=>e.Exercise.Id)
             .Concat(Data.BuiltInContentOverrides.Select(x=>x.ExerciseId))

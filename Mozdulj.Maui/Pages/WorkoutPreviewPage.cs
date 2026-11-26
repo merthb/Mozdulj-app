@@ -14,7 +14,7 @@ public sealed class WorkoutPreviewPage : ContentPage
     public WorkoutPreviewPage(AppState state, Workout workout)
     {
         _state = state; _workout = workout;
-        UI.Setup(this, "Gyakorlatsor");
+        UI.Setup(this, AppLocalization.Text("WorkoutUi125"));
         _scrollView.Content = _content;
         Content = _scrollView;
     }
@@ -36,17 +36,17 @@ public sealed class WorkoutPreviewPage : ContentPage
         _musicPanel?.Stop();
         _musicPanel = null;
         _content.Children.Clear();
-        _content.Children.Add(UI.Label(_workout.Title, 25, true));
-        _content.Children.Add(UI.Label(_workout.Kind == "recovery" ? "10 perc · folyamatos relaxáció" : $"{_workout.Items.Count} feladat · {(_workout.TargetMinutes>0?_workout.TargetMinutes:_state.Preferences.WorkoutMinutes)} perc cél · kb. {Math.Ceiling(_workout.EstimatedSeconds/60.0)} perc az átvezetésekkel", 14, color:UI.Muted));
+        _content.Children.Add(UI.Label(PresentationText.Known(_workout.Title), 25, true));
+        _content.Children.Add(UI.Label(_workout.Kind == "recovery" ? AppLocalization.Text("WorkoutUi126") : AppLocalization.Format("WorkoutUi250", _workout.Items.Count, _workout.TargetMinutes>0?_workout.TargetMinutes:_state.Preferences.WorkoutMinutes, Math.Ceiling(_workout.EstimatedSeconds/60.0)), 14, color:UI.Muted));
         if (_workout.Kind == "recovery")
         {
             // Egyetlen rövid blokk: az instrukció csak itt szerepel, nem három helyen.
             // Mindig az aktuális szöveget használjuk a korábban mentett programoknál is.
             _content.Children.Add(UI.Card(
-                UI.Label("🌿 Ellazulás", 17, true),
-                UI.Label(RecoveryRoutine.Guidance, 14, color:UI.Muted),
-                UI.Label("10 perc után megőrzi a sorozatot · 0 XP", 12, color:UI.Muted),
-                UI.Label("Nem szüneteltethető. Ha idő előtt kilépsz, elölről kell kezdened.", 13, color:UI.Purple)));
+                UI.Label(AppLocalization.Text("WorkoutUi127"), 17, true),
+                UI.Label(PresentationText.Known(RecoveryRoutine.Guidance), 14, color:UI.Muted),
+                UI.Label(AppLocalization.Text("WorkoutUi128"), 12, color:UI.Muted),
+                UI.Label(AppLocalization.Text("WorkoutUi129"), 13, color:UI.Purple)));
             var preferences = _state.Preferences;
             if (_workout.Status != "completed" &&
                 preferences.RelaxationMusicEnabled &&
@@ -57,7 +57,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 url.Scheme == Uri.UriSchemeHttps)
             {
                 var musicUrl = url;
-                var openMusic = UI.Button("YouTube Music megnyitása", false);
+                var openMusic = UI.Button(AppLocalization.Text("WorkoutUi130"), false);
                 openMusic.Clicked += async (_, _) =>
                 {
                     try
@@ -67,13 +67,13 @@ public sealed class WorkoutPreviewPage : ContentPage
                     }
                     catch (Exception ex)
                     {
-                        await DisplayAlertAsync("YouTube Music", ex.Message, "Rendben");
+                        await DisplayAlertAsync("YouTube Music", ex.Message, AppLocalization.Text("OK"));
                     }
                 };
                 _content.Children.Add(openMusic);
                 _content.Children.Add(UI.Label(
-                    "A mentett lejátszási lista a YouTube Musicban nyílik meg. " +
-                    "Indítsd el a zenét, majd térj vissza a Mozdulj!-ba a relaxáció indításához.",
+                    AppLocalization.Text("WorkoutUi131") +
+                    AppLocalization.Text("WorkoutUi132"),
                     12, color:UI.Muted));
                 _musicPanel = new YouTubeMusicMiniPlayer(Dispatcher);
                 _content.Children.Add(_musicPanel);
@@ -82,21 +82,21 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         else
         {
-            _content.Children.Add(UI.Label($"Bemelegítés: {_workout.Items.Count(x=>x.Phase=="warmup")} · Fő rész: {_workout.Items.Count(x=>x.Phase=="main")} · Levezetés: {_workout.Items.Count(x=>x.Phase=="cooldown")}",14,true));
+            _content.Children.Add(UI.Label(AppLocalization.Format("WorkoutUi251", _workout.Items.Count(x=>x.Phase=="warmup"), _workout.Items.Count(x=>x.Phase=="main"), _workout.Items.Count(x=>x.Phase=="cooldown")),14,true));
             if(!string.IsNullOrWhiteSpace(_workout.PlanningNote))
-                _content.Children.Add(UI.Card(UI.Label(_workout.PlanningNote,13,color:UI.Muted)));
+                _content.Children.Add(UI.Card(UI.Label(PresentationText.Known(_workout.PlanningNote),13,color:UI.Muted)));
             _content.Children.Add(UI.Label(_workout.Status == "planned"
-                ? "A gyakorlat nevére koppintva megnyílik a leírás. A bal oldali ↑ és ↓ gombokkal a gyakorlatokat a saját blokkjukon belül átrendezheted."
-                : "A gyakorlat nevére koppintva megnyithatod a részleteket.",
+                ? AppLocalization.Text("WorkoutUi133")
+                : AppLocalization.Text("WorkoutUi134"),
                 13, color:UI.Muted));
             if (_workout.Status=="planned")
-                _content.Children.Add(UI.Label($"Kihagyható feladatok: {WorkoutPlanEditing.RemainingRemovals(_workout)} / {WorkoutPlanEditing.MaxRemovals(_workout.TargetMinutes)}",13,true,color:UI.Teal));
+                _content.Children.Add(UI.Label(AppLocalization.Format("WorkoutUi252", WorkoutPlanEditing.RemainingRemovals(_workout), WorkoutPlanEditing.MaxRemovals(_workout.TargetMinutes)),13,true,color:UI.Teal));
             if (_workout.Status != "planned")
-                _content.Children.Add(UI.Label("🔒 A gyakorlatsor már elindult, ezért a feladatok nem módosíthatók.",12,color:UI.Muted));
+                _content.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi135"),12,color:UI.Muted));
             if(_workout.Status=="planned")
             {
-                _content.Children.Add(UI.Label("Kötelező gyakorlatok: kijelölhetsz olyan feladatokat, amelyek biztosan szerepeljenek a mai sorban. A program a fennmaradó részt újratervezi az időkeret és az edzésfázisok szerint. Csak a sor elindítása előtt használható.",12,color:UI.Muted));
-                var must=UI.SubtleAction("★ Kötelezők kiválasztása ›");
+                _content.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi136"),12,color:UI.Muted));
+                var must=UI.SubtleAction(AppLocalization.Text("WorkoutUi137"));
                 must.Clicked+=async (_,_)=>await Navigation.PushAsync(new WorkoutMandatoryPage(_state,_workout));
                 _content.Children.Add(must);
             }
@@ -110,7 +110,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             {
                 var exercise = _state.FindExercise(it.ExerciseId);
                 if (exercise != null) await Navigation.PushAsync(new ExerciseDetailPage(_state, exercise));
-                else await DisplayAlertAsync("Korábbi gyakorlat", "Ez a gyakorlat nincs az aktuális katalógusban.", "Rendben");
+                else await DisplayAlertAsync(AppLocalization.Text("WorkoutUi138"), AppLocalization.Text("WorkoutUi139"), AppLocalization.Text("OK"));
             }
             string phase;
             if (_workout.Kind == "recovery") phase = "recovery";
@@ -119,7 +119,7 @@ public sealed class WorkoutPreviewPage : ContentPage
             if (phase!=previousPhase)
             {
                 _content.Children.Add(UI.Label(phase switch
-                {"warmup"=>"1. Bemelegítés","main"=>"2. Fő blokk","cooldown"=>"3. Levezetés","recovery"=>"Ellazulási szakaszok",_=>"Feladatok"},19,true));
+                {"warmup"=>AppLocalization.Text("WorkoutUi140"),"main"=>AppLocalization.Text("WorkoutUi141"),"cooldown"=>AppLocalization.Text("WorkoutUi142"),"recovery"=>AppLocalization.Text("WorkoutUi143"),_=>AppLocalization.Text("WorkoutUi144")},19,true));
                 previousPhase=phase;
             }
             // Separate tap buttons work reliably inside the Android ScrollView.
@@ -148,8 +148,8 @@ public sealed class WorkoutPreviewPage : ContentPage
                 down.IsEnabled = AdjacentItem(it, 1) != null;
                 up.Opacity = up.IsEnabled ? 1 : 0.3;
                 down.Opacity = down.IsEnabled ? 1 : 0.3;
-                SemanticProperties.SetDescription(up, it.Name + ": feljebb");
-                SemanticProperties.SetDescription(down, it.Name + ": lejjebb");
+                SemanticProperties.SetDescription(up, it.Name + AppLocalization.Text("WorkoutUi198"));
+                SemanticProperties.SetDescription(down, it.Name + AppLocalization.Text("WorkoutUi199"));
                 up.Clicked += async (_, _) => await MoveOneStepAsync(it, -1);
                 down.Clicked += async (_, _) => await MoveOneStepAsync(it, 1);
                 arrows.Children.Add(up);
@@ -159,15 +159,15 @@ public sealed class WorkoutPreviewPage : ContentPage
             }
 
             var heading = new VerticalStackLayout { Spacing = 4, VerticalOptions = LayoutOptions.Center };
-            heading.Children.Add(UI.Label(it.Name + (it.IsRequired ? " ★ Kötelező" : ""), 16, true));
+            heading.Children.Add(UI.Label((_state.FindExercise(it.ExerciseId)?.DisplayName ?? it.Name) + (it.IsRequired ? AppLocalization.Text("WorkoutUi145") : ""), 16, true));
             var phaseLabel = phase switch
             {
-                "warmup" => "Bemelegítés", "main" => "Fő rész", "cooldown" => "Levezetés", "recovery" => "Relaxáció", _ => "Ismeretlen fázis"
+                "warmup" => AppLocalization.Text("WorkoutUi064"), "main" => AppLocalization.Text("WorkoutUi065"), "cooldown" => AppLocalization.Text("WorkoutUi066"), "recovery" => AppLocalization.Text("WorkoutUi146"), _ => AppLocalization.Text("WorkoutUi147")
             };
-            heading.Children.Add(UI.Label($"{phaseLabel} · {it.Category} · {it.TargetLabel} {(it.Status == "completed" ? "✓" : "")}", 13, color:UI.Muted));
+            heading.Children.Add(UI.Label($"{phaseLabel} · {PresentationText.Known(it.Category)} · {it.TargetLabel} {(it.Status == "completed" ? "✓" : "")}", 13, color:UI.Muted));
             var exerciseDefinition = _state.FindExercise(it.ExerciseId);
             if (exerciseDefinition?.Equipment.Count > 0)
-                heading.Children.Add(UI.Label("🎒 Szükséges: " + exerciseDefinition.EquipmentLabel, 13, true, color:UI.Purple));
+                heading.Children.Add(UI.Label(AppLocalization.Text("WorkoutUi148") + exerciseDefinition.EquipmentLabel, 13, true, color:UI.Purple));
             var tap = new TapGestureRecognizer();
             tap.Tapped += async (_, _) => await ShowDetailsAsync();
             heading.GestureRecognizers.Add(tap);
@@ -176,7 +176,7 @@ public sealed class WorkoutPreviewPage : ContentPage
 
             if (canReorder && it.Status == "pending" && !it.IsRequired && phase != "unknown")
             {
-                var replace = UI.SubtleAction("⇄ Csere");
+                var replace = UI.SubtleAction("⇄ " + AppLocalization.Text("WorkoutSwapAction"));
                 replace.VerticalOptions = LayoutOptions.Center;
                 replace.Clicked += async (_, _) =>
                     await Navigation.PushAsync(new WorkoutReplacementPage(_state, _workout, it));
@@ -187,18 +187,18 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         if (_workout.Status is "completed" or "partial" or "cancelled")
         {
-            _content.Children.Add(UI.Card(UI.Label($"Lezárt gyakorlatsor · {_workout.CompletedCount} / {_workout.Items.Count} feladat", 15, true)));
+            _content.Children.Add(UI.Card(UI.Label(AppLocalization.Format("WorkoutUi253", _workout.CompletedCount, _workout.Items.Count), 15, true)));
         }
         else
         {
-            var start=UI.Button(_workout.Kind=="recovery" ? "▶ Relaxáció indítása" :
-                _workout.Status=="in_progress" ? "▶ Folytatás" : "▶ Kezdés");
+            var start=UI.Button(_workout.Kind=="recovery" ? AppLocalization.Text("WorkoutUi149") :
+                _workout.Status=="in_progress" ? AppLocalization.Text("WorkoutUi150") : AppLocalization.Text("WorkoutUi151"));
             start.Clicked+=async (_,_) =>
             {
                 if (_workout.Kind == "recovery" ? !RecoveryRoutine.IsValid(_workout) : !WorkoutCoherence.IsReadyToStart(_state.Catalog,_workout))
                 {
-                    await DisplayAlertAsync("Nem megfelelő gyakorlatsor",
-                        "A gyakorlatsor ellenőrzése nem sikerült. A program nem indítható el.","Rendben");
+                    await DisplayAlertAsync(AppLocalization.Text("WorkoutUi152"),
+                        AppLocalization.Text("WorkoutUi153"),AppLocalization.Text("OK"));
                     return;
                 }
                 await Navigation.PushAsync(new WorkoutPlayerPage(_state,_workout));
@@ -222,27 +222,10 @@ public sealed class WorkoutPreviewPage : ContentPage
         HorizontalOptions = LayoutOptions.Start
     };
 
-    // Partner exercises are one movable unit. This is the same pairing logic
-    // used by WorkoutPlanEditing.MoveBefore in the core library.
-    private List<WorkoutItem> PairGroup(WorkoutItem item)
-    {
-        var group = new List<WorkoutItem> { item };
-        var exercise = _state.FindExercise(item.ExerciseId);
-        var other = exercise == null ? null : SidePairing.Counterpart(_state.Catalog, exercise);
-        if (other != null)
-        {
-            var counterpart = _workout.Items.FirstOrDefault(x => x.ExerciseId == other.Id);
-            if (counterpart != null && counterpart.Id != item.Id)
-                group.Add(counterpart);
-        }
-        return group.OrderBy(x => _workout.Items.IndexOf(x)).ToList();
-    }
-
     private WorkoutItem? AdjacentItem(WorkoutItem item, int direction)
     {
         if (_workout.Status != "planned" || direction == 0) return null;
-        var unit = PairGroup(item);
-        var index = _workout.Items.IndexOf(direction < 0 ? unit[0] : unit[^1]) + Math.Sign(direction);
+        var index = _workout.Items.IndexOf(item) + Math.Sign(direction);
         if (index < 0 || index >= _workout.Items.Count) return null;
         var neighbor = _workout.Items[index];
         return neighbor.Phase == item.Phase ? neighbor : null;
@@ -262,7 +245,7 @@ public sealed class WorkoutPreviewPage : ContentPage
                 await _state.MoveWorkoutItemAsync(_workout, item.Id, adjacent.Id);
             else
                 // Move the following unit before this one: equivalent to moving
-                // this unit down by one step, including both members of a pair.
+                // this exercise down by one step.
                 await _state.MoveWorkoutItemAsync(_workout, adjacent.Id, item.Id);
 
             Draw();
@@ -270,7 +253,7 @@ public sealed class WorkoutPreviewPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Nem rendezhető át", ex.Message, "Rendben");
+            await DisplayAlertAsync(AppLocalization.Text("WorkoutUi154"), ex.Message, AppLocalization.Text("OK"));
         }
         finally
         {

@@ -16,26 +16,26 @@ public sealed class ProfileEditPage : ContentPage
     private readonly int _initialMinutes;
     private readonly int _initialDifficulty;
     private readonly int _initialTransition;
-    private readonly Picker _minutes=new(){Title="Válassz időtartamot"};
-    private readonly Picker _difficulty=new(){Title="Válassz nehézséget"};
-    private readonly Picker _transition=new(){Title="Válassz átvezetést"};
-    private readonly Picker _weeklyDays=new(){Title="Heti mozgási cél"};
+    private readonly Picker _minutes=new(){Title=AppLocalization.Text("SettingsUi001")};
+    private readonly Picker _difficulty=new(){Title=AppLocalization.Text("DifficultyPrompt")};
+    private readonly Picker _transition=new(){Title=AppLocalization.Text("SettingsUi002")};
+    private readonly Picker _weeklyDays=new(){Title=AppLocalization.Text("WeeklyMovement")};
     private readonly Switch _reminderEnabled = new() { OnColor=UI.Teal };
     private readonly TimePicker _reminderTime = new();
     private readonly Switch _countdownSounds = new() { OnColor=UI.Teal };
     private readonly Switch _relaxationMusic = new() { OnColor=UI.Teal };
-    private readonly Picker _relaxationSource = new() { Title = "Relaxációs zene forrása" };
+    private readonly Picker _relaxationSource = new() { Title = AppLocalization.Text("SettingsUi003") };
     private readonly Switch _youtubePremium = new() { OnColor = UI.Teal };
     private readonly Entry _youtubePlaylistUrl = new()
         { Placeholder = "https://music.youtube.com/playlist?list=...", Keyboard = Keyboard.Url };
-    private readonly Button _save=UI.Button("Beállítások mentése");
+    private readonly Button _save=UI.Button(AppLocalization.Text("SettingsUi004"));
     private bool _saving;
     private static readonly int[] DurationOptions=[5,10,15,20,30];
 
     public ProfileEditPage(AppState state)
     {
         _state=state;
-        UI.Setup(this,"Profil szerkesztése");
+        UI.Setup(this,AppLocalization.Text("SettingsUi005"));
         var p=state.Preferences;
         var youtubeInstalled = YouTubeMusicSupport.IsInstalled();
         _initialMinutes=p.WorkoutMinutes;_initialDifficulty=p.MaximumDifficulty;_initialTransition=p.TransitionSeconds;
@@ -58,22 +58,22 @@ public sealed class ProfileEditPage : ContentPage
             AvailableEquipment=p.AvailableEquipment.ToList(),ExcludedExercises=p.ExcludedExercises.ToList()
         };
         var body=UI.Stack();
-        body.Children.Add(UI.Label("Szerkesztés",25,true));
-        body.Children.Add(UI.Label("A módosítások a Mentés gombbal lépnek érvénybe; a Mégse nem változtat semmit.",13,color:UI.Muted));
-        foreach(var n in DurationOptions) _minutes.Items.Add($"{n} perc");
+        body.Children.Add(UI.Label(AppLocalization.Text("SettingsUi006"),25,true));
+        body.Children.Add(UI.Label(AppLocalization.Text("SettingsUi007"),13,color:UI.Muted));
+        foreach(var n in DurationOptions) _minutes.Items.Add(AppLocalization.Format("Minutes", n));
         _minutes.SelectedIndex=Math.Max(0,Array.IndexOf(DurationOptions,p.WorkoutMinutes));
-        foreach(var difficulty in new[]{"Kezdő","Középhaladó","Haladó"})_difficulty.Items.Add(difficulty);
+        foreach(var difficulty in new[]{AppLocalization.Text("Beginner"),AppLocalization.Text("Intermediate"),AppLocalization.Text("Advanced")})_difficulty.Items.Add(difficulty);
         _difficulty.SelectedIndex=Math.Clamp(p.MaximumDifficulty-1,0,2);
-        foreach(var n in Enumerable.Range(5,6))_transition.Items.Add($"{n} másodperc");
+        foreach(var n in Enumerable.Range(5,6))_transition.Items.Add(AppLocalization.Format("Seconds", n));
         _transition.SelectedIndex=Math.Clamp(p.TransitionSeconds-5,0,5);
-        for(var n=1;n<=7;n++) _weeklyDays.Items.Add($"{n} nap / hét");
+        for(var n=1;n<=7;n++) _weeklyDays.Items.Add(AppLocalization.Format("DaysPerWeek", n));
         _weeklyDays.SelectedIndex=Math.Clamp(p.WeeklyTargetDays-1,0,6);
         body.Children.Add(UI.Card(
-            UI.Label("Idő és nehézség",19,true),
-            UI.Label("Gyakorlatsor célhossza",15,true),_minutes,
-            UI.Label("Legmagasabb megengedett nehézség",15,true),_difficulty,
-            UI.Label("Átvezetés két gyakorlat között",15,true),_transition,
-            UI.Label("Heti mozgási cél",15,true),_weeklyDays
+            UI.Label(AppLocalization.Text("ProfileWorkoutSettings"),19,true),
+            SettingRow(AppLocalization.Text("TargetDuration"),_minutes),
+            SettingRow(AppLocalization.Text("MaxDifficulty"),_difficulty),
+            SettingRow(AppLocalization.Text("SettingsUi008"),_transition),
+            SettingRow(AppLocalization.Text("WeeklyMovement"),_weeklyDays)
         ));
         _reminderEnabled.IsToggled=p.DailyReminderEnabled;
         _reminderTime.Time=new TimeSpan(p.DailyReminderHour,p.DailyReminderMinute,0);
@@ -87,12 +87,12 @@ public sealed class ProfileEditPage : ContentPage
             _draft.RelaxationPlaylist.Add(new RelaxationTrack
             {
                 FileName = _draft.RelaxationAudioFileName,
-                DisplayName = "Korábbi saját hangfájl"
+                DisplayName = AppLocalization.Text("ProfileLegacyAudio")
             });
 
         _youtubePremium.IsToggled = youtubeInstalled && p.RelaxationYouTubeMusicPremiumConfirmed;
-        _relaxationSource.Items.Add("Beépített zene");
-        _relaxationSource.Items.Add("Saját zenék");
+        _relaxationSource.Items.Add(AppLocalization.Text("SettingsUi009"));
+        _relaxationSource.Items.Add(AppLocalization.Text("SettingsUi010"));
         if (youtubeInstalled && _youtubePremium.IsToggled)
             _relaxationSource.Items.Add("YouTube Music");
         _relaxationSource.SelectedIndex = youtubeInstalled && _youtubePremium.IsToggled &&
@@ -111,7 +111,7 @@ public sealed class ProfileEditPage : ContentPage
             var list = _draft.RelaxationPlaylist;
             if (list.Count == 0)
                 playlistContainer.Children.Add(UI.Label(
-                    "Nincs kiválasztott saját zenefájl. A saját lejátszáshoz adj hozzá legalább egy elérhető fájlt.",
+                    AppLocalization.Text("SettingsUi011"),
                     13, color: UI.Muted));
             for (var index = 0; index < list.Count; index++)
             {
@@ -159,19 +159,19 @@ public sealed class ProfileEditPage : ContentPage
                 playlistContainer.Children.Add(row);
             }
             playlistHint.Text = list.Count == 0
-                ? "Nincs saját zeneszám"
-                : $"{list.Count} zeneszám · sorrendben lejátszva, szükség esetén ismételve a teljes 10 perc alatt";
+                ? AppLocalization.Text("SettingsUi012")
+                : AppLocalization.Format("SettingsUi103", list.Count);
         }
         RebuildPlaylist();
 
-        var selectTracks = UI.Button("♫ Zenék hozzáadása", false);
+        var selectTracks = UI.Button(AppLocalization.Text("SettingsUi013"), false);
         selectTracks.Clicked += async (_, _) =>
         {
             try
             {
                 var selected = await FilePicker.Default.PickMultipleAsync(new PickOptions
                 {
-                    PickerTitle = "Válassz relaxációs zenéket",
+                    PickerTitle = AppLocalization.Text("SettingsUi014"),
                     FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                     {
                         { DevicePlatform.Android, new[] { "audio/*" } }
@@ -183,7 +183,7 @@ public sealed class ProfileEditPage : ContentPage
                     if (result is null) continue;
                     var extension = Path.GetExtension(result.FileName).ToLowerInvariant();
                     if (extension is not (".mp3" or ".wav" or ".m4a" or ".aac" or ".ogg" or ".flac"))
-                        throw new InvalidDataException("MP3, WAV, M4A, AAC, OGG vagy FLAC hangfájl választható.");
+                        throw new InvalidDataException(AppLocalization.Text("SettingsUi015"));
                     var fileName = "relax-user-" + Guid.NewGuid().ToString("N") + extension;
                     var target = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
                     try
@@ -196,10 +196,10 @@ public sealed class ProfileEditPage : ContentPage
                         {
                             total += count;
                             if (total > 40 * 1024 * 1024)
-                                throw new InvalidDataException("Egy hangfájl legfeljebb 40 MB lehet.");
+                                throw new InvalidDataException(AppLocalization.Text("SettingsUi016"));
                             await output.WriteAsync(buffer.AsMemory(0, count));
                         }
-                        if (total == 0) throw new InvalidDataException("Üres hangfájl.");
+                        if (total == 0) throw new InvalidDataException(AppLocalization.Text("SettingsUi017"));
                     }
                     catch
                     {
@@ -216,11 +216,11 @@ public sealed class ProfileEditPage : ContentPage
             catch (Exception ex)
             {
                 RebuildPlaylist();
-                await DisplayAlertAsync("Hangfájl nem választható", ex.Message, "Rendben");
+                await DisplayAlertAsync(AppLocalization.Text("SettingsUi018"), ex.Message, AppLocalization.Text("OK"));
             }
         };
 
-        var defaultTracks = UI.Button("Vissza az alapzenére", false);
+        var defaultTracks = UI.Button(AppLocalization.Text("SettingsUi019"), false);
         defaultTracks.Clicked += (_, _) =>
         {
             _draft.RelaxationPlaylist.Clear();
@@ -233,9 +233,9 @@ public sealed class ProfileEditPage : ContentPage
         localMusicPanel.Children.Add(selectTracks);
         localMusicPanel.Children.Add(defaultTracks);
         youtubeMusicPanel.Children.Add(UI.Label(
-            "A link a telefon YouTube Music alkalmazásában nyílik meg. A Premium háttérlejátszás a YouTube Musicban működik; a Mozdulj! nem kezeli a zeneszámokat.",
+            AppLocalization.Text("SettingsUi020"),
             13, color: UI.Muted));
-        youtubeMusicPanel.Children.Add(UI.Label("YouTube Music-lejátszási lista linkje", 14, true));
+        youtubeMusicPanel.Children.Add(UI.Label(AppLocalization.Text("SettingsUi021"), 14, true));
         youtubeMusicPanel.Children.Add(_youtubePlaylistUrl);
 
         void UpdateMusicPanel()
@@ -245,11 +245,9 @@ public sealed class ProfileEditPage : ContentPage
         }
         _relaxationSource.SelectedIndexChanged += (_, _) => UpdateMusicPanel();
         var premiumPanel = new VerticalStackLayout { Spacing = 4, IsVisible = youtubeInstalled };
+        premiumPanel.Children.Add(SettingRow(AppLocalization.Text("SettingsUi022"),_youtubePremium));
         premiumPanel.Children.Add(UI.Label(
-            "YouTube Music Premium vagy YouTube Premium előfizetéssel rendelkezem", 13, true));
-        premiumPanel.Children.Add(_youtubePremium);
-        premiumPanel.Children.Add(UI.Label(
-            "A Mozdulj! csak a telepített alkalmazást tudja ellenőrizni. Az előfizetést neked kell megerősítened; a zene és a háttérlejátszás a YouTube Musicban működik.",
+            AppLocalization.Text("SettingsUi023"),
             12, color: UI.Muted));
         _youtubePremium.Toggled += (_, _) =>
         {
@@ -269,23 +267,34 @@ public sealed class ProfileEditPage : ContentPage
         };
         UpdateMusicPanel();
 
+        var musicDetails = new VerticalStackLayout { Spacing = 8, IsVisible = _relaxationMusic.IsToggled };
+        musicDetails.Children.Add(premiumPanel);
+        musicDetails.Children.Add(UI.Label(AppLocalization.Text("SettingsUi003"),14,true));
+        musicDetails.Children.Add(_relaxationSource);
+        musicDetails.Children.Add(localMusicPanel);
+        musicDetails.Children.Add(youtubeMusicPanel);
+        _relaxationMusic.Toggled += (_, _) => musicDetails.IsVisible = _relaxationMusic.IsToggled;
         body.Children.Add(UI.Card(
-            UI.Label("Hangok és emlékeztető",19,true),
-            UI.Label("Visszaszámlálás: jelzés az utolsó három másodpercben",14),_countdownSounds,
-            UI.Label("Nyugtató zene a regeneráló relaxációhoz",14),_relaxationMusic,
-            premiumPanel,
-            UI.Label("Relaxációs zene forrása", 14, true), _relaxationSource,
-            localMusicPanel, youtubeMusicPanel,
-            UI.Label("Napi streak-emlékeztető",14),_reminderEnabled,
-            UI.Label("Értesítés időpontja",14),_reminderTime,
-            UI.Label("Csak akkor jelez, ha aznap még nem volt mozgás vagy teljes regeneráció. Az értesítésekhez Android-engedély szükséges.",12,color:UI.Muted)
+            UI.Label(AppLocalization.Text("ProfileAudioSettings"),19,true),
+            SettingRow(AppLocalization.Text("SettingsUi025"),_countdownSounds),
+            SettingRow(AppLocalization.Text("SettingsUi026"),_relaxationMusic),
+            musicDetails
         ));
-        body.Children.Add(UI.Card(UI.Label("Fókusztesttájak",18,true),
+        var reminderTimeRow = SettingRow(AppLocalization.Text("SettingsUi028"),_reminderTime);
+        reminderTimeRow.IsVisible = _reminderEnabled.IsToggled;
+        _reminderEnabled.Toggled += (_, _) => reminderTimeRow.IsVisible = _reminderEnabled.IsToggled;
+        body.Children.Add(UI.Card(
+            UI.Label(AppLocalization.Text("ProfileNotificationSettings"),19,true),
+            SettingRow(AppLocalization.Text("SettingsUi027"),_reminderEnabled),
+            reminderTimeRow,
+            UI.Label(AppLocalization.Text("SettingsUi029"),12,color:UI.Muted)
+        ));
+        body.Children.Add(UI.Card(UI.Label(AppLocalization.Text("FocusRegions"),18,true),
             RegionChoices.Create(_state.Exercises,_draft.FocusRegions)));
-        AddChoices(body,"Kedvelt mozgástípusok",_state.Catalog.Categories,_draft.PreferredCategories);
-        AddChoices(body,"Elérhető eszközök",_state.Exercises.SelectMany(x=>x.Equipment).Distinct().OrderBy(x=>x),_draft.AvailableEquipment);
+        AddChoices(body,AppLocalization.Text("PreferredTypes"),_state.Catalog.Categories,_draft.PreferredCategories);
+        AddChoices(body,AppLocalization.Text("Equipment"),_state.Exercises.SelectMany(x=>x.Equipment).Distinct().OrderBy(x=>x),_draft.AvailableEquipment);
 
-        var cancel=UI.Button("Mégse",false);
+        var cancel=UI.Button(AppLocalization.Text("Cancel"),false);
         cancel.Clicked+=async (_,_)=>await Navigation.PopModalAsync();
         _save.Clicked+=async (_,_)=>await SaveAsync();
         var footer=new Grid{ColumnSpacing=10,Padding=new Thickness(16,10,16,14),BackgroundColor=UI.CardColor,
@@ -328,7 +337,7 @@ public sealed class ProfileEditPage : ContentPage
                 _draft.RelaxationMusicSource == RelaxationAudioReferences.Custom &&
                 !_draft.RelaxationPlaylist.Any(track =>
                     RelaxationAudioReferences.IsAvailable(FileSystem.Current.AppDataDirectory, track.FileName)))
-                throw new InvalidDataException("A saját zenék nem érhetők el. Válassz működő hangfájlt, vagy állítsd be a beépített zenét.");
+                throw new InvalidDataException(AppLocalization.Text("SettingsUi030"));
             _draft.RelaxationYouTubeMusicPlaylistUrl = (_youtubePlaylistUrl.Text ?? "").Trim();
             if (_draft.RelaxationMusicEnabled && _draft.RelaxationMusicSource == "youtube_music")
             {
@@ -337,7 +346,7 @@ public sealed class ProfileEditPage : ContentPage
                     musicUrl.Host is not ("music.youtube.com" or "www.youtube.com" or "youtube.com") ||
                     !musicUrl.AbsolutePath.Equals("/playlist", StringComparison.OrdinalIgnoreCase) ||
                     !musicUrl.Query.Contains("list=", StringComparison.Ordinal))
-                    throw new InvalidDataException("Érvényes YouTube Music-lejátszási lista linkjét add meg.");
+                    throw new InvalidDataException(AppLocalization.Text("SettingsUi031"));
             }
             var previous=_state.Preferences;
             bool planningChanged = previous.WorkoutMinutes!=_draft.WorkoutMinutes ||
@@ -354,13 +363,13 @@ public sealed class ProfileEditPage : ContentPage
                 !previous.AvailableEquipment.SequenceEqual(_draft.AvailableEquipment);
             bool applyToday=false,refreshMonth=false;
             if(planningChanged)
-                applyToday=await DisplayAlertAsync("Mikortól érvényesüljön?",
-                    "A még el nem kezdett mai sorokat is áttervezzük az új beállítások szerint, vagy csak holnaptól alkalmazzuk őket? A már elkezdett és teljesített sorok nem változnak.",
-                    "Már ma", "Csak holnaptól");
+                applyToday=await DisplayAlertAsync(AppLocalization.Text("SettingsUi032"),
+                    AppLocalization.Text("SettingsUi033"),
+                    AppLocalization.Text("SettingsUi034"), AppLocalization.Text("SettingsUi035"));
             if(monthlyRelevant)
-                refreshMonth=await DisplayAlertAsync("Havi kihívások módosítása?",
-                    "Az új beállításokhoz igazítsuk a folyamatban lévő havi kihívásokat is? A korábbi teljesítések és a megszerzett jelvények megmaradnak.",
-                    "Igen, új célokat", "Nem, maradjanak");
+                refreshMonth=await DisplayAlertAsync(AppLocalization.Text("SettingsUi036"),
+                    AppLocalization.Text("SettingsUi037"),
+                    AppLocalization.Text("SettingsUi038"), AppLocalization.Text("SettingsUi039"));
             await _state.UpdatePreferencesAsync(_draft,planningChanged ? applyToday : null,refreshMonth);
 #if ANDROID
             try
@@ -370,24 +379,40 @@ public sealed class ProfileEditPage : ContentPage
                     var permission=await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<
                         Mozdulj.Maui.Platforms.Android.StreakNotificationPermission>();
                     if(permission!=Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
-                        await DisplayAlertAsync("Értesítések kikapcsolva",
-                            "A rendszer nem engedélyezte az értesítéseket. Később a telefon beállításaiban engedélyezheted.","Rendben");
+                        await DisplayAlertAsync(AppLocalization.Text("SettingsUi040"),
+                            AppLocalization.Text("SettingsUi041"),AppLocalization.Text("OK"));
                 }
                 Mozdulj.Maui.Platforms.Android.StreakReminderScheduler.Schedule(_state.Preferences);
             }
             catch(Exception notificationError)
             {
-                await DisplayAlertAsync("Beállítások elmentve",
-                    "Az emlékeztetőt nem sikerült beállítani: "+notificationError.Message,"Rendben");
+                await DisplayAlertAsync(AppLocalization.Text("SettingsUi042"),
+                    AppLocalization.Text("SettingsUi043")+notificationError.Message,AppLocalization.Text("OK"));
             }
 #endif
             await Navigation.PopModalAsync();
         }
-        catch(Exception ex) { await DisplayAlertAsync("A mentés nem sikerült",ex.Message,"Rendben"); }
+        catch(Exception ex) { await DisplayAlertAsync(AppLocalization.Text("SettingsUi044"),ex.Message,AppLocalization.Text("OK")); }
         finally { _saving=false;_save.IsEnabled=true; }
     }
+    private static View SettingRow(string title, View control)
+    {
+        var row = new Grid { ColumnSpacing=10, ColumnDefinitions =
+        {
+            new ColumnDefinition { Width=GridLength.Star },
+            new ColumnDefinition { Width=control is Switch ? GridLength.Auto : new GridLength(2, GridUnitType.Star) }
+        }};
+        if (control is not Switch) row.ColumnDefinitions[0].Width = new GridLength(3, GridUnitType.Star);
+        var label = UI.Label(title,14,true);
+        label.VerticalOptions=LayoutOptions.Center;
+        control.VerticalOptions=LayoutOptions.Center;
+        if (control is Switch) control.HorizontalOptions=LayoutOptions.End;
+        row.Add(label,0,0); row.Add(control,1,0);
+        return row;
+    }
+
     private static void AddChoices(VerticalStackLayout body,string title,IEnumerable<string> options,List<string> selection)
     {
-        body.Children.Add(UI.Card(UI.Label(title,18,true),ChoiceChips.Create(options,selection)));
+        body.Children.Add(UI.Card(UI.Label(title,18,true),ChoiceChips.Create(options,selection,label: PresentationText.Known)));
     }
 }

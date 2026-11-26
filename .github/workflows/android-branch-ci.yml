@@ -26,6 +26,9 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v7
 
+      - name: Run offline 3D editor regression tests
+        run: node --test Mozdulj.Tests/rig-editor.test.cjs
+
       - name: Set up Java
         uses: actions/setup-java@v6
         with:

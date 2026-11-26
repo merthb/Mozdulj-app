@@ -82,6 +82,31 @@ public static class UI
             Content = body
         };
     }
+    /// <summary>Read-only, wrapping labels; unlike preference chips these
+    /// are not buttons and cannot modify the saved profile.</summary>
+    public static View ReadOnlyChips(IEnumerable<string> values)
+    {
+        var items = values.Where(v => !string.IsNullOrWhiteSpace(v)).Distinct().ToArray();
+        if (items.Length == 0)
+            return Label(Mozdulj.Core.AppLocalization.Text("NoneSelected"),13,color:Muted);
+        var layout = new FlexLayout
+        {
+            Direction = Microsoft.Maui.Layouts.FlexDirection.Row,
+            Wrap = Microsoft.Maui.Layouts.FlexWrap.Wrap,
+            AlignItems = Microsoft.Maui.Layouts.FlexAlignItems.Start,
+            JustifyContent = Microsoft.Maui.Layouts.FlexJustify.Start
+        };
+        foreach (var item in items)
+            layout.Children.Add(new Border
+            {
+                BackgroundColor = Lavender, Stroke = Outline, StrokeThickness = HighContrast ? 2 : 1,
+                StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(10) },
+                Padding = new Thickness(9,5), Margin = new Thickness(0,0,6,6),
+                Content = Label(item,12,color:Ink)
+            });
+        return layout;
+    }
+
     public static VerticalStackLayout Stack() => new() { Spacing = 14, Padding = new Thickness(18, 20, 18, 40) };
     public static void Setup(ContentPage page, string title)
     {

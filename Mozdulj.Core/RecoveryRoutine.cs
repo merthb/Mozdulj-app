@@ -42,7 +42,7 @@ public static class RecoveryRoutine
                 }
             ]
         };
-        if (!IsValid(workout)) throw new InvalidOperationException("Érvénytelen regeneráló program.");
+        if (!IsValid(workout)) throw new InvalidOperationException(AppLocalization.Text("Validation115"));
         return workout;
     }
 
@@ -72,7 +72,7 @@ public static class RecoveryRoutine
         var item = workout.Items[0];
         return item.ExerciseId == ExerciseId && item.Phase == "recovery" &&
                item.Category == "relaxáció" && item.Measure == "time" &&
-               item.TargetSeconds == TotalSeconds && item.EstimatedSeconds == TotalSeconds &&
+               item.TargetSeconds == TotalSeconds && item.TimeTargets is null && item.EstimatedSeconds == TotalSeconds &&
                item.TransitionAfterSeconds == 0 && !string.IsNullOrWhiteSpace(item.Instruction);
     }
 

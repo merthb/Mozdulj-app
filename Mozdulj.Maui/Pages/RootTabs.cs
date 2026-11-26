@@ -1,3 +1,4 @@
+using Mozdulj.Core;
 using Mozdulj.Maui.Services;
 namespace Mozdulj.Maui.Pages;
 
@@ -14,11 +15,14 @@ public sealed class RootTabs : TabbedPage
         BarTextColor = UI.Purple;
         SelectedTabColor = UI.Purple;
         UnselectedTabColor = UI.Muted;
-        Children.Add(new NavigationPage(Root(new TodayPage(state))) { Title = "Ma", BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
-        Children.Add(new NavigationPage(Root(new CatalogPage(state))) { Title = "Tár", BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
-        Children.Add(new NavigationPage(Root(new ChallengesPage(state))) { Title = "Célok", BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
-        Children.Add(new NavigationPage(Root(new StatisticsPage(state))) { Title = "Napló", BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
-        Children.Add(new NavigationPage(Root(new ProfilePage(state))) { Title = "Profil", BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
+        Children.Add(new NavigationPage(Root(new TodayPage(state))) { Title = AppLocalization.Text("Today"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
+        Children.Add(new NavigationPage(Root(new CatalogPage(state))) { Title = AppLocalization.Text("CatalogTab"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
+        Children.Add(new NavigationPage(Root(new ChallengesPage(state))) { Title = AppLocalization.Text("Goals"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
+        Children.Add(new NavigationPage(Root(new StatisticsPage(state))) { Title = AppLocalization.Text("Journal"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
+        Children.Add(new NavigationPage(Root(new ProfilePage(state))) { Title = AppLocalization.Text("Profile"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
+#if ANDROID
+        AndroidTabTextFit.Attach(this);
+#endif
     }
     private static T Root<T>(T page) where T : Page
     {

@@ -1,3 +1,4 @@
+using Mozdulj.Core;
 using Mozdulj.Maui.Services;
 namespace Mozdulj.Maui.Pages;
 
@@ -15,7 +16,7 @@ public sealed class StartupPage : ContentPage
             Spacing = 18,
             Children = { UI.Label("Mozdulj!", 36, true, UI.Purple),
                 new ActivityIndicator { IsRunning = true, Color = UI.Purple },
-                UI.Label("Gyakorlattár betöltése…", 14, color:UI.Muted) }
+                UI.Label(AppLocalization.Text("LoadingCatalog"), 14, color:UI.Muted) }
         };
     }
     protected override async void OnAppearing()
@@ -29,11 +30,12 @@ public sealed class StartupPage : ContentPage
             // Android's UI thread while building the first catalog.
             await Task.Run(() => _state.InitializeAsync());
             if (Window != null) Window.Page = _state.NeedsInitialSetup
-                ? new OnboardingPage(_state) : new RootTabs(_state);
+                ? (_state.Data.ApplicationLanguage is null ? new LanguageSelectionPage(_state) : new OnboardingPage(_state))
+                : new RootTabs(_state);
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Indítási hiba", ex.Message, "Rendben");
+            await DisplayAlertAsync(AppLocalization.Text("StartupError"), ex.Message, AppLocalization.Text("OK"));
         }
     }
 }

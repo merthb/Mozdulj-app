@@ -1,3 +1,4 @@
+using Mozdulj.Core;
 using Mozdulj.Maui.Services;
 using Microsoft.Maui.Storage;
 using Microsoft.Maui.ApplicationModel;
@@ -12,7 +13,7 @@ public sealed class ProfilePage : ContentPage
     public ProfilePage(AppState state)
     {
         _state=state;
-        UI.Setup(this,"Profil");
+        UI.Setup(this,AppLocalization.Text("Profile"));
         Content=new ScrollView{Content=_content};
     }
     protected override void OnAppearing() { base.OnAppearing(); Draw(); }
@@ -20,14 +21,46 @@ public sealed class ProfilePage : ContentPage
     {
         _content.Children.Clear();
         var p=_state.Preferences;
-        _content.Children.Add(UI.Label("Saját mozgásprofil",25,true));
+        _content.Children.Add(UI.Label(AppLocalization.Text("ProfileHeading"),25,true));
+
+        var languagePicker = new Picker { Title = AppLocalization.Text("Language"), TextColor = UI.Ink };
+        languagePicker.Items.Add("Magyar");
+        languagePicker.Items.Add("English");
+        languagePicker.SelectedIndex = AppLocalization.IsEnglish ? 1 : 0;
+        bool changingLanguage = false;
+        languagePicker.SelectedIndexChanged += async (_, _) =>
+        {
+            if (changingLanguage || languagePicker.SelectedIndex < 0) return;
+            var language = languagePicker.SelectedIndex == 1 ? "en" : "hu";
+            if (language == _state.Data.ApplicationLanguage) return;
+            changingLanguage = true;
+            languagePicker.IsEnabled = false;
+            try
+            {
+                await _state.SetApplicationLanguageAsync(language);
+                Dispatcher.Dispatch(() =>
+                {
+                    if (Window is null) return;
+                    var tabs = new RootTabs(_state);
+                    tabs.CurrentPage = tabs.Children[4];
+                    Window.Page = tabs;
+                });
+            }
+            catch (Exception ex)
+            {
+                languagePicker.SelectedIndex = AppLocalization.IsEnglish ? 1 : 0;
+                await DisplayAlertAsync(AppLocalization.Text("LanguageSaveError"), ex.Message, AppLocalization.Text("OK"));
+            }
+            finally { changingLanguage = false; languagePicker.IsEnabled = true; }
+        };
+        _content.Children.Add(UI.Card(UI.Label(AppLocalization.Text("Language"), 19, true), languagePicker));
 
         // Appearance is a device preference, not part of the exported workout profile.
-        _content.Children.Add(UI.Label("Megjelenés", 19, true));
-        var themePicker = new Picker { Title = "Alkalmazás témája", TextColor = UI.Ink,
+        _content.Children.Add(UI.Label(AppLocalization.Text("Appearance"), 19, true));
+        var themePicker = new Picker { Title = AppLocalization.Text("AppTheme"), TextColor = UI.Ink,
             BackgroundColor = UI.CardColor, TitleColor = UI.Muted };
-        themePicker.Items.Add("Világos");
-        themePicker.Items.Add("Sötét (grafitszürke)");
+        themePicker.Items.Add(AppLocalization.Text("Light"));
+        themePicker.Items.Add(AppLocalization.Text("Dark"));
         themePicker.SelectedIndex = UI.IsDark ? 1 : 0;
         var contrastSwitch = new Switch { IsToggled = UI.HighContrast, OnColor = UI.Teal };
         void RefreshAppearance()
@@ -58,61 +91,67 @@ public sealed class ProfilePage : ContentPage
         themePicker.SelectedIndexChanged += (_, _) => RefreshAppearance();
         contrastSwitch.Toggled += (_, _) => RefreshAppearance();
         _content.Children.Add(UI.Card(
-            UI.Label("Téma", 14, true), themePicker,
+            UI.Label(AppLocalization.Text("Theme"), 14, true), themePicker,
             new HorizontalStackLayout
             {
                 Spacing = 12,
-                Children = { contrastSwitch, UI.Label("Magas kontraszt", 15, true) }
+                Children = { contrastSwitch, UI.Label(AppLocalization.Text("Contrast"), 15, true) }
             },
-            UI.Label("A telefon betűméret-beállítását az alkalmazás automatikusan követi.",
+            UI.Label(AppLocalization.Text("FontScale"),
                 12, color:UI.Muted)));
 
-        var edit=UI.Button("✎ Profil szerkesztése");
+        var edit=UI.Button(AppLocalization.Text("EditProfile"));
         edit.Clicked+=async (_,_)=> await Navigation.PushModalAsync(new NavigationPage(new ProfileEditPage(_state))
         {
             BarBackgroundColor=UI.Background, BarTextColor=UI.Ink
         });
         _content.Children.Add(edit);
         _content.Children.Add(UI.Card(
-            UI.Label("Idő és nehézség",19,true),
-            Field("Gyakorlatsor célhossza",$"{p.WorkoutMinutes} perc"),
-            Field("Legmagasabb megengedett nehézség",new[]{"Kezdő","Középhaladó","Haladó"}[Math.Clamp(p.MaximumDifficulty-1,0,2)]),
-            Field("Átvezetés két feladat között",$"{p.TransitionSeconds} másodperc"),
-            Field("Heti cél",$"{p.WeeklyTargetDays} aktív nap"),
-            Field("Időzítő hangjelzései",p.CountdownSoundsEnabled?"Bekapcsolva":"Kikapcsolva"),
-            Field("Relaxációs zene",p.RelaxationMusicEnabled?"Bekapcsolva":"Kikapcsolva"),
-            Field("Napi emlékeztető",p.DailyReminderEnabled?$"{p.DailyReminderHour:D2}:{p.DailyReminderMinute:D2}":"Kikapcsolva")
+            UI.Label(AppLocalization.Text("ProfileWorkoutSettings"),19,true),
+            Field(AppLocalization.Text("TargetDuration"),AppLocalization.Format("Minutes", p.WorkoutMinutes)),
+            Field(AppLocalization.Text("MaxDifficulty"),new[]{AppLocalization.Text("Beginner"),AppLocalization.Text("Intermediate"),AppLocalization.Text("Advanced")}[Math.Clamp(p.MaximumDifficulty-1,0,2)]),
+            Field(AppLocalization.Text("Transition"),AppLocalization.Format("Seconds", p.TransitionSeconds)),
+            Field(AppLocalization.Text("WeeklyGoal"),AppLocalization.Format("ActiveDays", p.WeeklyTargetDays))
         ));
         _content.Children.Add(UI.Card(
-            UI.Label("Személyre szabás",19,true),
-            Field("Fókusztesttájak",Join(p.FocusRegions)),
-            Field("Kedvelt mozgástípusok",Join(p.PreferredCategories)),
-            Field("Elérhető eszközök",Join(p.AvailableEquipment))
+            UI.Label(AppLocalization.Text("ProfileAudioSettings"),19,true),
+            Field(AppLocalization.Text("Countdown"),p.CountdownSoundsEnabled?AppLocalization.Text("On"):AppLocalization.Text("Off")),
+            Field(AppLocalization.Text("RelaxationMusic"),p.RelaxationMusicEnabled?AppLocalization.Text("On"):AppLocalization.Text("Off"))
         ));
-        _content.Children.Add(UI.Label("Gyakorlattár kezelése",21,true));
-        _content.Children.Add(UI.Label($"{_state.Exercises.Count} elérhető gyakorlat · Offline gyakorlattár",13,color:UI.Muted));
-        var import=UI.Button("JSON-gyakorlattár importálása",false);
+        _content.Children.Add(UI.Card(
+            UI.Label(AppLocalization.Text("ProfileNotificationSettings"),19,true),
+            Field(AppLocalization.Text("Reminder"),p.DailyReminderEnabled?$"{p.DailyReminderHour:D2}:{p.DailyReminderMinute:D2}":AppLocalization.Text("Off"))
+        ));
+        _content.Children.Add(UI.Card(
+            UI.Label(AppLocalization.Text("Personalization"),19,true),
+            FocusSummary(p.FocusRegions),
+            ChipField(AppLocalization.Text("PreferredTypes"),p.PreferredCategories.Select(PresentationText.Known)),
+            ChipField(AppLocalization.Text("Equipment"),p.AvailableEquipment.Select(PresentationText.Known))
+        ));
+        _content.Children.Add(UI.Label(AppLocalization.Text("ManageLibrary"),21,true));
+        _content.Children.Add(UI.Label(AppLocalization.Format("LibraryCount", _state.Exercises.Count),13,color:UI.Muted));
+        var import=UI.Button(AppLocalization.Text("ImportLibrary"),false);
         import.Clicked+=async (_,_)=>
         {
             try
             {
-                var result=await FilePicker.Default.PickAsync(new PickOptions {PickerTitle="Válassz Mozdulj könyvtár-JSON-t"});
+                var result=await FilePicker.Default.PickAsync(new PickOptions {PickerTitle=AppLocalization.Text("PickLibrary")});
                 if(result is null) return;
-                var option=await DisplayActionSheetAsync("Hogyan importáljuk a saját gyakorlatokat?", "Mégse", null,
-                    "Újak hozzáadása", "Összefésülés", "Saját lista cseréje");
-                var mode=option switch {"Újak hozzáadása"=>"append","Összefésülés"=>"merge","Saját lista cseréje"=>"replace",_=>null};
+                var option=await DisplayActionSheetAsync(AppLocalization.Text("ImportMode"), AppLocalization.Text("Cancel"), null,
+                    AppLocalization.Text("AddNew"), AppLocalization.Text("Merge"), AppLocalization.Text("ReplaceList"));
+                var mode = option == AppLocalization.Text("AddNew") ? "append" : option == AppLocalization.Text("Merge") ? "merge" : option == AppLocalization.Text("ReplaceList") ? "replace" : null;
                 if(mode is null)return;
-                if(mode=="replace" && !await DisplayAlertAsync("Saját lista cseréje?",
-                    "Az eddigi saját gyakorlatok archiválódnak. Az alapgyakorlatok sosem íródnak felül.","Csere","Mégse"))return;
+                if(mode=="replace" && !await DisplayAlertAsync(AppLocalization.Text("ConfirmReplace"),
+                    AppLocalization.Text("ArchiveNotice"),AppLocalization.Text("Replace"),AppLocalization.Text("Cancel")))return;
                 using var stream=await result.OpenReadAsync();
                 var counts=await _state.ImportCatalogAsync(stream,mode);
-                await DisplayAlertAsync("Importálva",$"{counts.previous} → {counts.current} gyakorlat. A katalógust belső tárhelyre másoltuk.","Rendben");
+                await DisplayAlertAsync(AppLocalization.Text("Imported"),AppLocalization.Format("ImportCount", counts.previous, counts.current),AppLocalization.Text("OK"));
                 Draw();
             }
-            catch(Exception ex) {await DisplayAlertAsync("Sikertelen import",ex.Message,"Rendben");}
+            catch(Exception ex) {await DisplayAlertAsync(AppLocalization.Text("ImportFailed"),ex.Message,AppLocalization.Text("OK"));}
         };
         _content.Children.Add(import);
-        var export=UI.Button("Aktuális gyakorlattár exportálása (.json)",false);
+        var export=UI.Button(AppLocalization.Text("ExportLibrary"),false);
         export.Clicked+=async (_,_)=>
         {
             try
@@ -120,22 +159,22 @@ public sealed class ProfilePage : ContentPage
                 var data=await _state.ExportCatalogBytesAsync();
 #if ANDROID
                 if(Platform.CurrentActivity is not MainActivity activity)
-                    throw new InvalidOperationException("Az Android fájlmentő nem érhető el.");
+                    throw new InvalidOperationException(AppLocalization.Text("AndroidSaveUnavailable"));
                 var saved=await activity.SaveCatalogAsAsync($"mozdulj-gyakorlattar.json",data);
-                if(saved) await DisplayAlertAsync("Exportálva","A beépített és saját gyakorlatokat, állapotokkal együtt mentettük.","Rendben");
+                if(saved) await DisplayAlertAsync(AppLocalization.Text("Exported"),AppLocalization.Text("ExportedLibrary"),AppLocalization.Text("OK"));
 #else
                 var path=Path.Combine(FileSystem.CacheDirectory,"exercises.catalog.json");
                 await File.WriteAllBytesAsync(path,data);
-                await Share.Default.RequestAsync(new ShareFileRequest("Gyakorlattár exportálása",new ShareFile(path)));
+                await Share.Default.RequestAsync(new ShareFileRequest(AppLocalization.Text("ShareLibrary"),new ShareFile(path)));
 #endif
             }
-            catch(Exception ex) {await DisplayAlertAsync("Exportálási hiba",ex.Message,"Rendben");}
+            catch(Exception ex) {await DisplayAlertAsync(AppLocalization.Text("ExportFailed"),ex.Message,AppLocalization.Text("OK"));}
         };
         _content.Children.Add(export);
-        _content.Children.Add(UI.Label("Gyakorlattár mentése: alap- és saját gyakorlatok, kikapcsolások és helyi javítások. Az alapgyakorlatok edzésadatai védettek.",13,color:UI.Muted));
-        _content.Children.Add(UI.Label("Teljes adatmentés és APK-frissítések",20,true));
-        _content.Children.Add(UI.Label("Telefoncsere vagy eltávolítás előtt mentsd el az adataidat. A szokásos alkalmazásfrissítés megtartja őket.",13,color:UI.Muted));
-        var backup=UI.Button("Teljes adatmentés exportálása (.json)",false);
+        _content.Children.Add(UI.Label(AppLocalization.Text("LibraryBackupInfo"),13,color:UI.Muted));
+        _content.Children.Add(UI.Label(AppLocalization.Text("BackupHeading"),20,true));
+        _content.Children.Add(UI.Label(AppLocalization.Text("BackupInfo"),13,color:UI.Muted));
+        var backup=UI.Button(AppLocalization.Text("ExportBackup"),false);
         backup.Clicked+=async (_,_)=>
         {
             try
@@ -143,40 +182,84 @@ public sealed class ProfilePage : ContentPage
                 var bytes=await _state.ExportUserBackupAsync();
 #if ANDROID
                 if(Platform.CurrentActivity is not MainActivity activity)
-                    throw new InvalidOperationException("A rendszerfájlmentő nem elérhető.");
+                    throw new InvalidOperationException(AppLocalization.Text("FileSaveUnavailable"));
                 var saved=await activity.SaveCatalogAsAsync("mozdulj-teljes-mentes.json",bytes);
-                if(saved)await DisplayAlertAsync("Mentés kész","Profil, kedvencek, XP, badge-ek, előzmények, saját gyakorlatok és korrektúrák exportálva.","Rendben");
+                if(saved)await DisplayAlertAsync(AppLocalization.Text("BackupDone"),AppLocalization.Text("BackupContents"),AppLocalization.Text("OK"));
 #else
                 var path=Path.Combine(FileSystem.CacheDirectory,"mozdulj-teljes-mentes.json");
                 await File.WriteAllBytesAsync(path,bytes);
-                await Share.Default.RequestAsync(new ShareFileRequest("Teljes adatmentés",new ShareFile(path)));
+                await Share.Default.RequestAsync(new ShareFileRequest(AppLocalization.Text("ShareBackup"),new ShareFile(path)));
 #endif
             }
-            catch(Exception ex){await DisplayAlertAsync("Mentési hiba",ex.Message,"Rendben");}
+            catch(Exception ex){await DisplayAlertAsync(AppLocalization.Text("SaveError"),ex.Message,AppLocalization.Text("OK"));}
         };
         _content.Children.Add(backup);
-        var restore=UI.Button("Teljes adatmentés visszaállítása (.json)",false);
+        var restore=UI.Button(AppLocalization.Text("RestoreBackup"),false);
         restore.Clicked+=async (_, _)=>
         {
             try
             {
-                if (await BackupRestoreFlow.RunAsync(this,_state)) Draw();
+                var previousLanguage = AppLocalization.IsEnglish;
+                if (await BackupRestoreFlow.RunAsync(this,_state))
+                {
+                    if (previousLanguage != AppLocalization.IsEnglish && Window is not null)
+                    {
+                        var tabs = new RootTabs(_state);
+                        tabs.CurrentPage = tabs.Children[4];
+                        Window.Page = tabs;
+                    }
+                    else Draw();
+                }
             }
             catch(Exception ex)
             {
-                await DisplayAlertAsync("Visszaállítás sikertelen",ex.Message,"Rendben");
+                await DisplayAlertAsync(AppLocalization.Text("RestoreFailed"),ex.Message,AppLocalization.Text("OK"));
             }
         };
         _content.Children.Add(restore);
         _content.Children.Add(UI.Label(
-            "A régebbi mentések is ugyanitt tölthetők vissza. Újratelepítés után, " +
-            "ha elveszett a korábbi hitelesítő kulcs, az alkalmazás külön " +
-            "figyelmeztetést és jóváhagyást kér. Csak saját mentést használj.",
+            AppLocalization.Text("BackupRestoreInfo"),
             12,color:UI.Muted));
-        _content.Children.Add(UI.Label("Mozogj a saját tempódban. Fájdalom vagy bizonytalanság esetén kérj szakmai segítséget.",12,color:UI.Muted));
+        _content.Children.Add(UI.Label(AppLocalization.Text("Safety"),12,color:UI.Muted));
     }
-    private static View Field(string key,string value)=>new VerticalStackLayout{Spacing=2,Children={
-        UI.Label(key,13,true,color:UI.Muted),UI.Label(value,15)
-    }};
-    private static string Join(IEnumerable<string> values) {var a=values.ToArray();return a.Length==0?"Nincs kiválasztva":string.Join(", ",a);}
+    private static View Field(string key,string value)
+    {
+        var row = new Grid { ColumnSpacing = 12, ColumnDefinitions =
+        {
+            new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) },
+            new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) }
+        }};
+        var title = UI.Label(key,13,true,color:UI.Muted);
+        title.VerticalOptions = LayoutOptions.Center;
+        var detail = UI.Label(value,15);
+        detail.HorizontalTextAlignment = TextAlignment.End;
+        detail.VerticalOptions = LayoutOptions.Center;
+        row.Add(title,0,0); row.Add(detail,1,0);
+        return row;
+    }
+
+    private static View ChipField(string title, IEnumerable<string> values) =>
+        new VerticalStackLayout { Spacing=5, Children={
+            UI.Label(title,13,true,color:UI.Muted), UI.ReadOnlyChips(values)
+        }};
+
+    private static View FocusSummary(IEnumerable<string> regions)
+    {
+        var selected = RegionTaxonomy.NormalizeFocus(regions);
+        var summary = new VerticalStackLayout { Spacing=7 };
+        summary.Children.Add(UI.Label(AppLocalization.Text("FocusRegions"),13,true,color:UI.Muted));
+        if (selected.Count == 0)
+            summary.Children.Add(UI.ReadOnlyChips(Array.Empty<string>()));
+        else
+            foreach (var group in new[] {"upper","lower","full"})
+            {
+                var labels = RegionTaxonomy.Areas.Where(a => a.Group == group && selected.Contains(a.Id))
+                    .Select(a => RegionTaxonomy.AreaLabel(a.Id)).ToArray();
+                if (labels.Length == 0) continue;
+                if (group != "full")
+                    summary.Children.Add(UI.Label(RegionTaxonomy.GroupLabel(group),12,true,color:UI.Purple));
+                summary.Children.Add(UI.ReadOnlyChips(labels));
+            }
+        return summary;
+    }
 }

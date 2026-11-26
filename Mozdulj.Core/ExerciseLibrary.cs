@@ -49,41 +49,42 @@ public static class ExerciseLibraryRules
     {
         var errors = new List<string>();
         if (e is null) return new(["A gyakorlat nem létezik."]);
-        if (string.IsNullOrWhiteSpace(e.Name)) errors.Add("Név megadása kötelező.");
-        if (!Categories.Contains(e.Category)) errors.Add("Válassz érvényes mozgástípust.");
+        if (!ExerciseLanguage.HasName(e)) errors.Add(AppLocalization.Text("Validation045"));
+        if (!Categories.Contains(e.Category)) errors.Add(AppLocalization.Text("Validation046"));
         if (e.Regions is null || e.Regions.Count == 0 || e.Regions.Any(string.IsNullOrWhiteSpace))
-            errors.Add("Legalább egy érintett testtáj szükséges.");
-        if (!Phases.Contains(e.Phase)) errors.Add("Válassz edzésfázist (bemelegítés/fő rész/levezetés).");
-        if (e.Difficulty is < 1 or > 3) errors.Add("A nehézség 1–3 lehet.");
-        if (e.EstimatedSeconds is < 5 or > 3600) errors.Add("A becsült idő 5–3600 másodperc lehet.");
+            errors.Add(AppLocalization.Text("Validation047"));
+        if (!Phases.Contains(e.Phase)) errors.Add(AppLocalization.Text("Validation048"));
+        if (e.Difficulty is < 1 or > 3) errors.Add(AppLocalization.Text("Validation049"));
+        if (e.EstimatedSeconds is < 5 or > 3600) errors.Add(AppLocalization.Text("Validation050"));
         if (e.Equipment is null || e.Equipment.Any(string.IsNullOrWhiteSpace))
-            errors.Add("Az eszközlista hibás. Eszköz nélkül üres lista használható.");
-        if (string.IsNullOrWhiteSpace(e.Summary) && (e.Steps is null || !e.Steps.Any(s => !string.IsNullOrWhiteSpace(s))))
-            errors.Add("Legalább egy végrehajtási leírás vagy lépés szükséges.");
+            errors.Add(AppLocalization.Text("Validation051"));
+        if (!ExerciseLanguage.HasInstructions(e))
+            errors.Add(AppLocalization.Text("Validation052"));
         if (e.Measure == "time")
         {
-            if (e.TargetSeconds is null or < 5 or > 3600) errors.Add("Időalapú gyakorlatnál adj meg 5–3600 másodpercet.");
-            if (e.RepTargets is { Count: > 0 }) errors.Add("Időalapú feladat nem tartalmazhat ismétléscélt.");
+            if (!TimedTargets.IsValid(e.TargetSeconds,e.TimeTargets)) errors.Add(AppLocalization.Text("TimeTargetsInvalid"));
+            if (e.TimeTargets is not null && e.EstimatedSeconds < e.TargetSeconds.GetValueOrDefault()) errors.Add(AppLocalization.Text("TimeEstimateInvalid"));
+            if (e.RepTargets is { Count: > 0 }) errors.Add(AppLocalization.Text("Validation054"));
         }
         else if (e.Measure == "reps")
         {
-            if (e.TargetSeconds.HasValue) errors.Add("Ismétlésalapú feladat nem tartalmazhat időcélt.");
+            if (e.TargetSeconds.HasValue || e.TimeTargets is not null) errors.Add(AppLocalization.Text("Validation055"));
             if (e.RepTargets is null || e.RepTargets.Count == 0 ||
                 e.RepTargets.Any(r => r.Count is < 1 or > 200 || string.IsNullOrWhiteSpace(r.Label)))
-                errors.Add("Ismétlésalapú feladatnál minden szegmenshez pozitív darabszám és név szükséges.");
+                errors.Add(AppLocalization.Text("Validation056"));
         }
-        else errors.Add("Válassz idő- vagy ismétlésalapú mérést.");
+        else errors.Add(AppLocalization.Text("Validation057"));
         if (e.Pose?.Frames.Count == 0 && (e.Pose.Arrows.Count > 0 || e.Pose.Props.Count > 0))
-            errors.Add("Ábra nélkül nyilak nem tárolhatók.");
+            errors.Add(AppLocalization.Text("Validation058"));
         if (e.Pose?.Frames.Count > 0)
         {
             try { PoseValidator.Validate(e.Pose, e.Id); }
-            catch (InvalidDataException ex) { errors.Add("Ábra: " + ex.Message); }
+            catch (InvalidDataException ex) { errors.Add(AppLocalization.Text("Validation059") + ex.Message); }
         }
         if(e.Pose?.Rig3D is not null)
         {
             try { Rig3DValidator.Validate(e.Pose.Rig3D); }
-            catch(InvalidDataException ex) { errors.Add("3D póz: "+ex.Message); }
+            catch(InvalidDataException ex) { errors.Add(AppLocalization.Text("Validation060")+ex.Message); }
         }
         // No illustration is a valid choice. Its absence must NOT prevent activation.
         return new(errors);
@@ -92,7 +93,7 @@ public static class ExerciseLibraryRules
     public static Exercise Clone(Exercise value)
     {
         var clone=JsonSerializer.Deserialize<Exercise>(JsonSerializer.Serialize(value, CatalogCodec.JsonOptions), CatalogCodec.JsonOptions)
-            ?? throw new InvalidDataException("A gyakorlat nem másolható.");
+            ?? throw new InvalidDataException(AppLocalization.Text("Validation061"));
         Normalize(clone);
         return clone;
     }
@@ -113,12 +114,12 @@ public static class ExerciseLibraryRules
         var custom = local.UserExercises.Where(x => x.Status == LibraryStatuses.Active)
             .Select(x => x.Exercise).ToList();
         if (custom.Any(x => builtInIds.Contains(x.Id)))
-            throw new InvalidDataException("Saját gyakorlat nem írhat felül alapgyakorlatot.");
+            throw new InvalidDataException(AppLocalization.Text("Validation062"));
         foreach (var item in custom)
         {
             Normalize(item);
             var checkedValue = ValidateForActivation(item);
-            if (!checkedValue.IsValid) throw new InvalidDataException("Aktív saját gyakorlat hibás: " + item.Id);
+            if (!checkedValue.IsValid) throw new InvalidDataException(AppLocalization.Text("Validation063") + item.Id);
         }
         var overlays=local.BuiltInContentOverrides.ToDictionary(x=>x.ExerciseId,StringComparer.Ordinal);
         foreach(var edit in local.BuiltInContentOverrides) BuiltInContentRules.Validate(edit,baseCatalog);
@@ -138,22 +139,22 @@ public static class ExerciseLibraryRules
     {
         if (!((p.Format == "mozdulj.library.v1" && p.SchemaVersion == 1) ||
               (p.Format == "mozdulj.library.v2" && p.SchemaVersion == 2)))
-            throw new InvalidDataException("Nem támogatott gyakorlattár-export formátum.");
+            throw new InvalidDataException(AppLocalization.Text("Validation064"));
         if (p.UserExercises is null || p.DisabledBuiltInIds is null || p.BuiltInSnapshot is null)
-            throw new InvalidDataException("Hiányzó gyakorlattári adatok.");
+            throw new InvalidDataException(AppLocalization.Text("Validation065"));
         var builtIds = installedBase.Exercises.Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
         if (p.DisabledBuiltInIds.Distinct(StringComparer.Ordinal).Count() != p.DisabledBuiltInIds.Count ||
             p.DisabledBuiltInIds.Any(id => !builtIds.Contains(id)))
-            throw new InvalidDataException("Érvénytelen alapgyakorlat-állapot.");
+            throw new InvalidDataException(AppLocalization.Text("Validation066"));
         if (p.SchemaVersion == 2 && p.BuiltInContentOverrides is null)
-            throw new InvalidDataException("Hiányzó beépített gyakorlat-korrektúrák.");
+            throw new InvalidDataException(AppLocalization.Text("Validation067"));
         if (p.SchemaVersion == 1 && p.BuiltInContentOverrides is {Count: > 0})
-            throw new InvalidDataException("A v1 formátum nem tartalmazhat szerkeszthető alapgyakorlat-korrektúrát.");
+            throw new InvalidDataException(AppLocalization.Text("Validation068"));
         var patchIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var patch in p.BuiltInContentOverrides ?? [])
         {
             if (!patchIds.Add(patch.ExerciseId))
-                throw new InvalidDataException("Duplikált alapgyakorlat-korrektúra.");
+                throw new InvalidDataException(AppLocalization.Text("Validation069"));
             BuiltInContentRules.Validate(patch,installedBase);
         }
         var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -162,7 +163,7 @@ public static class ExerciseLibraryRules
             if (r.Exercise is null || !r.Exercise.Id.StartsWith("user-", StringComparison.Ordinal) ||
                 builtIds.Contains(r.Exercise.Id) || !ids.Add(r.Exercise.Id) ||
                 !LibraryStatuses.IsValid(r.Status))
-                throw new InvalidDataException("Érvénytelen saját gyakorlat vagy ütköző azonosító.");
+                throw new InvalidDataException(AppLocalization.Text("Validation070"));
             Normalize(r.Exercise);
             if (r.Status == LibraryStatuses.Active)
             {
@@ -173,7 +174,7 @@ public static class ExerciseLibraryRules
             if (r.Exercise.Pose.Frames.Count > 0)
                 PoseValidator.Validate(r.Exercise.Pose, r.Exercise.Id);
             else if (r.Exercise.Pose.Arrows.Count > 0 || r.Exercise.Pose.Props.Count > 0)
-                throw new InvalidDataException("Ábra nélkül nyilak nem tárolhatók.");
+                throw new InvalidDataException(AppLocalization.Text("Validation058"));
         }
         // Imported BuiltInSnapshot is never applied to the installed catalog.
     }
