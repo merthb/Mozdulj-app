@@ -1182,3 +1182,24 @@ test('body map exposes every selectable point and every rotation ring maps to an
  const tangent=nearestRingTangent(p,20,0);assert.ok(tangent&&tangent.d<.01);
  assert.ok(tangent.pxPerRadian>19&&tangent.pxPerRadian<21);
 });
+
+test('checked arc fallback avoids torso crossing during a valid arm lift',()=>{
+ const rig=loadRig(),a=rig.baseFrame('stand'),b=JSON.parse(JSON.stringify(a));
+ b.hands.left=[-.35,1.7,-.4];
+ const before=JSON.stringify([a,b]),result=rig.Collision.previewTransition(a,b);
+ assert.equal(result.ok,true);assert.equal(result.path,'arc');
+ assert.equal(JSON.stringify(result.samples[0]),JSON.stringify(a));
+ assert.equal(JSON.stringify(result.samples.at(-1)),JSON.stringify(b));
+ for(const frame of result.samples)assert.equal(rig.Collision.report(frame).count,0);
+ assert.equal(JSON.stringify([a,b]),before);
+ const reverse=rig.Collision.previewTransition(b,a);assert.ok(reverse.ok);
+ const mirrored=rig.Collision.previewTransition(rig.mirrorFrame(a),rig.mirrorFrame(b));assert.ok(mirrored.ok);
+});
+test('model-first editor keeps advanced controls and has a collapsible inspector',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),js=fs.readFileSync(path.join(root,'studio.js'),'utf8');
+ assert.match(html,/<body class="compact-editor inspector-closed">/);
+ assert.match(html,/id="toggleInspector" aria-expanded="false"/);
+ assert.match(html,/id="compactTarget"/);
+ assert.match(js,/function setupCompactEditor/);
+ assert.match(js,/function simpleEditing/);
+});
