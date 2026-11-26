@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "catalogVersion": 19,
+  "catalogVersion": 20,
   "locale": "hu-HU",
   "editorialNote": "A kétfázisú 3D mozdulatok visszatérési fázissal bővítve. Az anatómiai felülvizsgálat folyamatos; a modellek szemléltető jellegűek. A négykézláb modellek törzstájolása és több hanyatt fekvő alapkéztartás javítva; további szakmai ellenőrzés szükséges. Négy további dinamikus gyakorlathoz egyedi köztes mozgásfázis készült. 15 további mozgáshoz kiinduló–mozdulat–visszatérési fázis készült; a finom mozgások csak szemléltetők.",
   "categories": [
@@ -8106,7 +8106,7 @@
     },
     {
       "id": "macska-tehen-mozdulat",
-      "revision": 2,
+      "revision": 3,
       "name": "Macska–tehén mozdulat",
       "category": "mobilizálás",
       "regions": [
@@ -8154,7 +8154,7 @@
               "name": "Kiindulás",
               "root": [
                 0,
-                0.61,
+                0.55,
                 0.15
               ],
               "euler": [
@@ -8167,16 +8167,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.24,
-                  0.07,
-                  0.59
+                  0.075,
+                  0.69
                 ],
                 "right": [
                   0.24,
-                  0.07,
-                  0.59
+                  0.075,
+                  0.69
                 ]
               },
               "feet": {
@@ -8214,16 +8232,21 @@
                 ]
               },
               "equipment": [],
-              "footPitch": {
-                "left": -0.65,
-                "right": -0.65
-              }
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "start",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             },
             {
               "name": "Mozdulat",
               "root": [
                 0,
-                0.61,
+                0.55,
                 0.15
               ],
               "euler": [
@@ -8232,20 +8255,38 @@
                 0
               ],
               "headYaw": 0,
-              "headPitch": 0.22,
+              "headPitch": 0.15,
               "headRoll": 0,
               "upperYaw": 0,
-              "spineBend": 0.42,
+              "spineBend": -0.15,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.24,
-                  0.07,
-                  0.59
+                  0.075,
+                  0.69
                 ],
                 "right": [
                   0.24,
-                  0.07,
-                  0.59
+                  0.075,
+                  0.69
                 ]
               },
               "feet": {
@@ -8283,16 +8324,24 @@
                 ]
               },
               "equipment": [],
-              "footPitch": {
-                "left": -0.65,
-                "right": -0.65
-              }
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "lumbarBend": -0.12,
+              "thoracicBend": -0.18,
+              "cervicalPitch": -0.16,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             },
             {
               "name": "Visszatérés",
               "root": [
                 0,
-                0.61,
+                0.55,
                 0.15
               ],
               "euler": [
@@ -8305,16 +8354,34 @@
               "headRoll": 0,
               "upperYaw": 0,
               "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
               "hands": {
                 "left": [
                   -0.24,
-                  0.07,
-                  0.59
+                  0.075,
+                  0.69
                 ],
                 "right": [
                   0.24,
-                  0.07,
-                  0.59
+                  0.075,
+                  0.69
                 ]
               },
               "feet": {
@@ -8352,10 +8419,202 @@
                 ]
               },
               "equipment": [],
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
+            },
+            {
+              "name": "Mozdulat",
+              "root": [
+                0,
+                0.55,
+                0.15
+              ],
+              "euler": [
+                1.5707963267948966,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": -0.37,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0.1,
+              "pelvicTilt": 0,
               "footPitch": {
-                "left": -0.65,
-                "right": -0.65
-              }
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.24,
+                  0.075,
+                  0.69
+                ],
+                "right": [
+                  0.24,
+                  0.075,
+                  0.69
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.12,
+                  -0.57
+                ],
+                "right": [
+                  0.14,
+                  0.12,
+                  -0.57
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.3,
+                  0.53,
+                  0.78
+                ],
+                "elbowRight": [
+                  0.3,
+                  0.53,
+                  0.78
+                ],
+                "kneeLeft": [
+                  -0.15,
+                  0.34,
+                  -0.34
+                ],
+                "kneeRight": [
+                  0.15,
+                  0.34,
+                  -0.34
+                ]
+              },
+              "equipment": [],
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "lumbarBend": 0.08,
+              "thoracicBend": 0.12,
+              "cervicalPitch": 0.08,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
+            },
+            {
+              "name": "Visszatérés",
+              "root": [
+                0,
+                0.55,
+                0.15
+              ],
+              "euler": [
+                1.5707963267948966,
+                0,
+                0
+              ],
+              "headYaw": 0,
+              "headPitch": -0.24,
+              "headRoll": 0,
+              "upperYaw": 0,
+              "spineBend": 0,
+              "pelvicTilt": 0,
+              "footPitch": {
+                "left": 0.95,
+                "right": 0.95
+              },
+              "legAngles": {
+                "left": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                },
+                "right": {
+                  "flexion": 1.5707963267948966,
+                  "abduction": 0.32,
+                  "kneeFlexion": 1.69
+                }
+              },
+              "armAngles": {},
+              "hands": {
+                "left": [
+                  -0.24,
+                  0.075,
+                  0.69
+                ],
+                "right": [
+                  0.24,
+                  0.075,
+                  0.69
+                ]
+              },
+              "feet": {
+                "left": [
+                  -0.14,
+                  0.12,
+                  -0.57
+                ],
+                "right": [
+                  0.14,
+                  0.12,
+                  -0.57
+                ]
+              },
+              "poles": {
+                "elbowLeft": [
+                  -0.3,
+                  0.53,
+                  0.78
+                ],
+                "elbowRight": [
+                  0.3,
+                  0.53,
+                  0.78
+                ],
+                "kneeLeft": [
+                  -0.15,
+                  0.34,
+                  -0.34
+                ],
+                "kneeRight": [
+                  0.15,
+                  0.34,
+                  -0.34
+                ]
+              },
+              "equipment": [],
+              "leftHandCurl": 0,
+              "leftWristPitch": 1,
+              "leftWristDeviation": 0.4363323129985824,
+              "rightHandCurl": 0,
+              "rightWristPitch": 1,
+              "rightWristDeviation": 0.4363323129985824,
+              "phaseType": "movement",
+              "transitionSeconds": 1.2,
+              "holdSeconds": 0
             }
           ],
           "camera": {
@@ -8369,7 +8628,7 @@
             ]
           },
           "movementId": "catcow",
-          "editorialNote": "Egyénileg ellenőrizendő, szemléltető 3D mozdulat."
+          "editorialNote": "Mindkét gerincirány és az ismétlődő geometriai átmenetek ellenőrizve; a támasz és a mozgás vizuális/szakmai ellenőrzése szükséges."
         }
       },
       "englishText": {
