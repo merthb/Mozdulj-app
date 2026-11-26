@@ -32,3 +32,7 @@ The following pairs are candidates, not automatically approved. Compare equipmen
 - `user-yoga-fekvo-oldalso-nyujtozas-felholdban-jobbra` ↔ `user-yoga-fekvo-oldalso-nyujtozas-felholdban-balra`
 - `user-yoga-allo-falnal-mellkasnyitas-jobb-karral` ↔ `user-yoga-allo-falnal-mellkasnyitas-bal-karral`
 - `user-yoga-allo-vadlilazitas-falnal-jobb-hatul` ↔ `user-yoga-allo-vadlilazitas-falnal-bal-hatul`
+
+## Second batch (v18)
+
+Nine arm/shoulder entries received individual Hungarian/English text and rebuilt phase sequences: `karkorzes-kicsiben`, `karok-emelese-magas-tartasba`, `nyak-es-vallov-lazitasa-legzessel`, `karcsusztatas-falon`, `gumiszalagos-lapockazaras`, `vallkulso-rotacio-szalaggal`, `oldalemeles-kis-sullyal`, `eloreemeles-kis-sullyal`, `vallovi-lazitas-torolkozovel`. Actual engine checkPose, looping previewPlan and target-specific workoutGuidePlan checks passed for all nine. External rotation additionally checked for outward hand travel and stable elbow on both sides. Wall contact quality and all device visual/clinical review remain pending. IDs and repetition targets retained; no bilateral entries removed. 15/294 entries have bilingual text and initial geometric pass; 279 remain.
