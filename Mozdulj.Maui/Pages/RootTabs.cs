@@ -20,6 +20,9 @@ public sealed class RootTabs : TabbedPage
         Children.Add(new NavigationPage(Root(new ChallengesPage(state))) { Title = AppLocalization.Text("Goals"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
         Children.Add(new NavigationPage(Root(new StatisticsPage(state))) { Title = AppLocalization.Text("Journal"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
         Children.Add(new NavigationPage(Root(new ProfilePage(state))) { Title = AppLocalization.Text("Profile"), BarBackgroundColor = UI.Background, BarTextColor = UI.Ink });
+#if ANDROID
+        AndroidTabTextFit.Attach(this);
+#endif
     }
     private static T Root<T>(T page) where T : Page
     {

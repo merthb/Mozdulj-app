@@ -730,4 +730,11 @@ YouTube Music is not ready. Check the installed app and Premium setting in Profi
   <data name="RigInvalidArticulation" xml:space="preserve"><value>Invalid local spine or pelvis rotation.</value></data>
   <data name="RigInvalidHandPose" xml:space="preserve"><value>Invalid hand pose.</value></data>
   <data name="OwnExerciseUnreviewed" xml:space="preserve"><value>Custom exercise – not professionally reviewed.</value></data>
+  <data name="EquipmentStairs" xml:space="preserve"><value>Stairs</value></data>
+  <data name="EquipmentMassageBall" xml:space="preserve"><value>Massage ball</value></data>
+  <data name="ProfileWorkoutSettings" xml:space="preserve"><value>Workout settings</value></data>
+  <data name="ProfileAudioSettings" xml:space="preserve"><value>Sound and music</value></data>
+  <data name="ProfileNotificationSettings" xml:space="preserve"><value>Notifications</value></data>
+  <data name="WorkoutSwapAction" xml:space="preserve"><value>Swap</value></data>
+  <data name="ProfileLegacyAudio" xml:space="preserve"><value>Previous custom audio file</value></data>
 </root>

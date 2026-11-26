@@ -107,20 +107,26 @@ public sealed class ProfilePage : ContentPage
         });
         _content.Children.Add(edit);
         _content.Children.Add(UI.Card(
-            UI.Label(AppLocalization.Text("TimeDifficulty"),19,true),
+            UI.Label(AppLocalization.Text("ProfileWorkoutSettings"),19,true),
             Field(AppLocalization.Text("TargetDuration"),AppLocalization.Format("Minutes", p.WorkoutMinutes)),
             Field(AppLocalization.Text("MaxDifficulty"),new[]{AppLocalization.Text("Beginner"),AppLocalization.Text("Intermediate"),AppLocalization.Text("Advanced")}[Math.Clamp(p.MaximumDifficulty-1,0,2)]),
             Field(AppLocalization.Text("Transition"),AppLocalization.Format("Seconds", p.TransitionSeconds)),
-            Field(AppLocalization.Text("WeeklyGoal"),AppLocalization.Format("ActiveDays", p.WeeklyTargetDays)),
+            Field(AppLocalization.Text("WeeklyGoal"),AppLocalization.Format("ActiveDays", p.WeeklyTargetDays))
+        ));
+        _content.Children.Add(UI.Card(
+            UI.Label(AppLocalization.Text("ProfileAudioSettings"),19,true),
             Field(AppLocalization.Text("Countdown"),p.CountdownSoundsEnabled?AppLocalization.Text("On"):AppLocalization.Text("Off")),
-            Field(AppLocalization.Text("RelaxationMusic"),p.RelaxationMusicEnabled?AppLocalization.Text("On"):AppLocalization.Text("Off")),
+            Field(AppLocalization.Text("RelaxationMusic"),p.RelaxationMusicEnabled?AppLocalization.Text("On"):AppLocalization.Text("Off"))
+        ));
+        _content.Children.Add(UI.Card(
+            UI.Label(AppLocalization.Text("ProfileNotificationSettings"),19,true),
             Field(AppLocalization.Text("Reminder"),p.DailyReminderEnabled?$"{p.DailyReminderHour:D2}:{p.DailyReminderMinute:D2}":AppLocalization.Text("Off"))
         ));
         _content.Children.Add(UI.Card(
             UI.Label(AppLocalization.Text("Personalization"),19,true),
-            Field(AppLocalization.Text("FocusRegions"),Join(RegionTaxonomy.NormalizeFocus(p.FocusRegions).Select(RegionTaxonomy.AreaLabel))),
-            Field(AppLocalization.Text("PreferredTypes"),Join(p.PreferredCategories.Select(PresentationText.Known))),
-            Field(AppLocalization.Text("Equipment"),Join(p.AvailableEquipment.Select(PresentationText.Known)))
+            FocusSummary(p.FocusRegions),
+            ChipField(AppLocalization.Text("PreferredTypes"),p.PreferredCategories.Select(PresentationText.Known)),
+            ChipField(AppLocalization.Text("Equipment"),p.AvailableEquipment.Select(PresentationText.Known))
         ));
         _content.Children.Add(UI.Label(AppLocalization.Text("ManageLibrary"),21,true));
         _content.Children.Add(UI.Label(AppLocalization.Format("LibraryCount", _state.Exercises.Count),13,color:UI.Muted));
@@ -216,8 +222,44 @@ public sealed class ProfilePage : ContentPage
             12,color:UI.Muted));
         _content.Children.Add(UI.Label(AppLocalization.Text("Safety"),12,color:UI.Muted));
     }
-    private static View Field(string key,string value)=>new VerticalStackLayout{Spacing=2,Children={
-        UI.Label(key,13,true,color:UI.Muted),UI.Label(value,15)
-    }};
-    private static string Join(IEnumerable<string> values) {var a=values.ToArray();return a.Length==0?AppLocalization.Text("NoneSelected"):string.Join(", ",a);}
+    private static View Field(string key,string value)
+    {
+        var row = new Grid { ColumnSpacing = 12, ColumnDefinitions =
+        {
+            new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) },
+            new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) }
+        }};
+        var title = UI.Label(key,13,true,color:UI.Muted);
+        title.VerticalOptions = LayoutOptions.Center;
+        var detail = UI.Label(value,15);
+        detail.HorizontalTextAlignment = TextAlignment.End;
+        detail.VerticalOptions = LayoutOptions.Center;
+        row.Add(title,0,0); row.Add(detail,1,0);
+        return row;
+    }
+
+    private static View ChipField(string title, IEnumerable<string> values) =>
+        new VerticalStackLayout { Spacing=5, Children={
+            UI.Label(title,13,true,color:UI.Muted), UI.ReadOnlyChips(values)
+        }};
+
+    private static View FocusSummary(IEnumerable<string> regions)
+    {
+        var selected = RegionTaxonomy.NormalizeFocus(regions);
+        var summary = new VerticalStackLayout { Spacing=7 };
+        summary.Children.Add(UI.Label(AppLocalization.Text("FocusRegions"),13,true,color:UI.Muted));
+        if (selected.Count == 0)
+            summary.Children.Add(UI.ReadOnlyChips(Array.Empty<string>()));
+        else
+            foreach (var group in new[] {"upper","lower","full"})
+            {
+                var labels = RegionTaxonomy.Areas.Where(a => a.Group == group && selected.Contains(a.Id))
+                    .Select(a => RegionTaxonomy.AreaLabel(a.Id)).ToArray();
+                if (labels.Length == 0) continue;
+                if (group != "full")
+                    summary.Children.Add(UI.Label(RegionTaxonomy.GroupLabel(group),12,true,color:UI.Purple));
+                summary.Children.Add(UI.ReadOnlyChips(labels));
+            }
+        return summary;
+    }
 }

@@ -176,7 +176,7 @@ public sealed class WorkoutPreviewPage : ContentPage
 
             if (canReorder && it.Status == "pending" && !it.IsRequired && phase != "unknown")
             {
-                var replace = UI.SubtleAction("⇄ Csere");
+                var replace = UI.SubtleAction("⇄ " + AppLocalization.Text("WorkoutSwapAction"));
                 replace.VerticalOptions = LayoutOptions.Center;
                 replace.Clicked += async (_, _) =>
                     await Navigation.PushAsync(new WorkoutReplacementPage(_state, _workout, it));

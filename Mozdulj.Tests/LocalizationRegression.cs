@@ -32,9 +32,15 @@ internal static class LocalizationRegression
         {
             AppLocalization.Apply("en");
             Check(AppLocalization.Text("Language") == "Language", "English resource");
+            Check(AppLocalization.Text("WorkoutSwapAction") == "Swap", "workout swap action");
+            Check(PresentationText.Known("lépcső") == "Stairs", "stairs equipment");
+            Check(PresentationText.Known("masszázslabda") == "Massage ball", "massage ball equipment");
+            Check(PresentationText.Known("saját eszköz") == "saját eszköz", "custom equipment unchanged");
             Check(AppLocalization.Format("Minutes", 10) == "10 min", "English formatting");
             AppLocalization.Apply("hu");
             Check(AppLocalization.Text("Language") == "Nyelv", "Hungarian resource");
+            Check(AppLocalization.Text("WorkoutSwapAction") == "Csere", "Hungarian workout swap action");
+            Check(PresentationText.Known("lépcső") == "lépcső", "Hungarian equipment unchanged");
             Check(AppLocalization.Format("Minutes", 10) == "10 perc", "Hungarian formatting");
             Check(CultureInfo.CurrentCulture.Equals(culture), "storage culture unchanged");
         }

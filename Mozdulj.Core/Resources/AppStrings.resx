@@ -730,4 +730,11 @@ A YouTube Music nincs használatra kész. Ellenőrizd a telepített alkalmazást
   <data name="RigInvalidArticulation" xml:space="preserve"><value>Érvénytelen helyi gerinc- vagy medenceforgatás.</value></data>
   <data name="RigInvalidHandPose" xml:space="preserve"><value>Érvénytelen kéztartás.</value></data>
   <data name="OwnExerciseUnreviewed" xml:space="preserve"><value>Saját gyakorlat – szakmailag nem ellenőrzött.</value></data>
+  <data name="EquipmentStairs" xml:space="preserve"><value>Lépcső</value></data>
+  <data name="EquipmentMassageBall" xml:space="preserve"><value>Masszázslabda</value></data>
+  <data name="ProfileWorkoutSettings" xml:space="preserve"><value>Edzésbeállítások</value></data>
+  <data name="ProfileAudioSettings" xml:space="preserve"><value>Hangok és zene</value></data>
+  <data name="ProfileNotificationSettings" xml:space="preserve"><value>Értesítések</value></data>
+  <data name="WorkoutSwapAction" xml:space="preserve"><value>Csere</value></data>
+  <data name="ProfileLegacyAudio" xml:space="preserve"><value>Korábbi saját hangfájl</value></data>
 </root>

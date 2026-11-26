@@ -69,11 +69,11 @@ public sealed class ProfileEditPage : ContentPage
         for(var n=1;n<=7;n++) _weeklyDays.Items.Add(AppLocalization.Format("DaysPerWeek", n));
         _weeklyDays.SelectedIndex=Math.Clamp(p.WeeklyTargetDays-1,0,6);
         body.Children.Add(UI.Card(
-            UI.Label(AppLocalization.Text("TimeDifficulty"),19,true),
-            UI.Label(AppLocalization.Text("TargetDuration"),15,true),_minutes,
-            UI.Label(AppLocalization.Text("MaxDifficulty"),15,true),_difficulty,
-            UI.Label(AppLocalization.Text("SettingsUi008"),15,true),_transition,
-            UI.Label(AppLocalization.Text("WeeklyMovement"),15,true),_weeklyDays
+            UI.Label(AppLocalization.Text("ProfileWorkoutSettings"),19,true),
+            SettingRow(AppLocalization.Text("TargetDuration"),_minutes),
+            SettingRow(AppLocalization.Text("MaxDifficulty"),_difficulty),
+            SettingRow(AppLocalization.Text("SettingsUi008"),_transition),
+            SettingRow(AppLocalization.Text("WeeklyMovement"),_weeklyDays)
         ));
         _reminderEnabled.IsToggled=p.DailyReminderEnabled;
         _reminderTime.Time=new TimeSpan(p.DailyReminderHour,p.DailyReminderMinute,0);
@@ -87,7 +87,7 @@ public sealed class ProfileEditPage : ContentPage
             _draft.RelaxationPlaylist.Add(new RelaxationTrack
             {
                 FileName = _draft.RelaxationAudioFileName,
-                DisplayName = "Korábbi saját hangfájl"
+                DisplayName = AppLocalization.Text("ProfileLegacyAudio")
             });
 
         _youtubePremium.IsToggled = youtubeInstalled && p.RelaxationYouTubeMusicPremiumConfirmed;
@@ -245,9 +245,7 @@ public sealed class ProfileEditPage : ContentPage
         }
         _relaxationSource.SelectedIndexChanged += (_, _) => UpdateMusicPanel();
         var premiumPanel = new VerticalStackLayout { Spacing = 4, IsVisible = youtubeInstalled };
-        premiumPanel.Children.Add(UI.Label(
-            AppLocalization.Text("SettingsUi022"), 13, true));
-        premiumPanel.Children.Add(_youtubePremium);
+        premiumPanel.Children.Add(SettingRow(AppLocalization.Text("SettingsUi022"),_youtubePremium));
         premiumPanel.Children.Add(UI.Label(
             AppLocalization.Text("SettingsUi023"),
             12, color: UI.Muted));
@@ -269,15 +267,26 @@ public sealed class ProfileEditPage : ContentPage
         };
         UpdateMusicPanel();
 
+        var musicDetails = new VerticalStackLayout { Spacing = 8, IsVisible = _relaxationMusic.IsToggled };
+        musicDetails.Children.Add(premiumPanel);
+        musicDetails.Children.Add(UI.Label(AppLocalization.Text("SettingsUi003"),14,true));
+        musicDetails.Children.Add(_relaxationSource);
+        musicDetails.Children.Add(localMusicPanel);
+        musicDetails.Children.Add(youtubeMusicPanel);
+        _relaxationMusic.Toggled += (_, _) => musicDetails.IsVisible = _relaxationMusic.IsToggled;
         body.Children.Add(UI.Card(
-            UI.Label(AppLocalization.Text("SettingsUi024"),19,true),
-            UI.Label(AppLocalization.Text("SettingsUi025"),14),_countdownSounds,
-            UI.Label(AppLocalization.Text("SettingsUi026"),14),_relaxationMusic,
-            premiumPanel,
-            UI.Label(AppLocalization.Text("SettingsUi003"), 14, true), _relaxationSource,
-            localMusicPanel, youtubeMusicPanel,
-            UI.Label(AppLocalization.Text("SettingsUi027"),14),_reminderEnabled,
-            UI.Label(AppLocalization.Text("SettingsUi028"),14),_reminderTime,
+            UI.Label(AppLocalization.Text("ProfileAudioSettings"),19,true),
+            SettingRow(AppLocalization.Text("SettingsUi025"),_countdownSounds),
+            SettingRow(AppLocalization.Text("SettingsUi026"),_relaxationMusic),
+            musicDetails
+        ));
+        var reminderTimeRow = SettingRow(AppLocalization.Text("SettingsUi028"),_reminderTime);
+        reminderTimeRow.IsVisible = _reminderEnabled.IsToggled;
+        _reminderEnabled.Toggled += (_, _) => reminderTimeRow.IsVisible = _reminderEnabled.IsToggled;
+        body.Children.Add(UI.Card(
+            UI.Label(AppLocalization.Text("ProfileNotificationSettings"),19,true),
+            SettingRow(AppLocalization.Text("SettingsUi027"),_reminderEnabled),
+            reminderTimeRow,
             UI.Label(AppLocalization.Text("SettingsUi029"),12,color:UI.Muted)
         ));
         body.Children.Add(UI.Card(UI.Label(AppLocalization.Text("FocusRegions"),18,true),
@@ -386,6 +395,22 @@ public sealed class ProfileEditPage : ContentPage
         catch(Exception ex) { await DisplayAlertAsync(AppLocalization.Text("SettingsUi044"),ex.Message,AppLocalization.Text("OK")); }
         finally { _saving=false;_save.IsEnabled=true; }
     }
+    private static View SettingRow(string title, View control)
+    {
+        var row = new Grid { ColumnSpacing=10, ColumnDefinitions =
+        {
+            new ColumnDefinition { Width=GridLength.Star },
+            new ColumnDefinition { Width=control is Switch ? GridLength.Auto : new GridLength(2, GridUnitType.Star) }
+        }};
+        if (control is not Switch) row.ColumnDefinitions[0].Width = new GridLength(3, GridUnitType.Star);
+        var label = UI.Label(title,14,true);
+        label.VerticalOptions=LayoutOptions.Center;
+        control.VerticalOptions=LayoutOptions.Center;
+        if (control is Switch) control.HorizontalOptions=LayoutOptions.End;
+        row.Add(label,0,0); row.Add(control,1,0);
+        return row;
+    }
+
     private static void AddChoices(VerticalStackLayout body,string title,IEnumerable<string> options,List<string> selection)
     {
         body.Children.Add(UI.Card(UI.Label(title,18,true),ChoiceChips.Create(options,selection,label: PresentationText.Known)));

@@ -24,6 +24,8 @@ public static class PresentationText
         ["jógablokk"] = "WorkoutUi217",
         ["egyensúlypárna"] = "WorkoutUi218",
         ["fellépő"] = "WorkoutUi219",
+        ["lépcső"] = "EquipmentStairs",
+        ["masszázslabda"] = "EquipmentMassageBall",
         ["ismétlés"] = "WorkoutUi220",
         ["előre"] = "WorkoutUi221",
         ["hátra"] = "WorkoutUi222",
