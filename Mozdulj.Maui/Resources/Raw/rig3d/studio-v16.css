@@ -325,3 +325,5 @@ body.compact-editor:not(.view-only) #advancedBody[open] #targetControls{padding:
 .compact-angle output{font-size:.78rem;font-variant-numeric:tabular-nums}
 #compactAngles:empty{display:none}
 .view-only #toggleInspector,.view-only #undoPose,.view-only #redoPose{display:none!important}
+
+body.compact-editor:not(.view-only) .edit-tools button#toggleInspector[aria-expanded=true]{outline:2px solid var(--purple);outline-offset:-2px}
