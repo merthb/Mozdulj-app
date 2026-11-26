@@ -2021,7 +2021,7 @@ function shaded3D(canvas){
     for(const sign of [-1,1])ell(add(p,mul(axis,sign*.12)),[.035,.06,.06],'metal');
   }}
  }}
- function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false,axisSpace='world',moveAxis='free',directionHints=[],referenceFrames=[]}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
+ function draw(frame,{edit=true,selected=null,showAll=false,issue=null,dark=false,equipmentMode=false,equipmentSelection=null,displayMode='solid',highContrast=false,axisSpace='world',moveAxis='free',directionHints=[],referenceFrames=[],showAxes=true}={}){let eye=setup();gl.clearColor(...(dark?[.115,.10,.16,1]:[.985,.978,1,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,viewproj);
  const j=joints(frame);lastJoints=j;
  // ground follows world coordinates. No automatic nonuniform body shrinking.
  ell([0,-.10,0],[1.60,.085,1.80],dark?[.26,.23,.34]:'floor');
@@ -2130,7 +2130,7 @@ function shaded3D(canvas){
    const p=j.scapula[selected.startsWith('left')?'left':'right'],color=[.70,.32,.86];
    gl.disable(gl.DEPTH_TEST);try{for(const [a,b] of [[p.superior,p.medial],[p.medial,p.inferior],[p.inferior,p.superior]])limb(a,b,.012,color);}finally{gl.enable(gl.DEPTH_TEST);}
  }
- if(edit&&!equipmentMode&&selected){
+ if(edit&&!equipmentMode&&selected&&showAxes){
    const target=bodyTarget(selected),origin=bodyPoint(j,selected);
    if(target&&origin){
      const axes=targetAxes(frame,target,camera,axisSpace),colors=[[.92,.18,.22],[.12,.65,.30],[.12,.42,.95]];
